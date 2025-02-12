@@ -1,4 +1,4 @@
-.PHONY: boot kernel compile run all kernelrun
+.PHONY: boot kernel compile run all kernelrun loadfromrelease releaseerun
 boot:
 	cd bootloader; nasm main.asm
 	cd kbootloader; nasm -f bin boot.asm -o boot
@@ -13,3 +13,6 @@ all: boot kernel compile run
 kernelrun: kernel compile run
 load: 
 	sudo bash load.sh
+loadfromrelease:
+	cp release/* .
+releaserun: loadfromrelease run

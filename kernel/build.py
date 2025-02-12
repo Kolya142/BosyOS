@@ -15,18 +15,18 @@ os.system("rm build/*")
 
 print("Build kernel")
 project_root = os.path.abspath(".")
-cc = f"gcc \"-I{project_root}\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -c"
+cc = f"gcc \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -c"
 print(f"Build command: {cc}")
 for root, _, files in os.walk("."):
     for file in files:
-        if (file != 'entry.c' and root != 'kernel') and file.endswith(".c"):
+        if (file != 'KMain.c' and root != 'kernel') and file.endswith(".c"):
             source_file = os.path.join(root, file)
             output_file = os.path.join(build_dir, file + ".o")
             run_command(f"{cc} {source_file} -o {output_file}")
-run_command(f"{cc} kernel/entry.c -o build/entry.o")
+run_command(f"{cc} kernel/KMain.c -o build/KMain.o")
 obj_files = " ".join(
-    [os.path.join(build_dir, file) for file in os.listdir(build_dir) if file.endswith(".o") and file != 'entry.o']
+    [os.path.join(build_dir, file) for file in os.listdir(build_dir) if file.endswith(".o") and file != 'KMain.o']
 )
 
 print("Link") # 100% patch ld bug       VVVVVVVVVVVVV VVVVVVVVVVV
-run_command(f"ld -m elf_i386 -T link.ld build/entry.o {obj_files} -o kernel.b")
+run_command(f"ld -m elf_i386 -T link.ld build/KMain.o {obj_files} -o kernel.b")

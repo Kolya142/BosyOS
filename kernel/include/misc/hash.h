@@ -1,0 +1,1 @@
+unsigned int calculate_shash(unsigned int n);

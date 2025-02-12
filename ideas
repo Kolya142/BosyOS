@@ -1,0 +1,4 @@
+add FAT32
+add iso loader
+add efi loader
+make system scripting language

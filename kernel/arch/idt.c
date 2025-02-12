@@ -1,30 +1,36 @@
-#include "idt.h"
+#include <arch/io.h>
+#include <arch/cpu.h>
 
-IDTEntry IDTEntries[256];
-IDTPointer IDTPtr;
+volatile U32 IDTNothingCounter = 0;
 
-void IDTDefaultHandler()
-{
-    vga = secondvgabuf;
-    U8 c = TTYCurrentColor;
-    TTYSetColor(Red, Black);
-    TTYPrintPos("Unhandled interrupt", 80-20, 4);
-    TTYCurrentColor = c;
+INT_DEF(IDTNothing) {
+    INT_START;
+    IDTNothingCounter++;
+    INT_RETURN;
 }
 
-void IDTSetEntry(U8 num, U32 base, U16 selector, U8 type_attr)
-{
-    IDTEntries[num].offset0 = base & 0xFFFF;
-    IDTEntries[num].offset1 = (base >> 16) & 0xFFFF;
-    IDTEntries[num].selector = selector;
-    IDTEntries[num].zero = 0;
-    IDTEntries[num].type_attr = type_attr;
+IDTR IDTRO;
+IDTDescriptor IDTTable[128];
+
+U0 IDTSet(U8 i, Ptr p, U8 f) {
+    IDTDescriptor *d = &IDTTable[i];
+    d->low    = (U32)p & 0xFFFF;
+    d->high   = (U32)p >> 16;
+
+    d->select = 0x08;
+    d->zero   = 0;
+
+    d->attr = f;
 }
-void IDTInit() {
-    IDTPtr.limit = sizeof(IDTEntry) * 256 - 1;
-    IDTPtr.base = (U32)&IDTEntries;
-    for (int i = 0; i < 256; i++) {
-        IDTSetEntry(i, (U32)IDTDefaultHandler, 0x08, 0x8E);
+
+U0 IDTInit() {
+    IDTRO.base = (U32)IDTTable;
+    IDTRO.lim  = (U16)(sizeof(IDTDescriptor) * 128 - 1);
+    for (U8 i = 0; i < 128; i++) {
+        IDTSet(i, IDTNothing, 0x8E);
     }
-    asm volatile("lidt %0" : : "m"(IDTPtr));
+    __asm__ volatile(
+        "lidt %0\n"
+        "sti" : : "m"(IDTRO)
+    );
 }

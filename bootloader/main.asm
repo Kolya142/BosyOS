@@ -1,3 +1,4 @@
+; Warning: is doen't work on real hardware or emulator, except QEMU
 org 0x7c00
 bits 16
 jmp text ; Data
@@ -23,7 +24,7 @@ mov byte [LOADED], 1
 mov ah, 2  ; read
 mov al, 64 ; 512*64 - 32768b - 32kb
 mov ch, 0  ; cylinder
-mov cl, 2  ; sector
+mov cl, 2  ; first sector
 mov dh, 0  ; head
 mov dl, byte [BOOTDRIVE]
 mov bx, 0x8000

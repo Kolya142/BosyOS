@@ -1,8 +1,8 @@
 .PHONY: boot kernel compile run all kernelrun
 boot:
 	cd bootloader; nasm main.asm
-	cd kernel/boot; nasm -f bin boot.asm -o boot
-	cat bootloader/main kernel/boot/boot > bootsegment
+	cd kbootloader; nasm -f bin boot.asm -o boot
+	cat bootloader/main kbootloader/boot > bootsegment
 kernel:
 	cd kernel; python3 build.py; truncate -s 31564 kernel.b
 compile:

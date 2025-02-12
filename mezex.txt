@@ -1,0 +1,7 @@
+"mezex" Name - https://github.com/Kolya142/jykornewo, args (95 4 "BosyOS's Text Format 873")
+Colors: ($!V $*V), V is hexdigit value with vga color
+Bytes:  $xXY, XY - byte in hex
+Cursor: $U $D $L $R $H - Up Down Left Right Home
+
+Soon in BosyOS:
+Link:   "$^FN:", FN - File Name

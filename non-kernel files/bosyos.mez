@@ -1,0 +1,18 @@
+                              The $!EBosyOS$!F Main page
+$!B
+    Links:
+        $!EBosyOS source$!B - $!9$^https://github.com/Kolya142/BosyOS~$!B
+
+    Mezex:
+        support - BosyOS TTY library & html(compiler)
+        usage:
+            $!E\$!$!FV$!A(V - hexdigit) $!E-$!B set foreground in vga color
+            $!E\$*$!FV$!A(V - hexdigit) $!E-$!B set background in vga color
+            $!E\\\$                $!E-$!B write \$ sign
+            $!E\\\\                $!E-$!B write \\ symbol
+            $!E\\n                $!E-$!B write newline symbol
+            $!E\$U                $!E-$!B move up for one symbol
+            $!E\$D                $!E-$!B move down for one symbol
+            $!E\$L                $!E-$!B move left for one symbol
+            $!E\$R                $!E-$!B move right for one symbol
+$!F

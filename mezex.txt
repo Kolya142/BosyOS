@@ -4,4 +4,4 @@ Bytes:  $xXY, XY - byte in hex
 Cursor: $U $D $L $R $H - Up Down Left Right Home
 
 Soon in BosyOS:
-Link:   "$^FN:", FN - File Name
+Link:   "$^FN~", FN - File Name

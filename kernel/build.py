@@ -23,6 +23,10 @@ for root, _, files in os.walk("."):
             source_file = os.path.join(root, file)
             output_file = os.path.join(build_dir, file + ".o")
             run_command(f"{cc} {source_file} -o {output_file}")
+        if file.endswith('.s'):
+            source_file = os.path.join(root, file)
+            output_file = os.path.join(build_dir, file + ".o")
+            run_command(f"fasm {source_file} {output_file}")
 run_command(f"{cc} kernel/KMain.c -o build/KMain.o")
 obj_files = " ".join(
     [os.path.join(build_dir, file) for file in os.listdir(build_dir) if file.endswith(".o") and file != 'KMain.o']

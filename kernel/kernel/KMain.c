@@ -10,7 +10,7 @@
 #include <misc/meml.h>
 #include <misc/wordgen.h>
 #include <misc/cp517.h>
-
+#include <misc/bf.h>
 
 void KernelMain() {
     IDTInit();
@@ -21,14 +21,20 @@ void KernelMain() {
     VgaCursorDisable();
     VgaCursorEnable();
     VgaCursorSet(0, 0);
+    // MemSet(cp517, 0xff, sizeof(cp517));
+    // VgaFontLoad(cp517);
     TTYClear();
     TTYUPrint(
         "\n"
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n"
-        "$!EWrite something in keyboard$!F. $x9F");
+        "$!EWrite bf code in keyboard$!F. $x9F");
     U32 inputbox = 320;
+    U32 inputboxp = 0;
+    Char inputboxd[500] = {0};
     Bool inputboxi = True;
-    VgaCursorSetR(320);
+    I32 stack[30] = {0};
+    U8 mem[5000] = {0};
+    I32 stacki = 0;
     for (;;) {
         TTYCursor = 0;
         {
@@ -46,16 +52,33 @@ void KernelMain() {
         TTYCursor = inputbox;
         if ((KBState.Key != Lshift) && (KBState.Key != Rshift)) {
             if (!(KBState.SC & 0x80) && inputboxi) {
-                if (KBState.Key == F5) {
-                    WordGen();
+                if (KBState.Key == '\r') {
+                    TTYCursor += 80;
+                    TTYCursor -= TTYCursor % 80;
+                    TTYPrint(inputboxd);
+                    BFInterpret(inputboxd, mem, Null, stack, &stacki, 0, Null);
+                    MemSet(inputboxd, 0, 500);
+                    inputbox += 80;
+                    inputbox -= inputbox % 80;
+                    inputboxp = 0;
                 }
-                else
-                    TTYUPrintC(KBState.Shift ? ToUpper(KBState.Key) : KBState.Key);
+                if (KBState.Key == '\b') {
+                    inputboxp++;
+                    inputboxd[inputboxp] = 0;
+                    TTYPrintC('\b');
+                }
+                else {
+                    Char k = KBState.Shift ? ToUpper(KBState.Key) : KBState.Key;
+                    inputboxd[inputboxp] = k;
+                    inputboxp++;
+                    TTYPrintC(k);
+                }
             }
+            VgaCursorSetR(TTYCursor);
             inputboxi = KBState.SC & 0x80;
         }
         inputbox = TTYCursor;
         MSleep(5);
     }
-    CpuHalt();
+    PowerOff();
 }

@@ -101,18 +101,23 @@ U0 TTYUPrintC(Char c) {
         }
         else if (c == 'U') {
             TTYPrintC((AsciiP)Up);
+            lds = 0;
         }
         else if (c == 'D') {
             TTYPrintC((AsciiP)Down);
+            lds = 0;
         }
         else if (c == 'L') {
             TTYPrintC((AsciiP)Left);
+            lds = 0;
         }
         else if (c == 'R') {
             TTYPrintC((AsciiP)Right);
+            lds = 0;
         }
-        else if (c == 'R') {
+        else if (c == 'H') {
             TTYPrintC((AsciiP)Home);
+            lds = 0;
         }
         else if (c == 'x') {
             lbp = 1;

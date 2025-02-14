@@ -127,6 +127,7 @@ lbd = 0
 lbp = 0
 link = ""
 for c in mez:
+    print(lbs, lds, ldv, lbd, lbp, c)
     if lbs:
         if c == '\\':
             vga[ttyc] = c
@@ -141,7 +142,17 @@ for c in mez:
             ttyc += 1
         lbs = False
     elif lds:
-        if c == '!':
+        if ldv == 3:
+            if c != '~':
+                link += c
+                continue
+            vga[ttyc] = f'<text onclick="window.location = \'{link}\';">{link}</text>'
+            vgac[ttyc] = col
+            ttyc += 1
+            ldv = 0
+            lds = False
+            link = ''
+        elif c == '!':
             ldv = 1
         elif c == '*':
             ldv = 2
@@ -182,13 +193,6 @@ for c in mez:
             elif ldv == 2:
                 d = int(c, 16)
                 col = col & 0x0f | (d<<4)
-            elif ldv == 3:
-                if c != '~':
-                    link += c
-                    continue
-                vga[ttyc] = f'<text onclick="window.location = \'{link}\';">{link}</text>'
-                vgac[ttyc] = col
-                ttyc += 1
             ldv = 0
             lds = False
     elif c == '\\':

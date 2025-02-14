@@ -1,7 +1,15 @@
                               The $!EBosyOS$!F Main page
 $!B
     Links:
-        $!EBosyOS source$!B - $!9$^https://github.com/Kolya142/BosyOS~$!B
+        $!EBosyOS source$!B   - $!9$^https://github.com/Kolya142/BosyOS~$!B
+        $!EBosyOS download$!B - $!9$^https://raw.githubusercontent.com/Kolya142/BosyOS/refs/heads/main/release/drive~$!B
+    LinksUsefulExternel:
+        $!ECP437$!B   - $!9$^https://en.wikipedia.org/wiki/Code_page_437~$!B
+        $!EVgaText$!B - $!9$^https://en.wikipedia.org/wiki/VGA_text_mode~$!B
+
+    CurrentState:
+        Keyboard input & Vga($!E80x25 16color$!B) output
+        $!E1$!B core $!E1$!B process execution
 
     Mezex:
         support - BosyOS TTY library & html(compiler)

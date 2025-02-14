@@ -1,7 +1,7 @@
 #include <misc/meml.h>
 U0 *MemCpy(U0 *destp, const U0 *src, U32 len) {
     U0 *dest = destp;
-    while (len) {
+    while (len) { // TODO: Use x86 rep movsb magic
         *(Byte*)dest = *(Byte*)src;
         dest++;
         src++;

@@ -10,7 +10,7 @@ INT_DEF(PITHandler) {
 }
 
 U0 PITInit() {
-    U16 div = PIT_FREQ / 1993;
+    U16 div = PIT_FREQ / 1000;
 
     POut(0x43, 0x36);
     POut(0x40, div & 0xff);

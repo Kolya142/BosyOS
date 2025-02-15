@@ -1,0 +1,4 @@
+0x5000 - user's application
+0x7c00 - first bootloader
+0x8000 - kernel bootloader
+0x8400 - kernel

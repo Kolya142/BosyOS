@@ -1,6 +1,7 @@
 #include <drivers/keyboard.h>
 #include <user/syscall.h>
 #include <misc/wordgen.h>
+#include <arch/getreg.h>
 #include <drivers/vga.h>
 #include <drivers/pit.h>
 #include <misc/string.h>
@@ -17,6 +18,11 @@
 U0 SysCallTest();
 
 void KernelMain() {
+    if (*(Byte*)(0x7C00 + 510) == 0x55) {
+        for (U32 i = 0x7C00; i < 0x8000; i++) { // Clear bootloader
+            *(Byte*)i = 0;
+        }
+    }
     IDTInit();
     PICMap();
     PITInit();
@@ -35,14 +41,14 @@ void KernelMain() {
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n"
         "$!ERun a test application$!F.\n");
     {
-        U8 appdata[] = "f\xb8\x01\0\xcdx\xc3";
+        U8 appdata[] = "f\xb8\x01\0\xbe\x0cP\0\0\xcdx\xc3$!AHello, world!$!F\n\0";
         BsfHeader head = {
-            .CodeS = 8,
-            .Magic = 'BOSY',
+            .CodeS = 32,
+            .Magic = 0x424f5359,
         };
         BsfApp app = {
-            .data = appdata,
             .header = head,
+            .data = appdata,
         };
         BsfExec(&app);
     }
@@ -114,5 +120,16 @@ void KernelMain() {
 }
 
 U0 SysCallTest() {
-    TTYUPrint("$!ESysCallTest()$!F\n");
+    U32 addr = RegGet(REG_ESI);
+    const String hex = "0123456789ABCDEF";
+    U32i *t = (U32i*)&addr;
+    TTYRawPrint(hex[t->u8[3] >> 4], Blue, White);
+    TTYRawPrint(hex[t->u8[3] & 15], Blue, White);
+    TTYRawPrint(hex[t->u8[2] >> 4], Blue, White);
+    TTYRawPrint(hex[t->u8[2] & 15], Blue, White);
+    TTYRawPrint(hex[t->u8[1] >> 4], Blue, White);
+    TTYRawPrint(hex[t->u8[1] & 15], Blue, White);
+    TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
+    TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
+    TTYUPrint((Char*)addr);
 }

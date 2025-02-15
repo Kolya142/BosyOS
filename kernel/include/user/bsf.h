@@ -3,10 +3,10 @@
 typedef struct BsfHeader {
     U32 Magic;
     U32 CodeS;
-} BsfHeader;
+} __attribute__((packed)) BsfHeader;
 typedef struct BsfApp {
     BsfHeader header;
     Ptr      data;
-} BsfApp;
+} __attribute__((packed)) BsfApp;
 
 Bool BsfExec(BsfApp *app);

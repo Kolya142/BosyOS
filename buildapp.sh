@@ -1,0 +1,1 @@
+nasm non-kernel\ files/exampleapp.asm && python3 non-kernel\ files/file_to_c.py non-kernel\ files/exampleapp

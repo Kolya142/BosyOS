@@ -9,11 +9,16 @@ msg1 db "Failed to load system kernel", 0
 msg2 db "Excepted magic 79c5h", 0
 msg3 db "Kernel already loaded", 0
 msg4 db "Kernel running...", 0
+msg5 db "System doen't support big endian", 0
+endi dw 0x1234
 text: ; Text
 
 mov byte [BOOTDRIVE], dl
 mov si, msg
 call print
+
+cmp byte [endi], 0x34
+jne error3
 
 mov al, byte [LOADED]
 
@@ -50,6 +55,11 @@ error1:
 
 error2:
     mov si, msg3
+    call print
+    jmp $
+
+error3:
+    mov si, msg5
     call print
     jmp $
 

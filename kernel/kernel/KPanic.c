@@ -1,3 +1,4 @@
+#include <kernel/KDogWatch.h>
 #include <kernel/KPanic.h>
 #include <misc/string.h>
 #include <drivers/pit.h>
@@ -9,6 +10,9 @@
 
 U0 KPanic(const String msg, Bool reboot)
 {
+    for (U8 i = 0; i < 255; ++i) {
+        KDogWatchPEnd(i);
+    }
     U32 start = PITTime;
     stat U16 tones[] = {400, 300, 100, 400, 200, 400, 250};
     stat U8 tind = 0;

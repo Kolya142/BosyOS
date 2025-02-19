@@ -1,16 +1,21 @@
 #include <drivers/pit.h>
+#include <kernel/KDogWatch.h>
 
 volatile U32 PITTime = 0;
 
 INT_DEF(PITHandler) {
+    static volatile U16 timer = 0;
     INT_START;
     PITTime++;
-    POut(0x20, 0x20);
+    timer++;
+    if (timer) {
+        KDogWatchTick();
+    }
     INT_RETURN;
 }
 
 U0 PITInit() {
-    U16 div = PIT_FREQ / 1993; // Doom release data
+    U16 div = PIT_FREQ / 1900;
 
     POut(0x43, 0x36);
     POut(0x40, div & 0xff);

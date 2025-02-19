@@ -1,4 +1,5 @@
 #include <drivers/keyboard.h>
+#include <kernel/KPanic.h>
 #include <user/syscall.h>
 #include <misc/wordgen.h>
 #include <arch/getreg.h>
@@ -7,22 +8,36 @@
 #include <misc/string.h>
 #include <misc/cp517.h>
 #include <misc/time.h>
+#include <arch/beep.h>
+#include <libs/bosz.h>
 #include <misc/meml.h>
+#include <user/user.h>
 #include <user/bsf.h>
 #include <arch/cpu.h>
+#include <arch/gdt.h>
 #include <arch/sys.h>
 #include <arch/pic.h>
 #include <libs/tty.h>
-#include <misc/bf.h>
 
 U0 SysCallTest();
+INT_DEF(TErr1);
+INT_DEF(TErr2);
+INT_DEF(TErr3);
+INT_DEF(TErr4);
+INT_DEF(TErr5);
+INT_DEF(TErr6);
+U0 programtest();
 
-void KernelMain() {
+__attribute__((naked)) U0 KernelMain() {
     if (*(Byte*)(0x7C00 + 510) == 0x55) {
         for (U32 i = 0x7C00; i < 0x8000; i++) { // Clear bootloader
             *(Byte*)i = 0;
         }
     }
+    TTYClear();
+    TTYUPrint("GDT Before\n");
+    GDTInit();
+    TTYUPrint("GDT After\n");
     IDTInit();
     PICMap();
     PITInit();
@@ -33,103 +48,182 @@ void KernelMain() {
     VgaCursorSet(0, 0);
     SysCallSet(SysCallTest, 1);
     SysCallInit();
-    // MemSet(cp517, 0xff, sizeof(cp517));
-    // VgaFontLoad(cp517);
-    TTYClear();
+    IDTSet(0x00, TErr1, 0x08, 0x8E);
+    IDTSet(0x08, TErr2, 0x08, 0x8E);
+    IDTSet(0x0E, TErr3, 0x08, 0x8E);
+    IDTSet(0x0D, TErr4, 0x08, 0x8E);
+    IDTSet(0x06, TErr5, 0x08, 0x8E);
+    IDTSet(0x0B, TErr6, 0x08, 0x8E);
     TTYUPrint(
         "\n"
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n"
         "$!ERun a test application$!F.\n");
-    {
-        U8 appdata[] = "f\xb8\x01\0\xbe\x0cP\0\0\xcdx\xc3$!AHello, world!$!F\n\0";
-        BsfHeader head = {
-            .CodeS = 32,
-            .Magic = 0x424f5359,
-        };
-        BsfApp app = {
-            .header = head,
-            .data = appdata,
-        };
-        BsfExec(&app);
-    }
+    // programtest();
     TTYUPrint(
-        "$!Aapplication ended$!F.\n");
-    // U32 inputbox = 320;
-    // U32 inputboxp = 0;
-    // Char inputboxd[500] = {0};
-    // Bool inputboxi = True;
-    // I32 stack[30] = {0};
-    // U8 mem[5000] = {0};
-    // I32 stacki = 0;
-    // for (;;) {
-    //     TTYCursor = 0;
-    //     {
-    //         const String hex = "0123456789ABCDEF";
-    //         U32i *t = (U32i*)&PITTime;
-    //         TTYRawPrint(hex[t->u8[3] >> 4], Blue, White);
-    //         TTYRawPrint(hex[t->u8[3] & 15], Blue, White);
-    //         TTYRawPrint(hex[t->u8[2] >> 4], Blue, White);
-    //         TTYRawPrint(hex[t->u8[2] & 15], Blue, White);
-    //         TTYRawPrint(hex[t->u8[1] >> 4], Blue, White);
-    //         TTYRawPrint(hex[t->u8[1] & 15], Blue, White);
-    //         TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
-    //         TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
-    //     }
-    //     TTYCursor = inputbox;
-    //     if ((KBState.Key != Lshift) && (KBState.Key != Rshift)) {
-    //         if (!(KBState.SC & 0x80) && inputboxi) {
-    //             if (KBState.Key == F5) {
-    //                 WordGen();
-    //             }
-    //             else if (KBState.Key == '\r') {
-    //                 TTYCursor += 80;
-    //                 TTYCursor -= TTYCursor % 80;
-    //                 TTYPrint(inputboxd);
-    //                 if (!StrCmp(inputboxd, "cls")) {
-    //                     MemSet(inputboxd, 0, 500);
-    //                     inputbox = 320;
-    //                     MemSet(vga+320*2,0, 4000-320*2);
-    //                     inputboxp = 0;
-    //                     continue;
-    //                 }
-    //                 BFInterpret(inputboxd, mem, Null, stack, &stacki, 0, Null);
-    //                 MemSet(inputboxd, 0, 500);
-    //                 inputbox += 80;
-    //                 inputbox -= inputbox % 80;
-    //                 inputboxp = 0;
-    //             }
-    //             if (KBState.Key == '\b') {
-    //                 inputboxp++;
-    //                 inputboxd[inputboxp] = 0;
-    //                 TTYPrintC('\b');
-    //             }
-    //             else {
-    //                 Char k = KBState.Shift ? ToUpper(KBState.Key) : KBState.Key;
-    //                 inputboxd[inputboxp] = k;
-    //                 inputboxp++;
-    //                 TTYPrintC(k);
-    //             }
-    //         }
-    //         VgaCursorSetR(TTYCursor);
-    //         inputboxi = KBState.SC & 0x80;
-    //     }
-    //     inputbox = TTYCursor;
-    //     MSleep(5);
-    // }
+        "$!Aapplication skiped$!F.\nTry press F-keys\n");
+    Bool lk = False;
+    for (;;) {
+        if (KBState.SC & 0x80 && !lk) {
+            if (KBState.Key == F1) {
+                KPanic("You call, Your problem", True);
+            }
+            if (KBState.Key == F4) {
+                TTYUPrintHex(calculate_shash(PITTime));
+            }
+            if (KBState.Key == F5) {
+                WordGen();
+            }
+            if (KBState.Key == F2) {
+                TTYCursor = 0;
+                TTYClear();
+                const String data = "                              The $!EBosyOS$!F Main page\x0a$!B\x0a    Links:\x0a        $!EBosyOS source$!B   - $!9$^https://github.com/Kolya142/BosyOS\x7e$!B\x0a        $!EBosyOS download$!B - $!9$^https://raw.githubusercontent.com/Kolya142/BosyOS/refs/heads/main/release/drive\x7e$!B\x0a    LinksUsefulExternel:\x0a        $!ECP437$!B   - $!9$^https://en.wikipedia.org/wiki/Code_page_437\x7e$!B\x0a        $!EVgaText$!B - $!9$^https://en.wikipedia.org/wiki/VGA_text_mode\x7e$!B\x0a\x0a    CurrentState:\x0a        Keyboard input & Vga($!E80x25 16color$!B) output\x0a        $!E1$!B core $!E1$!B process execution\x0a\x0a    Mezex:\x0a        support - BosyOS TTY library & html(compiler)\x0a        usage:\x0a            $!E\$!$!FV$!A(V - hexdigit) $!E-$!B set foreground in vga color\x0a            $!E\$*$!FV$!A(V - hexdigit) $!E-$!B set background in vga color\x0a            $!E\\\$                $!E-$!B write \$ sign\x0a            $!E\\\\                $!E-$!B write \\ symbol\x0a            $!E\\n                $!E-$!B write newline symbol\x0a            $!E";
+                TTYUPrint(data);
+                break;
+            }
+            if (KBState.Key == F3) {
+                
+                U16 tones[] = { 3, 105, 91, 0, 91, 94, 0, 94, 90, 0, 90, 95, 0, 96, 90, 0, 90, 94, 0, 94, 90, 0, 90, 96, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 198, 0, 0, 186, 184, 186, 0, 0, 186, 184, 0, 0, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 198, 186, 184, 186, 186, 184, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 184, 187, 198, 186, 184, 186, 186, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 0, 184, 0, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 570, 0, 0, 0, 557, 0, 0, 371, 0, 0, 0, 184, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 570, 0, 0, 0, 557, 0, 0, 0, 186, 184, 0, 0, 0, 0, 184, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 570, 0, 0, 0, 557, 0, 0, 0, 371, 0, 0, 0, 184, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 372, 198, 0, 0, 186, 184, 186, 0, 0, 186, 184, 0, 0, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 184, 187, 198, 186, 184, 0, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0, 184, 0, 186, 186, 0, 184, 0, 184, 0, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 570, 0, 0, 0, 557, 0, 0, 371, 0, 0, 0, 184, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 570, 0, 0, 0, 557, 0, 0, 0, 186, 184, 0, 0, 0, 0, 184, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 570, 0, 0, 0, 557, 0, 0, 0, 371, 0, 0, 0, 184, 187, 0, 0, 0, 0, 569, 0, 0, 0, 558, 0, 0, 0, 372, 198, 0, 0, 186, 184, 186, 0, 0, 186, 184, 0, 0, 184 };
+                TTYUPrint("$!0$*A<Song> $!F$*0");
+                U8 tone = 0;
+
+                U32 z = calculate_shash(PITTime);
+            
+                for (;;) {
+                    U16 t = tones[tone];
+
+                    TTYRawPrint("012345679ABCDEF"[(t >> 8) >> 8], Black, White);
+                    TTYRawPrint("012345679ABCDEF"[(t >> 8) & 15], Black, White);
+                    TTYRawPrint("012345679ABCDEF"[(t & 0xff) >> 8], Black, White);
+                    TTYRawPrint("012345679ABCDEF"[(t & 0xff) & 15], Black, White);
+                    TTYCursor -= 4;
+
+                    U32 c = TTYCursor;
+                    TTYCursor += 80 - TTYCursor % 80;
+                    WordGen();
+                    TTYCursor = c;
+                    
+                    if (t != 0) {
+                        Beep(t);
+                    }
+            
+                    MSleep(60);
+                    tone++;
+                    vga[(z >> 16) & 0xfff] = z & 0xffff;
+                    z = calculate_shash((c >> 1) ^ PITTime);
+                    if (tone >= (sizeof(tones) / sizeof(U16))) {
+                        break;
+                    }
+                }
+            }       
+        }
+    }
     PowerOff();
 }
 
 U0 SysCallTest() {
     U32 addr = RegGet(REG_ESI);
+    if (addr > UserSegment.length)
+        return;
+    addr += (U32)UserSegment.addr;
+    // TTYRawPrint("012345679ABCDEF"[(addr >> 8) >> 8], Black, White);
+    // TTYRawPrint("012345679ABCDEF"[(addr >> 8) & 15], Black, White);
+    // TTYRawPrint("012345679ABCDEF"[(addr & 0xff) >> 8], Black, White);
+    // TTYRawPrint("012345679ABCDEF"[(addr & 0xff) & 15], Black, White);
     const String hex = "0123456789ABCDEF";
-    U32i *t = (U32i*)&addr;
-    TTYRawPrint(hex[t->u8[3] >> 4], Blue, White);
-    TTYRawPrint(hex[t->u8[3] & 15], Blue, White);
-    TTYRawPrint(hex[t->u8[2] >> 4], Blue, White);
-    TTYRawPrint(hex[t->u8[2] & 15], Blue, White);
-    TTYRawPrint(hex[t->u8[1] >> 4], Blue, White);
-    TTYRawPrint(hex[t->u8[1] & 15], Blue, White);
-    TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
-    TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
     TTYUPrint((Char*)addr);
+}
+INT_DEF(TErr1) {
+    INT_START;
+    asm volatile (
+        "movw $0x10, %%ax \n" // 0x10 = Kernel Data Segment
+        "movw %%ax, %%ds  \n"
+        "movw %%ax, %%es  \n"
+        "movw %%ax, %%fs  \n"
+        "movw %%ax, %%gs  \n"
+        :::"ax"
+    );
+
+    KPanic("Program bug1", False);
+    INT_RETURN;
+}
+INT_DEF(TErr2) {
+    INT_START;
+    asm volatile (
+        "movw $0x10, %%ax \n" // 0x10 = Kernel Data Segment
+        "movw %%ax, %%ds  \n"
+        "movw %%ax, %%es  \n"
+        "movw %%ax, %%fs  \n"
+        "movw %%ax, %%gs  \n"
+        :::"ax"
+    );
+
+    KPanic("Program bug2", False);
+    INT_RETURN;
+}
+INT_DEF(TErr3) {
+    INT_START;
+    asm volatile (
+        "movw $0x10, %%ax \n" // 0x10 = Kernel Data Segment
+        "movw %%ax, %%ds  \n"
+        "movw %%ax, %%es  \n"
+        "movw %%ax, %%fs  \n"
+        "movw %%ax, %%gs  \n"
+        :::"ax"
+    );
+
+    KPanic("Program bug3", False);
+    INT_RETURN;
+}
+INT_DEF(TErr4) {
+    INT_START;
+    asm volatile (
+        "movw $0x10, %%ax \n" // 0x10 = Kernel Data Segment
+        "movw %%ax, %%ds  \n"
+        "movw %%ax, %%es  \n"
+        "movw %%ax, %%fs  \n"
+        "movw %%ax, %%gs  \n"
+        :::"ax"
+    );
+
+    KPanic("Program bug4", False);
+    INT_RETURN;
+}
+INT_DEF(TErr5) {
+    INT_START;
+    asm volatile (
+        "movw $0x10, %%ax \n" // 0x10 = Kernel Data Segment
+        "movw %%ax, %%ds  \n"
+        "movw %%ax, %%es  \n"
+        "movw %%ax, %%fs  \n"
+        "movw %%ax, %%gs  \n"
+        :::"ax"
+    );
+
+    KPanic("Program bug5", False);
+    INT_RETURN;
+}
+INT_DEF(TErr6) {
+    INT_START;
+    asm volatile (
+        "movw $0x10, %%ax \n" // 0x10 = Kernel Data Segment
+        "movw %%ax, %%ds  \n"
+        "movw %%ax, %%es  \n"
+        "movw %%ax, %%fs  \n"
+        "movw %%ax, %%gs  \n"
+        :::"ax"
+    );
+
+    KPanic("Program bug6", False);
+    INT_RETURN;
+}
+
+U0 programtest()
+{
+    U8 *app = "BOSY\"\x00\x00\x00f\xb8\x01\x00\xbe\r\x00\x00\x00\xcdx\xeb\xfe$!AHello, world!$!F\n\x00";
+    BsfApp bapp = BsfFromBytes(app);
+    UserSegment = (Segment) {
+        .addr = bapp.data,
+        .length = bapp.header.CodeS,
+    };
+    BsfExec(&bapp);
 }

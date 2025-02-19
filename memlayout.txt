@@ -1,4 +1,8 @@
-0x5000 - user's application
-0x7c00 - first bootloader
-0x8000 - kernel bootloader
-0x8400 - kernel
+0x1000  (virt) - user's application
+0x7c00  (real) - first bootloader
+0x8000  (real) - kernel bootloader
+0x100000(real) - user application
+0x200000(real) - user stack
+0x300000(real) - kernel
+0x500000(real) - kernel stack
+0x550000(real) - kernel heap

@@ -13,6 +13,6 @@ typedef struct IDTR {
     U32 base;
 } __attribute__((packed)) IDTR;
 extern volatile U32 IDTNothingCounter;
-U0 IDTSet(U8 i, Ptr p, U8 f);
+U0 IDTSet(U8 i, Ptr p, U8 select, U8 f);
 
 U0 IDTInit();

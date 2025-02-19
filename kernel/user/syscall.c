@@ -1,3 +1,4 @@
+#include <kernel/KPanic.h>
 #include <user/syscall.h>
 #include <arch/cpu.h>
 #include <arch/io.h>
@@ -15,5 +16,5 @@ INT_DEF(SysCallInt) {
     INT_RETURN;
 }
 U0 SysCallInit() {
-    IDTSet(0x78, SysCallInt, 0x8E);
+    IDTSet(0x78, SysCallInt, 0x18, 0xEE);
 }

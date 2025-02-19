@@ -195,3 +195,18 @@ U0 TTYUPrint(String s) {
         TTYUPrintC(s[i]);
     }
 }
+U0 TTYUPrintHex(U32 i) {
+    U32i t = (U32i)i;
+
+    TTYUPrintC("0123456789ABCDEF"[t.u8[3] >> 4]);
+    TTYUPrintC("0123456789ABCDEF"[t.u8[3] & 15]);
+    
+    TTYUPrintC("0123456789ABCDEF"[t.u8[2] >> 4]);
+    TTYUPrintC("0123456789ABCDEF"[t.u8[2] & 15]);
+    
+    TTYUPrintC("0123456789ABCDEF"[t.u8[1] >> 4]);
+    TTYUPrintC("0123456789ABCDEF"[t.u8[1] & 15]);
+
+    TTYUPrintC("0123456789ABCDEF"[t.u8[0] >> 4]);
+    TTYUPrintC("0123456789ABCDEF"[t.u8[0] & 15]);
+}

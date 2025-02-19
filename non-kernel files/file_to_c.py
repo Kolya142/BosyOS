@@ -15,6 +15,14 @@ for b in data:
         output.append("\\0")
     elif 0x20 <= b <= 0x79:
         output.append(chr(b))
+    elif b == 0x0A:
+        output.append("\\n")
+    elif b == 0x0D:
+        output.append("\\r")
+    elif b == ord('\t'):
+        output.append("\\t")
+    elif b == ord('\b'):
+        output.append("\\b")
     else:
         output.append(f"\\x{b:02x}")
 

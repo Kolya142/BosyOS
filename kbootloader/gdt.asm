@@ -1,3 +1,5 @@
+; gdt.asm
+
 tss_base equ tss_start - ($$-$+$$+$) ; EvilDataTypeHacking
 tss_size equ tss_end - tss_base - 1 - ($$-$+$$+$)
 tss_t1 equ (tss_base >> 16) & 0xff
@@ -7,8 +9,8 @@ gdt_start: ; What is the
    dq 0x0000000000000000
    dq 0x00CF9A000000FFFF
    dq 0x00CF92000000FFFF
-   dq 0x00AF9A0000000000
-   dq 0x00AF920000000000
+   dq 0x00AF9A000000FFFF
+   dq 0x00AF92000000FFFF
 
    dw tss_size
    dw tss_base

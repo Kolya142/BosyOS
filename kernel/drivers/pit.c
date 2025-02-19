@@ -10,12 +10,12 @@ INT_DEF(PITHandler) {
 }
 
 U0 PITInit() {
-    U16 div = PIT_FREQ / 1000;
+    U16 div = PIT_FREQ / 1993; // Doom release data
 
     POut(0x43, 0x36);
     POut(0x40, div & 0xff);
     POut(0x40, (div>>8) & 0xff);
     POut(0x21, PIn(0x21) & ~1);
-    IDTSet(32, PITHandler, 0x8E);
+    IDTSet(32, PITHandler, 0x08, 0x8E);
     asmv("int $32");
 }

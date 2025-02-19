@@ -9,4 +9,6 @@ typedef struct BsfApp {
     Ptr      data;
 } __attribute__((packed)) BsfApp;
 
+BsfApp BsfFromBytes(Byte *app);
+
 Bool BsfExec(BsfApp *app);

@@ -1,3 +1,5 @@
+; protected.asm
+
 cli
 [bits 16]
 enable_protected_mode:

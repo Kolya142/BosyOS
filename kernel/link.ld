@@ -2,7 +2,7 @@ OUTPUT_FORMAT(binary)
 ENTRY(KernelMain)
 SECTIONS
 {
-    . = 0x8400;
+    . = 0x300000;
     _kernel_start = .;
     .text : { *(.text) }
     . = ALIGN(4);

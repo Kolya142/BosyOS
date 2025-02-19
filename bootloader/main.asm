@@ -1,3 +1,5 @@
+; main.asm
+
 ; Warning: is doen't work on real hardware or emulator, except QEMU
 org 0x7c00
 bits 16
@@ -27,7 +29,7 @@ jnz error2
 mov byte [LOADED], 1
 
 mov ah, 2  ; read
-mov al, 64 ; 512*64 - 32768b - 32kb
+mov al, 2  ; 1kb
 mov ch, 0  ; cylinder
 mov cl, 2  ; first sector
 mov dh, 0  ; head
@@ -39,7 +41,7 @@ cmp word [0x8000], 79c5h
 jne error1
 mov si, msg4
 call print
-jmp 0x8002
+jmp 0x0000:0x8002
 
 jmp $
 

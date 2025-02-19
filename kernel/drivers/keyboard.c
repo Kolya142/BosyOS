@@ -38,7 +38,7 @@ INT_DEF(KBHandler) {
 }
 
 U0 KBInit() {
-    IDTSet(0x21, KBHandler, 0x8E);
+    IDTSet(0x21, KBHandler, 0x08, 0x8E);
 }
 U8 KBSCToASCIIP(U8 code)
 {

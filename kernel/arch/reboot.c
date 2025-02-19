@@ -1,3 +1,4 @@
+#include <kernel/KPanic.h>
 #include <arch/io.h>
 
 U0 PowerReboot() {
@@ -13,4 +14,5 @@ U0 PowerReboot() {
     POut(0x0CF9, 0x06);
     for (I32 i = 0; i < 100; i++) asm("pause");
     // error
+    KPanic("System can't reboot", False);
 }

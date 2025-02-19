@@ -1,7 +1,7 @@
 #include <misc/meml.h>
 #include <libs/types.h>
 #pragma once
-#define HEAP_START 0x3000F0
+#define HEAP_START 0x550000
 #define HEAP_SIZE 0x10000
 
 typedef struct HeapMemBlock {

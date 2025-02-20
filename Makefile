@@ -10,7 +10,7 @@ kernel:
 compile:
 	cat bootsegment initram.bsf kernel/kernel.b > drive
 run:
-	qemu-system-i386 -drive format=raw,file=drive -display gtk,zoom-to-fit=on -m 64M -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 -d int,cpu_reset,guest_errors -no-reboot -no-shutdown &> qemu.log # -cpu host --enable-kvm -d cpu_reset,guest_errors
+	qemu-system-i386 -drive format=raw,file=drive -display gtk,zoom-to-fit=on -m 64M -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 --enable-kvm
 all: boot kernel compile run
 kernelrun: kernel compile run
 load: img

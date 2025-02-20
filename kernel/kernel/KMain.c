@@ -21,6 +21,7 @@
 #include <libs/tty.h>
 
 U0 programtest();
+U0 mainloop();
 
 __attribute__((naked)) U0 KernelMain() {
     if (*(Byte*)(0x7C00 + 510) == 0x55) {
@@ -46,85 +47,100 @@ __attribute__((naked)) U0 KernelMain() {
         "\n"
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n");
     programtest();
-    Bool lk = False;
     KDogWatchPStart(0, "Main loop");
-    for (;;) {
-        if ((KBState.SC & 0x80) && !lk) {
-            lk = True;
-            if (KBState.Key == 'q') {
-                TTYUPrint(
-                    "$!AF1$!F - Kernel Panic\n"
-                    "$!AF2$!F - BosyOS Main Page\n"
-                    "$!AF3$!F - Music Player\n"
-                    "$!AF4$!F - Random Number\n"
-                    "$!AF4$!F - Random Word\n"
-                );
-            }
-            if (KBState.Key == F1) {
-                KPanic("You call, Your problem", True);
-            }
-            if (KBState.Key == F4) {
-                TTYUPrintHex(calculate_shash(PITTime));
-            }
-            if (KBState.Key == F5) {
-                WordGen();
-            }
-            if (KBState.Key == F2) {
-                TTYCursor = 0;
-                TTYClear();
-                const String data = "                              The $!EBosyOS$!F Main page\x0a$!B\x0a    Links:\x0a        $!EBosyOS source$!B   - $!9$^https://github.com/Kolya142/BosyOS\x7e$!B\x0a        $!EBosyOS download$!B - $!9$^https://raw.githubusercontent.com/Kolya142/BosyOS/refs/heads/main/release/drive\x7e$!B\x0a    LinksUsefulExternel:\x0a        $!ECP437$!B   - $!9$^https://en.wikipedia.org/wiki/Code_page_437\x7e$!B\x0a        $!EVgaText$!B - $!9$^https://en.wikipedia.org/wiki/VGA_text_mode\x7e$!B\x0a\x0a    CurrentState:\x0a        Keyboard input & Vga($!E80x25 16color$!B) output\x0a        $!E1$!B core $!E1$!B process execution\x0a\x0a    Mezex:\x0a        support - BosyOS TTY library & html(compiler)\x0a        usage:\x0a            $!E\$!$!FV$!A(V - hexdigit) $!E-$!B set foreground in vga color\x0a            $!E\$*$!FV$!A(V - hexdigit) $!E-$!B set background in vga color\x0a            $!E\\\$                $!E-$!B write \$ sign\x0a            $!E\\\\                $!E-$!B write \\ symbol\x0a            $!E\\n                $!E-$!B write newline symbol\x0a            $!E";
-                TTYUPrint(data);
-                TTYCursor = 0;
-            }
-            if (KBState.Key == F3) {
-                
-                KDogWatchPStart(0, "Music Player");
-
-                U16 tones[] = { 3, 105, 91, 0, 91, 94, 0, 94, 90, 0, 90, 95, 0, 96, 90, 0, 90, 94, 0, 94, 90, 0, 90, 96, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 198, 0, 0, 186, 184, 186, 0, 0, 186, 184, 0, 0, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 198, 186, 184, 186, 186, 184, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 0, 0, 184, 187, 0, 0, 198, 186, 184, 0, 0, 186, 186, 184, 184, 187, 198, 186, 184, 186, 186, 184, 184, 187, 198, 186, 184, 186, 0, 186, 0, 184, 184, 0, 187, 0, 198, 186, 0};
-                TTYUPrint("$!0$*A<Song> $!F$*0");
-                U8 tone = 0;
-
-                U32 z = calculate_shash(PITTime);
-
-            
-                for (;;) {
-                    KDogWatchPTick(0);
-                    U16 t = tones[tone];
-
-                    TTYRawPrint("012345679ABCDEF"[(t >> 8) >> 8], Black, White);
-                    TTYRawPrint("012345679ABCDEF"[(t >> 8) & 15], Black, White);
-                    TTYRawPrint("012345679ABCDEF"[(t & 0xff) >> 8], Black, White);
-                    TTYRawPrint("012345679ABCDEF"[(t & 0xff) & 15], Black, White);
-                    TTYCursor -= 4;
-
-                    U32 c = TTYCursor;
-                    TTYCursor += 80 - TTYCursor % 80;
-                    WordGen();
-                    TTYCursor = c;
-                    
-                    if (t != 0) {
-                        Beep(t);
-                    }
-            
-                    MSleep(60);
-                    tone++;
-                    vga[(z >> 16) & 0xfff] = z & 0xffff;
-                    z = calculate_shash((c >> 1) ^ PITTime);
-                    if (tone >= (sizeof(tones) / sizeof(U16))) {
-                        break;
-                    }
-                }
-            }  
-        }
-        else if (!(KBState.SC & 0x80) && lk) {
-            lk = False;
-        }
-        KDogWatchPTick(0);
-    }
+    mainloop();
     KDogWatchPEnd(0);
     PowerOff();
 }
 
+U0 termrun(const String cmd) {
+    if (!StrCmp(cmd, "help")) {
+        TTYUPrint(
+            "Commands:\n"
+            "help cls hlt\n"
+            "time echo\n"
+            "reboot poweroff\n"
+        );
+    }
+    else if (!StrCmp(cmd, "cls")) {
+        TTYClear();
+        TTYCursor = 0;
+    }
+    else if (!StrCmp(cmd, "hlt")) {
+        asmv("cli");
+        CpuHalt();
+    }
+    else if (!StrCmp(cmd, "time")) {
+        TTYUPrint("$!BPIT$!F:    "); TTYUPrintHex(PITTime); TTYUPrintC('\n');
+        RTCUpdate();
+        TTYUPrint("$!BYear$!F:   "); TTYUPrintHex(SystemTime.year); TTYUPrintC('\n');
+        TTYUPrint("$!BMonth$!F:  "); TTYUPrintHex(SystemTime.month); TTYUPrintC('\n');
+        TTYUPrint("$!BDay$!F:    "); TTYUPrintHex(SystemTime.day); TTYUPrintC('\n');
+        TTYUPrint("$!BHour$!F:   "); TTYUPrintHex(SystemTime.hour); TTYUPrintC('\n');
+        TTYUPrint("$!BMinute$!F: "); TTYUPrintHex(SystemTime.minute); TTYUPrintC('\n');
+        TTYUPrint("$!BSecond$!F: "); TTYUPrintHex(SystemTime.second); TTYUPrintC('\n');
+    }
+    else if (StrStartsWith(cmd, "echo ")) {
+        TTYUPrint(cmd+4);
+    }
+    else if (!StrCmp(cmd, "echo")) {
+        TTYUPrint(".");
+    }
+    else if (!StrCmp(cmd, "reboot")) {
+        PowerReboot();
+    }
+    else if (!StrCmp(cmd, "poweroff")) {
+        return;
+    }
+    else {
+        TTYUPrint("Unk ");
+        TTYUPrint(cmd);
+    }
+}
+
+U0 mainloop() {
+    Bool lk = False;
+    Char buffer[50] = {0};
+    U32 bufferi = 0;
+    TTYUPrint("$!A\\$ $!F");
+    for (;;) {
+        if (!(KBState.SC & 0x80) && !lk) {
+            lk = True;
+            if (!KBState.Key) continue;
+            if (KBState.Key < 0x80) {
+                if (KBState.Key == '\b') {
+                    if (bufferi) {
+                        buffer[bufferi--] = 0;
+                    }
+                    TTYUPrintC(KBState.Key);
+                }
+                else if (KBState.Key == '\r') {
+                    TTYUPrintC('\n');
+                    // TTYUPrint(buffer);
+                    if (bufferi) {
+                        termrun(buffer);
+                    }
+
+                    MemSet(buffer, 0, sizeof(buffer));
+                    bufferi = 0;
+                    TTYUPrint("\n$!A\\$ $!F");
+                }
+                else {
+                    Char key = KBState.Key;
+                    if (KBState.Shift) key = ToUpper(key);
+                    if (bufferi < sizeof(buffer) - 1) {
+                        buffer[bufferi++] = key;
+                        TTYUPrintC(key);
+                    }
+                }
+            }
+        }
+        else if ((KBState.SC & 0x80) && lk) {
+            lk = False;
+        }
+        KDogWatchPTick(0);
+    }
+}
 U0 programtest()
 {
     BsfApp bapp = BsfFromBytes((Ptr)0x8400);

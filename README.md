@@ -20,24 +20,6 @@ make kernelrun
 ```bash
 make compile
 ```
-# Kernel development
-## Warning
-### global variables
-in header: \
-`extern I16 variable;` \
-in source: \
-`I16 variable = 4;`
-## NameStyle
-### local variable
-`customer_data` snake_case
-### global variable driver
-`vga` snake_case
-### global variable
-`TTYCursor` SYSCase
-### global function
-`TTYPrint` SYSCase
-### global function driver
-`inb` snake_case
 # Components
 ## bootsegment
 Monolithic x86 bootloader \

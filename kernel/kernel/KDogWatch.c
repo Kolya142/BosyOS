@@ -54,7 +54,7 @@ U0 KDogWatchTick() {
     for (U8 i = 0; i < 255; ++i) {
         if (!Profiles[i].active)
             continue;
-        if (KDogWatchTicks > Profiles[i].update + 500) {
+        if (KDogWatchTicks >= Profiles[i].update + 500) {
             TTYUPrint("$!A[DogWatch]$!F:$!E");
             TTYUPrint("Slowly ");
             TTYUPrint(Profiles[i].name);

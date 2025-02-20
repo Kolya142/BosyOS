@@ -1,6 +1,8 @@
 import os
 import sys
 
+STACK = 10*4
+
 argv = sys.argv
 argc = len(argv)
 

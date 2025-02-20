@@ -10,6 +10,15 @@ INT_DEF(KBHandler) {
     U8 scode = PIn(0x60);
     KBState.SC = scode;
     KBState.Key = KBSCToASCIIP(scode);
+    if (scode == 0xE0) {
+        U8 ext = PIn(0x60);
+        if (ext == 0x5B || ext == 0x5C) {
+            KBState.Super = True;
+        }
+        else if (ext == 0xDB || ext == 0xDC) {
+            KBState.Super = False;
+        }
+    }
     if (scode & 128) {
         scode &= ~128;
         if (scode == 42) {

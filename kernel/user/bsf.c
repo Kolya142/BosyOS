@@ -1,4 +1,5 @@
 #include <misc/meml.h>
+#include <libs/tty.h>
 #include <user/bsf.h>
 #include <arch/gdt.h>
 BsfApp BsfFromBytes(Byte *app) {
@@ -12,9 +13,20 @@ Bool BsfExec(BsfApp *app) {
     if (head->Magic != 0x59534F42) { // BOSY
         return False;
     }
-    GDTSet((U32)app->data, head->CodeS);
 
-    SYSUserSetup(app->data, (Ptr)0);
+    MemCpy((Ptr)0x100000, app->data, head->CodeS);
+
+    // TTYUPrintHex(head->CodeS);
+    // TTYUPrint((Ptr)0x100000);
+
+    U0(*entry)() = (U0(*)())0x100000;
+    entry();
+
+    // GDTSet((U32)app->data, (U32)(app->data + head->CodeS + head->Stack - 1));
+    // GDTLoad();
+
+    // Ptr stack_addr = (Ptr)(app->data + head->CodeS + head->Stack - 4);
+    // SYSUserSetup(app->data, stack_addr);
 
     return True;
 }

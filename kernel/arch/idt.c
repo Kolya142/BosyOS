@@ -9,8 +9,10 @@ INT_DEF(IDTNothing) {
     INT_RETURN;
 }
 
+#define IDT_SIZE 255
+
 IDTR IDTRO;
-IDTDescriptor IDTTable[128];
+IDTDescriptor IDTTable[IDT_SIZE];
 
 U0 IDTSet(U8 i, Ptr p, U8 select, U8 f) {
     IDTDescriptor *d = &IDTTable[i];
@@ -25,8 +27,8 @@ U0 IDTSet(U8 i, Ptr p, U8 select, U8 f) {
 
 U0 IDTInit() {
     IDTRO.base = (U32)IDTTable;
-    IDTRO.lim  = (U16)(sizeof(IDTDescriptor) * 128 - 1);
-    for (U8 i = 0; i < 128; i++) {
+    IDTRO.lim  = (U16)(sizeof(IDTDescriptor) * IDT_SIZE - 1);
+    for (U8 i = 0; i < IDT_SIZE; i++) {
         IDTSet(i, IDTNothing, 0x08, 0x8E);
     }
     __asm__ volatile(

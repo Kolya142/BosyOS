@@ -11,21 +11,20 @@ U0 GDTInit() {
     GDTPtr.addr = (U32)&GDTEntries;
     MemSet(&TSS, 0, sizeof(TSS));
 
-    GDTEntrySet(0, 0, 0,                   0,    0   );      // Null Segment (0x00) ----
-    GDTEntrySet(1, 0, 0xFFFFFFFF,          0x9A, 0xCF);      // Kernel Code  (0x08) r-x-
-    GDTEntrySet(2, 0, 0xFFFFFFFF,          0x92, 0xCF);      // Kernel Data  (0x10) rw--
-    GDTEntrySet(3, 0, 0xFFFFFFFF,            0xFA, 0xCF);    // User Code    (0x18) r-x-
-    GDTEntrySet(4, 0, 0xFFFFFFFF,            0xF2, 0xCF);    // User Data    (0x20) rw--
-    GDTEntrySet(5, (U32)&TSS, sizeof(TSS), 0x89, 0x40);      // TSS          (0x28) --xa
+    GDTEntrySet(0, 0, 0,                   0,    0   );      // Null Segment (0x00) ---
+    GDTEntrySet(1, 0, 0xFFFFFFFF,          0x9A, 0xCF);      // Kernel Code  (0x08) r-x
+    GDTEntrySet(2, 0, 0xFFFFFFFF,          0x92, 0xCF);      // Kernel Data  (0x10) rw-
+    GDTEntrySet(3, 0, 0xFFFFFFFF,          0xFA, 0xCF);      // User Code    (0x18) r-x
+    GDTEntrySet(4, 0, 0xFFFFFFFF,          0xF2, 0xCF);      // User Data    (0x20) rw-
+    GDTEntrySet(5, (U32)&TSS, sizeof(TSS), 0x89, 0x40);      // TSS          (0x28) --x
     TSS.esp0 = 0x500000;
     TSS.ss0  = 0x10;
     GDTLoad();
-    TTYUPrint("TSS load\n");
-    asmv(
-        "movw $0x28, %ax\n"
-        "ltr %ax\n"
+    asmV(
+        "movw $0x28, %%ax\n"
+        "ltr %%ax\n"
+        ::: "eax"
     );
-    TTYUPrint("TSS loaded\n");
     TTYUPrintHex(GDTPtr.addr);
     TTYUPrintC('\n');
     TTYUPrintHex(GDTPtr.size);
@@ -71,16 +70,15 @@ U0 SYSUserSetup(Ptr user_entry, Ptr user_stack) { // Switch to RING3
         "movw %%ax, %%fs   \n"
         "movw %%ax, %%gs   \n"
 
-        "movl %1, %%eax    \n"
         "pushl $0x23       \n"
-        "pushl %%eax       \n"
+        "pushl %1          \n"
         
         "pushfl            \n"
 
         "pushl $0x1B       \n"
-
         "pushl %0          \n"
 
+        "int $3\n"
         "iret              \n"
 
         :

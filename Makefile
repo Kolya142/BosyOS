@@ -4,10 +4,11 @@ boot:
 	cd bootloader; nasm main.asm
 	cd kbootloader; nasm -f bin boot.asm -o boot
 	cat bootloader/main kbootloader/boot > bootsegment
+	python3 non-kernel\ files/bosybuild.py initram.asm N && truncate -s 4096 initram.bsf
 kernel:
-	cd kernel; python3 build.py; truncate -s 31564 kernel.b
+	cd kernel && python3 build.py && truncate -s 31564 kernel.b
 compile:
-	cat bootsegment kernel/kernel.b > drive
+	cat bootsegment initram.bsf kernel/kernel.b > drive
 run:
 	qemu-system-i386 -drive format=raw,file=drive -display gtk,zoom-to-fit=on -m 64M -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 -d int,cpu_reset,guest_errors -no-reboot -no-shutdown &> qemu.log # -cpu host --enable-kvm -d cpu_reset,guest_errors
 all: boot kernel compile run

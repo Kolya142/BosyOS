@@ -7,6 +7,7 @@ typedef struct KBStateS {
     U8 Key;
     Bool Shift;
     Bool Ctrl;
+    Bool Super;
 } __attribute__((packed)) KBStateS;
 
 extern volatile KBStateS KBState;

@@ -11,7 +11,7 @@ msg1 db "Failed to load system kernel", 0
 msg2 db "Excepted magic 79c5h", 0
 msg3 db "Kernel already loaded", 0
 msg4 db "Kernel running...", 0
-msg5 db "System doen't support big endian", 0
+msg5 db "Kernel doen't support big endian", 0
 endi dw 0x1234
 text: ; Text
 
@@ -29,7 +29,7 @@ jnz error2
 mov byte [LOADED], 1
 
 mov ah, 2  ; read
-mov al, 2  ; 1kb
+mov al, 10 ; 1K + 4K
 mov ch, 0  ; cylinder
 mov cl, 2  ; first sector
 mov dh, 0  ; head

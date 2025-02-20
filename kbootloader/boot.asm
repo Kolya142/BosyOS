@@ -10,9 +10,9 @@ mov al, 'T'
 int 0x10
 
 mov ah, 2  ; read
-mov al, 62 ; 62 sector
+mov al, 62 ; 64 sector
 mov ch, 0  ; cylinder
-mov cl, 4  ; first sector
+mov cl, 12 ; first sector
 mov dh, 0  ; head
 mov dl, byte [BOOTDRIVE]
 mov bx, 0x9000
@@ -51,12 +51,16 @@ kernel_start:
     mov esi, 0x90000
     mov edi, 0x300000
     rep movsb
+    mov ecx, 4000
+    mov esi, 0x90000
+    mov edi, 0xb8000
+    rep movsb
     mov byte [0xb8000+8], 'S'
     mov byte [0xb8002+8], 'U'
     mov byte [0xb8004+8], 'S'
-    mov byte [0xb8001+8], 4
-    mov byte [0xb8003+8], 4
-    mov byte [0xb8005+8], 4
+    mov byte [0xb8001+8], 3
+    mov byte [0xb8003+8], 5
+    mov byte [0xb8005+8], 2
     mov ax, 0x10
     mov ds, ax
     mov es, ax

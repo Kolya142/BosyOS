@@ -14,12 +14,15 @@ U8 RTCRead(U8 reg) {
     POut(0x70, reg);
     return PIn(0x71);
 }
+U8 BCDToBin(U8 bcd) {
+    return (bcd >> 4) * 10 + (bcd & 15);
+}
 
 U0 RTCUpdate() {
-    SystemTime.year = RTCRead(9) + 2000;
-    SystemTime.month = RTCRead(8);
-    SystemTime.day = RTCRead(7);
-    SystemTime.hour = RTCRead(4);
-    SystemTime.minute = RTCRead(2);
-    SystemTime.second = RTCRead(0);
+    SystemTime.year =   BCDToBin(RTCRead(9)) + 2000;
+    SystemTime.month =  BCDToBin(RTCRead(8));
+    SystemTime.day =    BCDToBin(RTCRead(7));
+    SystemTime.hour =   BCDToBin(RTCRead(4));
+    SystemTime.minute = BCDToBin(RTCRead(2));
+    SystemTime.second = BCDToBin(RTCRead(0));
 }

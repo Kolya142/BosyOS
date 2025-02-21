@@ -31,18 +31,9 @@ U32 StrLen(const Char *str) {
 
 U32 StrCmp(const Char *a, const Char *b)
 {
-    U32 p1 = 0, p2 = 0;
-    if ((!*a && *b) || (*a && !*b)) {
-        return -1;
-    }
-    while (a[p1] && b[p2]) {
-        if (a[p1] != b[p2]) {
-            return a[p1]-b[p2];
-        }
-        p1++;
-        p2++;
-    }
-    return p1-p2;
+    while (*b && (*a == *b)) {++a; ++b;}
+
+    return (U32)(*a-*b);
 }
 Char StrStartsWith(const Char *a, const Char *b) {
     for (U32 i = 0; b[i]; i++) {

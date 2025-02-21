@@ -1,4 +1,7 @@
+#include <misc/meml.h>
 #include <libs/tty.h>
+#include <libs/mem.h>
+#include <misc/fdl.h>
 U32 TTYCursor = 0;
 U0 TTYClear() {
     for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
@@ -209,4 +212,27 @@ U0 TTYUPrintHex(U32 i) {
 
     TTYUPrintC("0123456789ABCDEF"[t.u8[0] >> 4]);
     TTYUPrintC("0123456789ABCDEF"[t.u8[0] & 15]);
+}
+U0 TTYUPrintDec(U32 a) {
+    U8 n = a < 0;
+    if (n) a = -a;
+    
+    if (!a) {
+        TTYUPrintC('0');
+        return;
+    }
+    U32 S = FDL(a);
+    String s = MAlloc(S + 1);
+    MemSet(s, 0, S + 1);
+    U32 p = 0;
+    if (n) {
+        TTYUPrintC('-');
+    }
+    while (a) {
+        s[S-1-p] = '0' + (a % 10);
+        a /= 10;
+        p++;
+    }
+    TTYUPrint(s);
+    MFree(s);
 }

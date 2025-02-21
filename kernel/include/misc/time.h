@@ -16,4 +16,5 @@ typedef struct SystemTimeS {
 extern SystemTimeS SystemTime;
 
 U8 RTCRead(U8 reg);
+U8 BCDToBin(U8 bcd);
 U0 RTCUpdate();

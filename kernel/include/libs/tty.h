@@ -10,3 +10,4 @@ U0 TTYUPrintC(Char c);
 U0 TTYPrint(String s);
 U0 TTYUPrint(String s);
 U0 TTYUPrintHex(U32 i);
+U0 TTYUPrintDec(U32 a);

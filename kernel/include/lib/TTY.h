@@ -1,7 +1,7 @@
 #pragma once
-#include <libs/types.h>
+#include <lib/Types.h>
 #include <drivers/vga.h>
-#include <libs/asciip.h>
+#include <lib/ASCIIP.h>
 extern U32 TTYCursor;
 U0 TTYClear();
 Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg);

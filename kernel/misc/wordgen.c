@@ -1,4 +1,5 @@
 #include <misc/wordgen.h>
+#include <lib/Time.h>
 
 U0 WordGen()
 {
@@ -8,14 +9,16 @@ U0 WordGen()
         v <<= 2;
         v >>= 4;
         v ^= PITTime;
-        MSleep(1);
+        SleepM(1);
     }
+    RTCUpdate();
+    v ^= SystemTime.day ^ SystemTime.hour ^ SystemTime.second ^ SystemTime.minute;
     v = calculate_shash(v);
-    const char *vowels = "AEIOUY";
-    const char *consonts = "QWRTPSDFGHJKLZXCVBNM";
+    const String vowels = "AEIOUY";
+    const String consonts = "QWRTPSDFGHJKLZXCVBNM";
     U8 args = v;
     v = calculate_shash(((v << 2) >> 3) ^ 0xB46D84E8);
-    //   >>= - haskell icon
+    // args HASKELL 4;
     args >>= 4;
     args ^= v;
     Bool VowelStart = args & 1;
@@ -24,7 +27,7 @@ U0 WordGen()
     for (int i = 0; i < 6+(v&6); i++) {
         switch (state) {
             case 0: {
-                TTYRawPrint(vowels[v%7], Green, Black);
+                TTYRawPrint(vowels[v%6], Green, Black);
                 state = 1;
             } break;
             case 1: {

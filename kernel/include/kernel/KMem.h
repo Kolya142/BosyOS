@@ -1,5 +1,5 @@
-#include <misc/meml.h>
-#include <libs/types.h>
+#include <lib/MemLib.h>
+#include <lib/Types.h>
 #pragma once
 #define HEAP_START 0x550000
 #define HEAP_SIZE 0x10000

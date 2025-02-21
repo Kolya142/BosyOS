@@ -1,5 +1,6 @@
 #include <arch/io.h>
 #include <arch/cpu.h>
+#include <arch/idt.h>
 
 volatile U32 IDTNothingCounter = 0;
 

@@ -1,4 +1,4 @@
-#include <misc/string.h>
+#include <lib/String.h>
 
 Char ToUpper(Char a)
 {

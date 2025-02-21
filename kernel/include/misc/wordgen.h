@@ -1,7 +1,7 @@
 #include <drivers/pit.h>
-#include <libs/types.h>
-#include <misc/hash.h>
-#include <misc/time.h>
-#include <libs/tty.h>
+#include <lib/Types.h>
+#include <lib/Hash.h>
+#include <lib/Time.h>
+#include <lib/TTY.h>
 
 U0 WordGen();

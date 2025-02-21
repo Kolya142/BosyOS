@@ -1,5 +1,5 @@
 #pragma once
-#include <arch/cpu.h>
+#include <arch/idt.h>
 #include <arch/io.h>
 #define PIT_FREQ 1193182
 

@@ -1,8 +1,8 @@
 #include <kernel/KDogWatch.h>
 #include <kernel/KPanic.h>
-#include <user/syscall.h>
-#include <misc/meml.h>
-#include <arch/cpu.h>
+#include <misc/syscall.h>
+#include <lib/MemLib.h>
+#include <arch/idt.h>
 #include <arch/io.h>
 
 Ptr SysCallT[256] = {0};

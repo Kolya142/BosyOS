@@ -1,6 +1,6 @@
-#include <misc/time.h>
+#include <lib/Time.h>
 
-U32 MSleep(U32 millis) {
+U32 SleepM(U32 millis) {
     U32 s = PITTime;
     U32 e = PITTime + millis;
 

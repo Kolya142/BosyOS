@@ -1,5 +1,5 @@
-#include <libs/bosz.h>
-#include <libs/mem.h>
+#include <lib/BosZ.h>
+#include <lib/MemLib.h>
 
 Data DeCompress(const Byte *input, U32 len) {
     U32 i = 0;

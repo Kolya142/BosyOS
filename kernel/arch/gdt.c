@@ -1,5 +1,5 @@
-#include <misc/meml.h>
-#include <libs/tty.h>
+#include <lib/MemLib.h>
+#include <lib/TTY.h>
 #include <arch/gdt.h>
 
 TTSt TSS;

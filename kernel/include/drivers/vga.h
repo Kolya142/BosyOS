@@ -1,5 +1,5 @@
 #pragma once
-#include <libs/types.h>
+#include <lib/Types.h>
 #include <arch/io.h>
 #define VGAADDR 0xB8000
 #define VGAWIDTH 80

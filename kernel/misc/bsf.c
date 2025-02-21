@@ -1,6 +1,6 @@
-#include <misc/meml.h>
-#include <libs/tty.h>
-#include <user/bsf.h>
+#include <lib/MemLib.h>
+#include <lib/TTY.h>
+#include <misc/bsf.h>
 #include <arch/gdt.h>
 BsfApp BsfFromBytes(Byte *app) {
     BsfApp bapp;

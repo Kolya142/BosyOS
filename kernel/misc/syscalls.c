@@ -1,11 +1,11 @@
 #include <kernel/KDogWatch.h>
 #include <drivers/keyboard.h>
 #include <kernel/KPanic.h>
-#include <user/syscall.h>
+#include <misc/syscall.h>
 #include <arch/getreg.h>
-#include <misc/meml.h>
+#include <lib/MemLib.h>
 #include <arch/beep.h>
-#include <libs/tty.h>
+#include <lib/TTY.h>
 #include <arch/cpu.h>
 #include <arch/io.h>
 
@@ -23,7 +23,7 @@ U0 SCBeep() {
 }
 U0 SCSleep() {
     U16 data = RegGet(REG_ESI);
-    MSleep(data);
+    SleepM(data);
 }
 U0 SCKey() {
     asmV("movb %0, %%al" :: "r"(KBState.Key));

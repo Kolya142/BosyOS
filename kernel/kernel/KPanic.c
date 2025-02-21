@@ -1,10 +1,10 @@
 #include <kernel/KDogWatch.h>
 #include <kernel/KPanic.h>
-#include <misc/string.h>
+#include <lib/String.h>
 #include <drivers/pit.h>
 #include <arch/beep.h>
-#include <libs/tty.h>
-#include <libs/mem.h>
+#include <lib/TTY.h>
+#include <lib/MemLib.h>
 #include <arch/cpu.h>
 #include <arch/sys.h>
 

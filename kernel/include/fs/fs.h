@@ -1,5 +1,5 @@
 #pragma once
-#include <libs/types.h>
+#include <lib/Types.h>
 
 typedef struct BFSHeader {
     Char drive;

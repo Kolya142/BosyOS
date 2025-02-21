@@ -1,10 +1,11 @@
 #include <kernel/KDogWatch.h>
 #include <kernel/KPanic.h>
-#include <misc/string.h>
-#include <misc/meml.h>
+#include <lib/String.h>
+#include <lib/MemLib.h>
 #include <arch/cpu.h>
-#include <libs/tty.h>
+#include <lib/TTY.h>
 #include <arch/io.h>
+#include <arch/idt.h>
 
 typedef struct {
     Char name[32];

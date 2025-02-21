@@ -2,7 +2,7 @@
 #include <drivers/pit.h>
 
 // Sleep for x milliseconds
-U32 MSleep(U32 millis);
+U32 SleepM(U32 millis);
 
 typedef struct SystemTimeS {
     U16 year;

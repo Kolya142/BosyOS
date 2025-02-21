@@ -1,6 +1,6 @@
 #include <drivers/vga.h>
-#include <libs/asciip.h>
-#include <misc/meml.h>
+#include <lib/ASCIIP.h>
+#include <lib/MemLib.h>
 U16 *vga = (U16*)VGAADDR;
 
 Bool VgaPSet(U16 x, U16 y, U8 ch, U8 c)
@@ -15,8 +15,8 @@ U8 VgaColorGet(VgaColor fg, VgaColor bg)
 }
 VgaColor VgaColorFromAsciiP(Char c)
 {
-    if (c < (AsciiP)CBlack) return 0;
-    return c - (AsciiP)CBlack;
+    if (c < (AsciiP)ASCIIPCBlack) return 0;
+    return c - (AsciiP)ASCIIPCBlack;
 }
 U0 VgaCursorEnable()
 {

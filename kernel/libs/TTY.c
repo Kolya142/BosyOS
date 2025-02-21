@@ -1,7 +1,6 @@
-#include <misc/meml.h>
-#include <libs/tty.h>
-#include <libs/mem.h>
-#include <misc/fdl.h>
+#include <lib/MemLib.h>
+#include <lib/TTY.h>
+#include <lib/FDL.h>
 U32 TTYCursor = 0;
 U0 TTYClear() {
     for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
@@ -22,16 +21,16 @@ Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
         TTYCursor--;
         vga[TTYCursor] = 0x0000;
     }
-    else if (c == (AsciiP)Left) {
+    else if (c == (AsciiP)ASCIIPLeft) {
         TTYCursor--;
     }
-    else if (c == (AsciiP)Right) {
+    else if (c == (AsciiP)ASCIIPRight) {
         TTYCursor++;
     }
-    else if (c == (AsciiP)Up) {
+    else if (c == (AsciiP)ASCIIPUp) {
         TTYCursor -= VGAWIDTH;
     }
-    else if (c == (AsciiP)Down) {
+    else if (c == (AsciiP)ASCIIPDown) {
         TTYCursor += VGAWIDTH;
     }
     else {
@@ -71,14 +70,14 @@ U0 TTYPrintC(Char c)
     else if (!(c & 0x80)) {
         TTYRawPrint(c, lfg, lbg);
     }
-    else if (c == (AsciiP)Up) TTYCursor -= 80;
-    else if (c == (AsciiP)Down) TTYCursor += 80;
-    else if (c == (AsciiP)Left) TTYCursor --;
-    else if (c == (AsciiP)Right) TTYCursor ++;
-    else if (c == (AsciiP)Home) TTYCursor = 0;
-    else if (c == (AsciiP)NextRaw) lnrw = True;
-    else if (c == (AsciiP)F1) lnfg = True;
-    else if (c == (AsciiP)F2) lnbg = True;
+    else if (c == (AsciiP)ASCIIPUp) TTYCursor -= 80;
+    else if (c == (AsciiP)ASCIIPDown) TTYCursor += 80;
+    else if (c == (AsciiP)ASCIIPLeft) TTYCursor --;
+    else if (c == (AsciiP)ASCIIPRight) TTYCursor ++;
+    else if (c == (AsciiP)ASCIIPHome) TTYCursor = 0;
+    else if (c == (AsciiP)ASCIIPNextRaw) lnrw = True;
+    else if (c == (AsciiP)ASCIIPF1) lnfg = True;
+    else if (c == (AsciiP)ASCIIPF2) lnbg = True;
 }
 U0 TTYUPrintC(Char c) {
     stat Bool lbs = False;
@@ -103,23 +102,23 @@ U0 TTYUPrintC(Char c) {
             ldv = 2;
         }
         else if (c == 'U') {
-            TTYPrintC((AsciiP)Up);
+            TTYPrintC((AsciiP)ASCIIPUp);
             lds = 0;
         }
         else if (c == 'D') {
-            TTYPrintC((AsciiP)Down);
+            TTYPrintC((AsciiP)ASCIIPDown);
             lds = 0;
         }
         else if (c == 'L') {
-            TTYPrintC((AsciiP)Left);
+            TTYPrintC((AsciiP)ASCIIPLeft);
             lds = 0;
         }
         else if (c == 'R') {
-            TTYPrintC((AsciiP)Right);
+            TTYPrintC((AsciiP)ASCIIPRight);
             lds = 0;
         }
         else if (c == 'H') {
-            TTYPrintC((AsciiP)Home);
+            TTYPrintC((AsciiP)ASCIIPHome);
             lds = 0;
         }
         else if (c == 'x') {
@@ -140,7 +139,7 @@ U0 TTYUPrintC(Char c) {
             lbd |= d;
             lbp ++;
             if (lbp == 3) {
-                TTYPrintC((AsciiP)NextRaw);
+                TTYPrintC((AsciiP)ASCIIPNextRaw);
                 TTYPrintC(lbd);
                 lbd = 0;
                 lds = False;
@@ -161,12 +160,12 @@ U0 TTYUPrintC(Char c) {
             if (d - 255) {
                 switch (ldv) {
                     case 1:
-                        TTYPrintC((AsciiP)F1);
-                        TTYPrintC(d+(AsciiP)CBlack);
+                        TTYPrintC((AsciiP)ASCIIPF1);
+                        TTYPrintC(d+(AsciiP)ASCIIPCBlack);
                     break;
                     case 2:
-                        TTYPrintC((AsciiP)F2);
-                        TTYPrintC(d+(AsciiP)CBlack);
+                        TTYPrintC((AsciiP)ASCIIPF2);
+                        TTYPrintC(d+(AsciiP)ASCIIPCBlack);
                     break;
                 }
             }
@@ -175,7 +174,7 @@ U0 TTYUPrintC(Char c) {
         }
     }
     else if (c & 0x80) {
-        TTYPrintC((AsciiP)NextRaw);
+        TTYPrintC((AsciiP)ASCIIPNextRaw);
         TTYPrintC(c);
     }
     else if (c == '\\') {lbs = True;}

@@ -1,4 +1,5 @@
 #pragma once
+#include <arch/idt.h>
 #include <arch/cpu.h>
 #include <arch/io.h>
 

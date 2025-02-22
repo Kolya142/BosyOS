@@ -25,5 +25,5 @@ INT_DEF(SysCallInt) {
 U0 SysCallInit() {
     MemSet(SysCallT, 0, sizeof(SysCallT));
     IDTSet(0x78, SysCallInt, 0x08, 0x8E); // Ring0
-    IDTSet(0x80, SysCallInt, 0x1B, 0xEF); // Ring3
+    IDTSet(0x80, SysCallInt, 0x08, 0xEE); // Ring3
 }

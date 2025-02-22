@@ -33,7 +33,7 @@ U0 MemSet(U0 *dest, Byte val, U32 len) {
     __asm__ volatile (
         "cld\n"
         "rep stosb\n"
-        :: "a"(val), "D"(dest), "c"(len)
+        :: "c"(len), "a"(val), "D"(dest)
         : "memory"
     );
 }

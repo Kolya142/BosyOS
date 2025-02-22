@@ -74,11 +74,13 @@ U0 SYSUserSetup(Ptr user_entry, Ptr user_stack) { // Switch to RING3
         "pushl %1          \n"
         
         "pushfl            \n"
+        "popl %%eax        \n"
+        "orl $0x200, %%eax \n"
+        "pushl %%eax       \n"
 
         "pushl $0x1B       \n"
         "pushl %0          \n"
 
-        "int $3\n"
         "iret              \n"
 
         :

@@ -1,23 +1,15 @@
 #include <misc/wordgen.h>
+#include <lib/Random.h>
 #include <lib/Time.h>
 
 U0 WordGen()
 {
-    U32 v = PITTime;
-    for (U32 i = 0; i < 6; i++) {
-        v ^= PITTime;
-        v <<= 2;
-        v >>= 4;
-        v ^= PITTime;
-        SleepM(1);
-    }
     RTCUpdate();
-    v ^= SystemTime.day ^ SystemTime.hour ^ SystemTime.second ^ SystemTime.minute;
-    v = calculate_shash(v);
+    U32 v = RandomU();
     const String vowels = "AEIOUY";
     const String consonts = "QWRTPSDFGHJKLZXCVBNM";
     U8 args = v;
-    v = calculate_shash(((v << 2) >> 3) ^ 0xB46D84E8);
+    v = RandomU();
     // args HASKELL 4;
     args >>= 4;
     args ^= v;
@@ -39,7 +31,7 @@ U0 WordGen()
                 state = 0;
             } break;
         }
-        v = calculate_shash(v ^ PITTime);
+        v = RandomU();
     }
     if (VowelEnd) {
         TTYRawPrint(vowels[v&7], Green, Black);

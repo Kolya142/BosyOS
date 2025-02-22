@@ -1,3 +1,8 @@
+SYSTEM=linux
+
+ifeq ($(shell uname),Darwin)
+  SYSTEM=macos
+endif
 
 .PHONY: boot kernel compile run all kernelrun loadfromrelease releaseerun iso
 boot:
@@ -9,8 +14,14 @@ kernel:
 	cd kernel && python3 build.py && truncate -s 31564 kernel.b
 compile:
 	cat bootsegment initram.bsf kernel/kernel.b > drive
+
 run:
-	qemu-system-i386 -drive format=raw,file=drive -display gtk,zoom-to-fit=on -m 64M -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 --enable-kvm
+	@if [ $(SYSTEM) = "macos" ]; then \
+		qemu-system-i386 -drive format=raw,file=drive -m 64M -audiodev coreaudio,id=snd0 -machine pcspk-audiodev=snd0; \
+	else \
+		qemu-system-i386 -drive format=raw,file=drive -display gtk,zoom-to-fit=on -m 64M -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 --enable-kvm; \
+	fi
+
 all: boot kernel compile run
 kernelrun: kernel compile run
 load: img

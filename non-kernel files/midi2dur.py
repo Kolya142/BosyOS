@@ -39,4 +39,4 @@ def midi_to_notes_and_durations(midi_file):
     print("\nU16 tones[] = {", ", ".join(map(str, notes)), "};")
     print("\nU16 durations[] = {", ", ".join(map(str, durations)), "};")
 
-midi_to_notes_and_durations("/home/sony/Downloads/Portal - Still Alive.mid")
+midi_to_notes_and_durations("/home/sony/Downloads/touhou-bad-apple-20220916160557-nonstop2k.com.mid")

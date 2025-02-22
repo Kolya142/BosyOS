@@ -38,3 +38,7 @@ typedef union {
 #define stat static volatile
 #define asmv asm volatile
 #define asmV __asm__ volatile
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define swapx(a, b) {a = a ^ b; b = a ^ b; a = a ^ b;}

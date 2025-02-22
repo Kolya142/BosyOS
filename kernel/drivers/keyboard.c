@@ -30,6 +30,7 @@ INT_DEF(KBHandler) {
         else if (scode == 29) {
             KBState.Ctrl = False;
         }
+        KBState.keys[KBState.Key] = False;
     }
     else {
         if (scode == 42) {
@@ -41,6 +42,7 @@ INT_DEF(KBHandler) {
         else if (scode == 29) {
             KBState.Ctrl = True;
         }
+        KBState.keys[KBState.Key] = True;
     }
     end:
     INT_RETURN;

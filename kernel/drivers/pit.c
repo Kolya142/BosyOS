@@ -1,5 +1,6 @@
 #include <drivers/pit.h>
 #include <kernel/KDogWatch.h>
+#include <lib/Time.h>
 
 volatile U32 PITTime = 0;
 
@@ -10,6 +11,7 @@ INT_DEF(PITHandler) {
     timer++;
     if (timer) {
         KDogWatchTick();
+        RTCUpdate();
     }
     INT_RETURN;
 }

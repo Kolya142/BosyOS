@@ -15,18 +15,17 @@ Bool BsfExec(BsfApp *app) {
     }
 
     MemCpy((Ptr)0x100000, app->data, head->CodeS);
-
     // TTYUPrintHex(head->CodeS);
     // TTYUPrint((Ptr)0x100000);
 
     U0(*entry)() = (U0(*)())0x100000;
     entry();
 
-    // GDTSet((U32)app->data, (U32)(app->data + head->CodeS + head->Stack - 1));
+    // GDTSet(0x100000, 0xFFFFFFFF);
     // GDTLoad();
 
-    // Ptr stack_addr = (Ptr)(app->data + head->CodeS + head->Stack - 4);
-    // SYSUserSetup(app->data, stack_addr);
+    // Ptr stack_addr = (Ptr)0x200000 - 4;
+    // SYSUserSetup((Ptr)0x100000, stack_addr);
 
     return True;
 }

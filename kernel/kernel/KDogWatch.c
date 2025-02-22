@@ -28,14 +28,16 @@ volatile KDogWatchProfile Profiles[255] = {0};
     ); \
     KDogWatchLog(text, True); \
     }
-ERR(DWErr0D, "Cpu Error: 0x0D");
-ERR(DWErr0E, "Cpu Error: 0x0E");
-ERR(DWErr05, "Cpu Error: 0x05");
+ERR(DWErr0D, "Cpu Error 0x0D");
+ERR(DWErr0E, "Cpu Error 0x0E");
+ERR(DWErr05, "Cpu Error 0x05");
+ERR(DWErr08, "Cpu Error 0x08");
 
 U0 KDogWatchInit() {
     IDTSet(0x0D, DWErr0D, 0x08, 0x8E);
     IDTSet(0x0E, DWErr0E, 0x08, 0x8E);
     IDTSet(0x05, DWErr05, 0x08, 0x8E);
+    IDTSet(0x08, DWErr08, 0x08, 0x8E);
     KDogWatchLog("Init", False);
 }
 

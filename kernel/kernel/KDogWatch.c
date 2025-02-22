@@ -88,3 +88,6 @@ U0 KDogWatchPTick(U8 id) {
 U0 KDogWatchPEnd(U8 id) {
     Profiles[id].active = False;
 }
+U0 KDogWatchPPlay(U8 id) {
+    Profiles[id].active = True;
+}

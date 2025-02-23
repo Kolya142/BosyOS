@@ -9,11 +9,15 @@ boot:
 	cd bootloader; nasm main.asm
 	cd kbootloader; nasm -f bin boot.asm -o boot
 	cat bootloader/main kbootloader/boot > bootsegment
-	python3 non-kernel\ files/bosybuild.py initram.asm N && truncate -s 4096 initram.bsf
 kernel:
 	cd kernel && python3 build.py && truncate -s 31564 kernel.b
 compile:
-	cat bootsegment initram.bsf kernel/kernel.b > drive
+	@if [ -e drive ]; then \
+		dd if=drive of=userdata bs=512 skip=3 count=16; \
+	else \
+ 		truncate -s 8192 userdata; \
+	fi
+	cat bootsegment userdata kernel/kernel.b > drive
 
 run:
 	@if [ $(SYSTEM) = "macos" ]; then \
@@ -21,8 +25,10 @@ run:
 	else \
 		qemu-system-i386 -drive format=raw,file=drive -display gtk,zoom-to-fit=on -m 64M -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 --enable-kvm; \
 	fi
+	dd if=drive of=userdata bs=512 skip=3 count=16
 
 all: boot kernel compile run
+allr: boot kernel compile
 kernelrun: kernel compile run
 load: img
 	sudo bash load.sh

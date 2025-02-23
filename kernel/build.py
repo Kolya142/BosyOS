@@ -15,7 +15,7 @@ os.system("rm build/*")
 
 print("Build kernel")
 project_root = os.path.abspath(".")
-cc = f"gcc \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -c"
+cc = f"gcc \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -Wall -Wextra -c"
 print(f"Build command: {cc}")
 for root, _, files in os.walk("."):
     for file in files:

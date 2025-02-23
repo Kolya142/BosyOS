@@ -3,3 +3,5 @@
 
 U0 POut(U16 port, U8 data);
 U8 PIn(U16 port);
+U0 POut16(U16 port, U16 data);
+U16 PIn16(U16 port);

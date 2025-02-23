@@ -29,7 +29,7 @@ jnz error2
 mov byte [LOADED], 1
 
 mov ah, 2  ; read
-mov al, 10 ; 1K + 4K
+mov al, 2  ; 1K
 mov ch, 0  ; cylinder
 mov cl, 2  ; first sector
 mov dh, 0  ; head

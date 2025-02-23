@@ -18,6 +18,7 @@
 #include <lib/Random.h>
 #include <lib/MemLib.h>
 #include <lib/Time.h>
+#include <lib/DAT.h>
 #include <lib/TTY.h>
 #include <lib/BosZ.h>
 
@@ -52,6 +53,7 @@ __attribute__((naked)) U0 KernelMain() {
     VgaCursorSet(0, 0);
     SysCallInit();
     SysCallSetup();
+    DATInit();
     TTYUPrint(
         "\n"
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n");
@@ -67,9 +69,9 @@ U0 termrun(const String cmd) {
         TTYUPrint(
             "Commands:\n"
             "help cls hlt gen\n"
-            "time echo test rand\n"
+            "time echo wsave rand\n"
             "reboot poweroff apple\n"
-            "snake text sound\n"
+            "snake text sound wget\n"
         );
     }
     else if (!StrCmp(cmd, "cls")) {
@@ -251,10 +253,26 @@ U0 termrun(const String cmd) {
         }
         Bool game = True;
         while (game) {
-            if (KBState.keys['w']) dir = 1;
-            else if (KBState.keys['a']) dir = 2;
-            else if (KBState.keys['s']) dir = 3;
-            else if (KBState.keys['d']) dir = 4;
+            if (KBState.keys['w']) {
+                if (dir != 1)
+                    BeepSPC(54, 30);
+                dir = 1;
+            }
+            else if (KBState.keys['a']) {
+                if (dir != 2)
+                    BeepSPC(54, 30);
+                dir = 2;
+            }
+            else if (KBState.keys['s']) {
+                if (dir != 3)
+                    BeepSPC(54, 30);
+                dir = 3;
+            }
+            else if (KBState.keys['d']) {
+                if (dir != 4)
+                    BeepSPC(54, 30);
+                dir = 4;
+            }
 
             for (U8 i = 4; i >= 1; --i) {
                 vga[tail[i]] = 0xF03A;
@@ -266,12 +284,23 @@ U0 termrun(const String cmd) {
                 score++;
                 vga[apple] = 0xF02E;
                 apple = RandomU() % 1300 + 500;
+                BeepSPC(50, 70);
+                BeepSPC(30, 40);
+                BeepSPC(50, 70);
             }
 
-            if (dir == 1      && ((snake - 80) < 55555)) snake -= 80;
-            else if (dir == 2 && (snake - 1) % 80 != 79) snake -= 1;
-            else if (dir == 3 && ((snake + 80) < 2000))  snake += 80;
-            else if (dir == 4 && ((snake +1) % 80 != 0)) snake += 1;
+            if (dir == 1      && ((snake - 80) < 55555)) {
+                snake -= 80;
+            }
+            else if (dir == 2 && (snake - 1) % 80 != 79) {
+                snake -= 1;
+            }
+            else if (dir == 3 && ((snake + 80) < 2000))  {
+                snake += 80;
+            }
+            else if (dir == 4 && ((snake +1) % 80 != 0)) {
+                snake += 1;
+            }
 
             for (U8 i = 0; i < 5; ++i) {
                 TTYCursor = tail[i];
@@ -291,9 +320,12 @@ U0 termrun(const String cmd) {
             }
             TTYCursor = apple;
             TTYRawPrint(' ', Red, Red);
-            TTYCursor = 0;
+            TTYCursor = 80 / 2 - 4 / 2;
             TTYUPrintHex(score);
-            SleepM(140);
+            BeepSPC(45, 15);
+            BeepSPC(25, 10);
+            BeepSPC(30, 20);
+            SleepM(100);
         }
         KDogWatchPStart(0, "Main loop");
     }
@@ -353,8 +385,21 @@ U0 termrun(const String cmd) {
         }
         KDogWatchPStart(0, "Main loop");
     }
-    else if (!StrCmp(cmd, "test")) {
-        KDogWatchLog("Test", False);
+    else if (!StrCmp(cmd, "wsave")) {
+        DATAlloc(0x1254);
+        TTYUPrint("$!BPrevius word$!F: ");
+        U8 buf[100] = {0};
+        DATRead(0x1254, buf, 0, 100);
+        TTYUPrint(buf);
+        TTYUPrint("\n$!CNew word$!F: ");
+        KBRead(buf, 100);
+        DATWrite(0x1254, buf, 0, 100);
+    }
+    else if (!StrCmp(cmd, "wget")) {
+        TTYUPrint("$!Bword$!F: ");
+        U8 buf[100] = {0};
+        DATRead(0x1254, buf, 0, 100);
+        TTYUPrint(buf);
     }
     else {
         TTYUPrint("Unk ");

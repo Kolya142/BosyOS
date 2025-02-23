@@ -9,7 +9,7 @@ Disk Layout:
 Boot  DATHeader UserData Kernel
  |     |         |         |
  |    [DAT  Tables]        |
-[2]   [1]       [7]      [...]
+[2]   [1]       [15]     [...]
 */
 
 #define DAT_FIRST_SEG 3

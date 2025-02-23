@@ -17,6 +17,27 @@ Char ToUpper(Char a)
     if (a == '`') {
         return '~';
     }
+    if (a == ',') {
+        return '<';
+    }
+    if (a == '.') {
+        return '>';
+    }
+    if (a == '[') {
+        return '{';
+    }
+    if (a == ']') {
+        return '}';
+    }
+    if (a == '/') {
+        return '?';
+    }
+    if (a == '\'') {
+        return '"';
+    }
+    if (a == ';') {
+        return ':';
+    }
     if (a >= 'a' && a <= 'z') {
         return a+'A'-'a';
     }

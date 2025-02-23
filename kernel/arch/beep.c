@@ -5,6 +5,13 @@ U0 Beep(U16 dur) {
     SleepM(dur);
     POut(0x61, PIn(0x61) & ~3);
 }
+U0 BeepHz(U8 freq, U16 dur) {
+    U32 Div = 1193180 / freq;
+    POut(0x43, 0xB6);
+    POut(0x42, (U8)(Div));
+    POut(0x42, (U8)(Div >> 8));
+    Beep(dur);
+}
 
 U0 BeepSPC(U8 tone, U16 dur) {
     static const U16 NoteTable[128] = {
@@ -18,9 +25,5 @@ U0 BeepSPC(U8 tone, U16 dur) {
         2093, 2217, 2349, 2489, 2637, 2794, 2960, 3136, 3322, 3520, 3729, 3951, // C7 - B7
         4186, 4435, 4699, 4978, 5274, 5588, 5920, 6272, 6645, 7040, 7459, 7902  // C8 - B8
     };
-    U32 Div = 1193180 / NoteTable[tone];
-    POut(0x43, 0xB6);
-    POut(0x42, (U8)(Div) );
-    POut(0x42, (U8)(Div >> 8));
-    Beep(dur);
+    BeepHz(NoteTable[tone], dur);
 }

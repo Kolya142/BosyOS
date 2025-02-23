@@ -71,7 +71,7 @@ U0 CHelp() {
         "$!Btime echo wsave rand$!F\n"
         "$!Creboot poweroff apple$!F\n"
         "$!Esnake text sound wget$!F\n"
-        "$!3words triangle bf$!F\n"
+        "$!3words triangle bf hz$!F\n"
         "$!5Features$!F:\n"
         "All Commands: esc-exit\n"
         "$!Asound$!F - press $!Balt$!F\n"
@@ -177,42 +177,92 @@ U0 CGen() {
     }
 }
 U0 CText() {
-    Bool lk = False;
-    TTYCursor = 0;
-    TTYUPrint("\npress ctrl to switch mode\npress esc to exit\n");
+    CCls();
+    if (DATFind(0x5234) == 0xFFFF) {
+        DATAlloc(0x5234);
+    }
+    else {
+        U8 buf[20*18] = {0};
+        DATRead(0x5234, buf, 0, 20*18);
+        U32 i = 0;
+        for (U32 x = 2; x < 30; ++x) {
+            for (U32 y = 2; y < 20; ++y) {
+                vga[x + y*80] = buf[i] ? (buf[i] | 0x0F00) : 0x0F20;
+                ++i;
+            }
+        }
+    }
+    TTYUPrint("Press p");
     Bool text = False;
+    Bool lk[256] = {0};
+    KDogWatchPEnd(0);
+    VgaCursorEnable();
+    U32 x = TTYCursor % 80;
+    U32 y = TTYCursor / 80;
     for (;;) {
-        if (!(KBState.SC & 0x80) && !lk) {
-            if (!text) {
-                if (KBState.keys['w']) {
-                    TTYCursor -= 80;
+        TTYCursor = 0;
+        VgaCursorSet(x, y);
+        while (!KBState.keys['p']);
+        TTYUPrint("Enter text: ");
+        Char cmd[30] = {0};
+        KBRead(cmd, 30);
+        VgaCursorSet(x, y);
+        if (cmd[0] == ':') {
+            for (U32 i = 0; cmd[i]; ++i) {
+                switch (cmd[i]) {
+                    case 'q': {
+                        U8 buf[20*18] = {0};
+                        U32 i = 0;
+                        for (U32 x = 2; x < 30; ++x) {
+                            for (U32 y = 2; y < 20; ++y) {
+                                buf[i] = vga[x + y*80] & 0xff;
+                                ++i;
+                            }
+                        }
+                        KDogWatchPPlay(0);
+                        DATWrite(0x5234, buf, 0, 20*18);
+                        VgaCursorDisable();
+                        return;
+                    } break;
+                    case 'l': 
+                    --x;
+                    break;
+                    case 'D': 
+                    vga[x--] = 0;
+                    break;
+                    case 'r': 
+                    ++x;
+                    break;
+                    case 'u': 
+                    --y;
+                    break;
+                    case 'd': 
+                    ++y;
+                    break;
+                    case 'c': 
+                    CCls();
+                    break;
+                    case 'n': {
+                        x = 2;
+                        ++y;
+                    } break;
                 }
-                else if (KBState.keys['a']) {
-                    TTYCursor--;
-                }
-                else if (KBState.keys['s']) {
-                    TTYCursor += 80;
-                }
-                else if (KBState.keys['d']) {
-                    TTYCursor++;
-                }
-                VgaCursorSet(TTYCursor, 0);
             }
-            else if (KBState.Key < 0x80) {
-                TTYUPrintC(KBState.Key);
-            }
-            if (KBState.keys[ASCIIPCtrl]) {
-                text ^= 1;
-            }
-            if (KBState.keys['\x1b']) {
-                break;
-            }
-            lk = True;
         }
-        else if ((KBState.SC & 0x80) && lk) {
-            lk = False;
+        else {
+            if (x < 2) x = 2;
+            if (x > 29) x = 29;
+            if (y < 2) y = 2;
+            if (y > 19) y = 19;
+            TTYCursor = x + y * 80;
+            TTYUPrint(cmd);
         }
-        KDogWatchPTick(0);
+        if (x < 2) x = 2;
+        if (x > 29) x = 29;
+        if (y < 2) y = 2;
+        if (y > 19) y = 19;
+        TTYCursor = x + y * 80;
+        VgaCursorSet(TTYCursor, 0);
     }
 }
 
@@ -403,6 +453,29 @@ U0 BFInterpret(const String code) {
         }
     }
 }
+U0 CHz() {
+    KDogWatchPEnd(0);
+    for (;;) {
+        for (U32 s = 1; s < 200; ++s) {
+            for (U32 o = 0; o < 50; ++o) {
+                static const U16 tones[12] = {
+                    100, 106, 112, 119, 126, 133, 141, 150, 159, 169, 179, 190
+                };
+                U32 f = 30 + tones[s%12] - o;
+                BeepHz(f, f / 6);
+                TTYUPrintHex(f);
+                TTYCursor -= 8;
+                if (KBState.keys['\x1b']) 
+                    break;
+            }
+            if (KBState.keys['\x1b']) 
+                break;
+        }
+        if (KBState.keys['\x1b']) 
+            break;
+    }
+    KDogWatchPPlay(0);
+}
 
 U0 termrun(const String cmd) {
     if (!StrCmp(cmd, "help")) {
@@ -420,6 +493,9 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "hlt")) {
         asmv("cli");
         CpuHalt();
+    }
+    else if (!StrCmp(cmd, "hz")) {
+        CHz();
     }
     else if (!StrCmp(cmd, "time")) {
         CTime();

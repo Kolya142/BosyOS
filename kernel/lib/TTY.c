@@ -4,7 +4,7 @@
 U32 TTYCursor = 0;
 U0 TTYClear() {
     for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
-        vga[i] = 0x0f20;
+        vga[i] = 0x0000;
     }
 }
 Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {

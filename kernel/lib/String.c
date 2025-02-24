@@ -49,6 +49,9 @@ U32 StrLen(const Char *str) {
         len++;
     return len;
 }
+U0 StrCpy(String dst, String src) {
+    MemCpy(dst, src, StrLen(src));
+}
 
 U32 StrCmp(const Char *a, const Char *b)
 {

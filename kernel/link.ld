@@ -3,9 +3,10 @@ ENTRY(KernelMain)
 SECTIONS
 {
     . = 0x300000;
-    _kernel_start = .;
-    .text : { *(.text) }
-    . = ALIGN(4);
-    .data : { *(.data) }
-    .bss : { *(.bss) }
+    KernelMain = .;
+    
+    .text : ALIGN(4) { *(.text) }
+    .data : ALIGN(4) { *(.data) }
+    .bss  : ALIGN(4) { *(.bss) }
+
 }

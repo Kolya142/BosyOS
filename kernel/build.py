@@ -32,5 +32,5 @@ obj_files = " ".join(
     [os.path.join(build_dir, file) for file in os.listdir(build_dir) if file.endswith(".o") and file != 'KMain.o']
 )
 
-print("Link") # evil ld bug hacking     VVVVVVVVVVVVV
-run_command(f"ld -m elf_i386 -T link.ld build/KMain.o {obj_files} -o kernel.b")
+print("Link") # evil ld bug fixing      VVVVVVVVVVVVV
+run_command(f"ld -m elf_i386 -T link.ld build/KMain.o {obj_files} -o kernel.b --verbose")

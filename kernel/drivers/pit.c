@@ -24,5 +24,4 @@ U0 PITInit() {
     POut(0x40, (div>>8) & 0xff);
     POut(0x21, PIn(0x21) & ~1);
     IDTSet(32, PITHandler, 0x08, 0x8E);
-    asmv("int $32");
 }

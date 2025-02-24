@@ -4,5 +4,5 @@
 0x100000(real) - user application
 0x200000(real) - user stack
 0x300000(real) - kernel
-0x500000(real) - kernel stack
-0x550000(real) - kernel heap
+0x600000(real) - kernel stack
+0x700000(real) - kernel heap

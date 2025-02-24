@@ -1,6 +1,7 @@
 // Kernel
 #include <kernel/KDogWatch.h>
 #include <kernel/KPanic.h>
+#include <kernel/KMem.h>
 
 // Drivers
 #include <drivers/keyboard.h>
@@ -10,6 +11,7 @@
 // Miscellaneous
 #include <misc/syscall.h>
 #include <misc/wordgen.h>
+#include <misc/vfiles.h>
 #include <misc/bsf.h>
 
 // Libraries
@@ -21,6 +23,11 @@
 #include <lib/DAT.h>
 #include <lib/TTY.h>
 #include <lib/BosZ.h>
+
+// FileSystem
+#include <fs/BOTFS.h>
+#include <fs/vfs.h>
+#include <fs/ufs.h>
 
 // Arch/Cpu Functions
 #include <arch/getreg.h>
@@ -39,6 +46,7 @@ __attribute__((naked)) U0 KernelMain() {
             *(Byte*)i = 0;
         }
     }
+    HeapInit();
     TTYClear();
     KDogWatchInit();
     GDTInit();
@@ -53,7 +61,11 @@ __attribute__((naked)) U0 KernelMain() {
     VgaCursorSet(0, 0);
     SysCallInit();
     SysCallSetup();
+    UFSInit();
+    VFSInit();
+    VFilesInit();
     DATInit();
+    BOTFSInit();
     TTYUPrint(
         "\n"
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n");
@@ -72,9 +84,11 @@ U0 CHelp() {
         "$!Creboot poweroff apple$!F\n"
         "$!Esnake text sound wget$!F\n"
         "$!3words triangle bf hz$!F\n"
+        "$!5mus pong testufs testheap$!F\n"
+        "$!6testbfs ls$!F\n"
         "$!5Features$!F:\n"
         "All Commands: esc-exit\n"
-        "$!Asound$!F - press $!Balt$!F\n"
+        "$!Asound$!F - $!Balt$!F-play, $!Blshift$!F-save, $!Brshift$!F-load\n"
         "$!Awsave$!F/$!Awget$!F uses disk\n"
         "use $!BWASD$!F in $!Atext$!F to move cursor"
     );
@@ -118,14 +132,13 @@ U0 CTriangle() {
     }
 }
 U0 CTime() {
-    TTYUPrint("$!BPIT$!F:    "); TTYUPrintHex(PITTime); TTYUPrintC('\n');
-    RTCUpdate();
-    TTYUPrint("$!BYear$!F:   "); TTYUPrintDec(SystemTime.year); TTYUPrintC('\n');
-    TTYUPrint("$!BMonth$!F:  "); TTYUPrintDec(SystemTime.month); TTYUPrintC('\n');
-    TTYUPrint("$!BDay$!F:    "); TTYUPrintDec(SystemTime.day); TTYUPrintC('\n');
-    TTYUPrint("$!BHour$!F:   "); TTYUPrintDec(SystemTime.hour); TTYUPrintC('\n');
-    TTYUPrint("$!BMinute$!F: "); TTYUPrintDec(SystemTime.minute); TTYUPrintC('\n');
-    TTYUPrint("$!BSecond$!F: "); TTYUPrintDec(SystemTime.second); TTYUPrintC('\n');
+    PrintF("$!BPIT$!F:    %x\n", PITTime);
+    PrintF("$!BYear$!F:   %d\n", SystemTime.year);
+    PrintF("$!BMonth$!F:  %d\n", SystemTime.month);
+    PrintF("$!BDay$!F:    %d\n", SystemTime.day);
+    PrintF("$!BHour$!F:   %d\n", SystemTime.hour);
+    PrintF("$!BMinute$!F: %d\n", SystemTime.minute);
+    PrintF("$!BSecond$!F: %d\n", SystemTime.second);
 }
 U0 CRand() {
     Bool lk = False;
@@ -282,27 +295,47 @@ U0 CSound() {
         81, 83, 85, 87, 89, 91, 93, 95
     };
     
-    U8 Record[510];
-    MemSet(Record, 0, 510);
+    U8 *Record = MAlloc(555);
+    MemSet(Record, 1, 555);
     U32 i = 0;
-
+    Bool start = False;
     for (;;) {
         if (KBState.keys['\x1b']) {
             break;
         }
-        if (KBState.keys[ASCIIPAlt]) {
-            for (U32 j = 0; Record[j]; ++j) {
-                BeepSPC(Record[j], 1);
+        else if (KBState.keys[ASCIIPAlt]) {
+            for (U32 j = 0; j < 555 && Record[j] != 1; ++j) {
+                if (Record[j])
+                    BeepSPC(Record[j], 3);
                 KDogWatchPTick(0);
+                SleepM(5);
             }
         }
-        TTYUPrintHex(i>>1);
-        if (!(KBState.SC & 0x80)) {
-            U8 note = KeyToNote[KBState.SC%sizeof(KeyToNote)];
-            TTYUPrintHex(note);
-            BeepSPC(note, 3);
-            Record[i>>1] = note;
-            i = (i+1) % (sizeof(Record) << 2);
+        else if (KBState.keys[ASCIIPLshift]) {
+            BOTFSCreate("mysound", 555);
+            BOTFSWrite("mysound", Record, 0, 555);
+        }
+        else if (KBState.keys[ASCIIPRshift]) {
+            BOTFSRead("mysound", Record, 0, 555);
+        }
+        else if (!(KBState.SC & 0x80)) {
+            if (KBState.Key > 0x80) {
+                Record[i >> 2] = 0;
+            }
+            else {
+                U8 note = KeyToNote[KBState.Key%sizeof(KeyToNote)];
+                TTYUPrintHex(note);
+                BeepSPC(note, 3);
+                Record[i >> 2] = note;
+                start = True;
+            }
+        }
+        else if ((KBState.SC & 0x80)) {
+            Record[i >> 2] = 0;
+        }
+        TTYUPrintHex(i >> 2);
+        if (start) {
+            i = (i+1) % (555 << 2);
         }
         TTYCursor -= TTYCursor % 80;
         KDogWatchPTick(0);
@@ -402,6 +435,63 @@ U0 CSnake() {
     }
     KDogWatchPStart(0, "Main loop");
 }
+U0 CPong() {
+    KDogWatchPEnd(0);
+    I32 p1 = 10;
+    I32 p2 = 10;
+    I32 ballx = RandomU() % 10 + 40;
+    I32 bally = RandomU() % 10 + 10;
+    I32 ballvx = (RandomU() & 1) ? 1 : -1;
+    I32 ballvy = (RandomU() & 1) ? 1 : -1;
+    Bool game = True;
+    while (game) {
+        for (U32 i = 0; i < 2000; ++i) {
+            vga[i] = 0xF7B0;
+        }
+        
+        for (U32 y = p1 - 3; y <= p1 + 3; ++y) {
+            vga[y * 80 + 0] = 0x00DB;
+        }
+        for (U32 y = p2 - 3; y <= p2 + 3; ++y) {
+            vga[y * 80 + 79] = 0x00DB;
+        }
+        vga[ballx + bally * 80] = 0x09DB;
+        ballx += ballvx;
+        bally += ballvy;
+
+        if (bally == 24 || bally == 0) {
+            ballvy = -ballvy;
+            BeepSPC(45, 30);
+        }
+        if (ballx == 1 && bally >= p1 - 3 && bally <= p1 + 3) {
+            ballvx = -ballvx;
+            BeepSPC(45, 30);
+        }
+        if (ballx == 78 && bally >= p2 - 3 && bally <= p2 + 3) {
+            ballvx = -ballvx;
+            BeepSPC(45, 30);
+        }
+        if (KBState.keys['w']) {
+            --p1;
+        }
+        if (KBState.keys['s']) {
+            ++p1;
+        }
+        p2 += (bally - p2) / 5;
+        if (ballx == 79 || ballx == 0) {
+            ballx = 4;
+            bally = 4;
+            ballvx = 1;
+            ballvy = 1;
+            BeepSPC(25, 30);
+        }
+        if (KBState.keys['\x1b']) {
+            game = False;
+        }
+        SleepM(100);
+    }
+    KDogWatchPStart(0, "Main loop");
+}
 U0 BFInterpret(const String code) {
     U32 stack[32] = {0};
     U8  mem[3355] = {0};
@@ -484,11 +574,46 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "cls")) {
         CCls();
     }
+    else if (!StrCmp(cmd, "ls")) {
+        String ffiles[32] = {0};
+        BOTFSList(ffiles, 32);
+        for (U32 i = 0; i < 32; ++i) {
+            if (!ffiles[i]) continue;
+            PrintF("%s ", ffiles[i]);
+        }
+    }
     else if (!StrCmp(cmd, "words")) {
         CWords();
     }
     else if (!StrCmp(cmd, "triangle")) {
         CTriangle();
+    }
+    else if (!StrCmp(cmd, "testufs")) {
+        U8 buf[1] = {0};
+        UFSRead("dev", "random", buf, 1);
+        PrintF("Test: %x", buf[0]);
+    }
+    else if (!StrCmp(cmd, "testbfs")) {
+        BOTFSCreate("test", 10);
+        BOTFSCreate("trash", 1);
+        PrintF("File: %B\n", BOTFSFind("test") != 0xFFFFFFFF);
+        BOTFSWrite("test", "sus\n", 0, 4);
+        U8 buf[4] = {0};
+        BOTFSRead("test", buf, 0, 4);
+        String ffiles[5] = {0};
+        BOTFSList(ffiles, 5);
+        PrintF("existing files: ");
+        for (U32 i = 0; i < 5; ++i) {
+            if (!ffiles[i]) continue;
+            PrintF("%s ", ffiles[i]);
+        }
+        PrintF("\nData: %s\n", buf);
+        BOTFSDelete("trash");
+        PrintF("Deleted trash: %B\n", BOTFSFind("trash") == 0xFFFFFFFF);    
+    }
+    else if (!StrCmp(cmd, "testheap")) {
+        TTYUPrint("Test:");
+        TTYUPrintHex((U32)MAlloc(3));
     }
     else if (!StrCmp(cmd, "hlt")) {
         asmv("cli");
@@ -527,6 +652,9 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "snake")) {
         CSnake();
+    }
+    else if (!StrCmp(cmd, "pong")) {
+        CPong();
     }
     else if (!StrCmp(cmd, "bf")) {
         CCls();
@@ -579,6 +707,36 @@ U0 termrun(const String cmd) {
         U8 buf[100] = {0};
         DATRead(0x1254, buf, 0, 100);
         TTYUPrint(buf);
+    }
+    else if (!StrCmp(cmd, "snd")) {
+        U16 tones[] = { 61, 59, 57, 55, 55, 57, 59, 61, 63, 64, 64, 65, 66, 66, 65, 64, 63, 62, 64, 61, 61, 62, 63, 61, 59, 57, 56, 56, 57, 58, 59, 63, 61, 59, 56, 57, 59, 60, 62 };
+        U16 durations[] = { 136, 136, 272, 272, 272, 272, 272, 136, 136, 136, 272, 136, 136, 272, 136, 136, 136, 136, 272, 136, 272, 272, 272, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136 };
+        
+        for (U32 i = 0; i < sizeof(tones) / 2; ++i) {
+            for (U8 v = 0; v < 2; v++) {
+                BeepSPC(tones[i], durations[i] / 2);
+                SleepM(10);
+            }
+            if (i % 4 == 0) BeepSPC(tones[i] - 12, durations[i] / 2);
+            SleepM(1000/70);
+            KDogWatchPTick(0);
+            if (KBState.keys['\x1b']) {
+                break;
+            }
+        }
+    }
+    else if (!StrCmp(cmd, "mus")) {
+        U16 tones[] = { 79, 78, 76, 76, 78, 57, 62, 66, 62, 59, 62, 66, 62, 57, 62, 66, 69, 62, 79, 59, 78, 62, 76, 66, 76, 62, 57, 78, 62, 66, 62, 74, 59, 62, 76, 66, 69, 62, 57, 62, 66, 62, 59, 62, 66, 69, 62, 76, 59, 64, 78, 67, 79, 64, 59, 64, 76, 67, 73, 64, 57, 74, 64, 67, 64, 76, 57, 64, 69, 67, 69, 64, 57, 78, 62, 66, 62, 59, 62, 66, 62, 57, 62, 66, 62, 79, 59, 78, 62, 76, 66, 76, 62, 78, 57, 62, 66, 62, 59, 62, 66, 62, 57, 62, 66, 69, 62, 79, 59, 78, 62, 76, 66, 76, 62, 57, 62, 78, 66, 74, 62, 59, 62, 76, 66, 69, 62, 57, 62, 66, 62, 59, 62, 66, 62, 76, 59, 64, 78, 67, 79, 64, 59, 64, 76, 67, 73, 64, 57, 64, 74, 67, 76, 64, 57, 69, 64, 74, 67, 76, 64, 77, 58, 76, 62, 74, 65, 72, 70, 69, 70, 72, 53, 60, 77, 65, 60, 76, 55, 74, 62, 74, 65, 72, 62, 74, 57, 72, 60, 72, 65, 60, 72, 53, 60, 69, 65, 70, 60, 72, 53, 60, 77, 65, 60, 79, 55, 77, 62, 76, 65, 74, 62, 74, 57, 76, 60, 77, 65, 60, 77, 57, 60, 79, 65, 81, 60, 82, 58, 82, 65, 81, 69, 65, 79, 58, 65, 77, 69, 79, 65, 81, 57, 81, 60, 79, 65, 60, 77, 57, 60, 74, 65, 72, 60, 74, 57, 77, 60, 77, 65, 76, 60, 57, 76, 60, 78, 64, 78, 66, 50, 57, 78, 74, 50, 57, 71, 47, 54, 74, 78, 74, 47, 54, 69 };
+        U16 durations[] = { 1010, 249, 246, 246, 249, 0, 264, 248, 246, 249, 249, 246, 246, 249, 264, 248, 246, 0, 249, 0, 249, 0, 246, 0, 246, 0, 249, 264, 0, 248, 246, 249, 0, 249, 246, 0, 246, 0, 249, 264, 248, 246, 249, 249, 246, 246, 0, 249, 0, 264, 248, 0, 246, 0, 249, 249, 246, 0, 246, 0, 249, 264, 0, 248, 246, 249, 0, 249, 246, 0, 246, 0, 249, 264, 0, 248, 246, 249, 249, 246, 246, 249, 264, 248, 246, 249, 0, 249, 0, 246, 0, 246, 0, 249, 0, 264, 248, 246, 249, 249, 246, 246, 249, 264, 248, 246, 0, 249, 0, 249, 0, 246, 0, 246, 0, 249, 264, 248, 0, 246, 0, 249, 249, 246, 0, 246, 0, 249, 264, 248, 246, 249, 249, 246, 246, 249, 0, 264, 248, 0, 246, 0, 249, 249, 246, 0, 246, 0, 249, 264, 248, 0, 246, 0, 249, 249, 0, 246, 0, 246, 0, 249, 0, 264, 0, 248, 0, 246, 0, 744, 246, 249, 0, 264, 248, 0, 246, 249, 0, 249, 0, 246, 0, 246, 0, 249, 0, 264, 0, 248, 0, 246, 249, 0, 249, 246, 0, 246, 0, 249, 0, 264, 248, 0, 246, 249, 0, 249, 0, 246, 0, 246, 0, 249, 0, 264, 0, 248, 0, 246, 249, 0, 249, 246, 0, 246, 0, 249, 0, 264, 0, 248, 0, 246, 249, 0, 249, 246, 0, 246, 0, 249, 0, 264, 0, 248, 0, 246, 249, 0, 249, 246, 0, 246, 0, 249, 0, 264, 0, 248, 0, 246, 0, 249, 249, 0, 246, 0, 246, 0, 249, 0, 512, 246, 0, 0, 249, 0, 0, 249, 246, 246, 0, 0, 249 };
+
+        for (U32 i = 0; i < sizeof(tones) / 2; ++i) {
+            BeepSPC(tones[i], durations[i]);
+            SleepM(1000/120);
+            KDogWatchPTick(0);
+            if (KBState.keys['\x1b']) {
+                break;
+            }
+        }
     }
     else {
         TTYUPrint("Unk ");

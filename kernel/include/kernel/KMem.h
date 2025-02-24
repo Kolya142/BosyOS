@@ -1,8 +1,8 @@
 #include <lib/MemLib.h>
 #include <lib/Types.h>
 #pragma once
-#define HEAP_START 0x550000
-#define HEAP_SIZE 0x10000
+#define HEAP_START 0x700000
+#define HEAP_SIZE 0x100000
 
 typedef struct HeapMemBlock {
     int size;

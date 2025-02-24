@@ -1,6 +1,8 @@
+#include <misc/wordgen.h>
 #include <lib/MemLib.h>
 #include <lib/TTY.h>
 #include <lib/FDL.h>
+#include <stdarg.h>
 U32 TTYCursor = 0;
 U0 TTYClear() {
     for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
@@ -186,6 +188,52 @@ U0 TTYUPrintC(Char c) {
             TTYPrintC(c);
         }
     }
+}
+U0 PrintF(String format, ...) {
+    va_list args;
+    va_start(args, format);
+    while (*format) {
+        if (*format == '%' && *(format + 1)) {
+            ++format;
+            switch (*format) {
+                case 'c': {
+                    Char c = va_arg(args, U32);
+                    TTYUPrintC(c);
+                } break;
+                case 'w': {
+                    WordGen();
+                } break;
+                case 's': {
+                    String s = va_arg(args, String);
+                    TTYUPrint(s);
+                } break;
+                case 'B': {
+                    Bool s = va_arg(args, U32);
+                    TTYUPrint(s ? "True" : "False");
+                } break;
+                case 'd': {
+                    U32 s = va_arg(args, U32);
+                    TTYUPrintDec(s);
+                } break;
+                case 'p':
+                case 'x': {
+                    U32 s = va_arg(args, U32);
+                    TTYUPrintHex(s);
+                } break;
+                case '%': {
+                    TTYUPrintC('%');
+                } break;
+                default:
+                    TTYUPrintC('%');
+                    TTYUPrintC(*format);
+            }
+            ++format;
+            continue;
+        }
+        TTYUPrintC(*format);
+        ++format;
+    }
+    va_end(args);
 }
 U0 TTYPrint(String s) {
     for (U32 i = 0; s[i]; i++) {

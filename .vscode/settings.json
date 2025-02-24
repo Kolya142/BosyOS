@@ -2,7 +2,8 @@
     "files.associations": {
         "*.h": "c",
         "*.c": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "typeinfo": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

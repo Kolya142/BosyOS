@@ -11,7 +11,7 @@ typedef enum VgaColor {
     DGreen,
     DCyan,
     DRed,
-    DPurple,
+    Purple,
     Brown,
     Gray,
     DGray,
@@ -19,7 +19,7 @@ typedef enum VgaColor {
     Green,
     Cyan,
     Red,
-    Purple,
+    Magenta,
     Yellow,
     White,
 } VgaColor;

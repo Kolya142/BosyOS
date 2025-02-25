@@ -23,4 +23,6 @@ $!B
             $!E\$D                $!E-$!B move down for one symbol
             $!E\$L                $!E-$!B move left for one symbol
             $!E\$R                $!E-$!B move right for one symbol
+        test:
+            $!EThe$!F $!9quick$!F $!6brown fox$!F $!5jumps$!F $!Bover$!F $!7lazy$!F dog
 $!F

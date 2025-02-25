@@ -31,6 +31,14 @@ typedef struct BOTFSFile {
     U8 zero[2];
 } __attribute__((packed)) BOTFSFile;
 
+typedef struct BOTFSFileStat {
+    Char name[12];
+    U8 flags;
+    U32 start;
+    U16 size;
+    Bool exists;
+} __attribute__((packed)) BOTFSFileStat;
+
 extern BOTFSHeader BFSGlob;
 
 U0 BOTFSInit();
@@ -40,6 +48,7 @@ U0 BOTFSDRead(U16 seg, U16 start, U16 end, Ptr buf);
 U0 BOTFSDWrite(U16 seg, U16 start, U16 end, Ptr buf);
 
 U32 BOTFSFind(String name);
+BOTFSFileStat BOTFSStat(String name);
 
 U0 BOTFSRead(String name, Ptr buf, U16 shift, U16 count);
 U0 BOTFSWrite(String name, Ptr buf, U16 shift, U16 count);

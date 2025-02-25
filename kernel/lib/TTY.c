@@ -4,6 +4,8 @@
 #include <lib/FDL.h>
 #include <stdarg.h>
 U32 TTYCursor = 0;
+VgaColor TTYlfg = White;
+VgaColor TTYlbg = Black;
 U0 TTYClear() {
     for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
         vga[i] = 0x0000;
@@ -39,10 +41,6 @@ Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
         vga[TTYCursor] = (U16)((VgaColorGet(fg, bg)<<8) | c);
         TTYCursor++;
     }
-    if (TTYCursor < 0) {
-        TTYCursor = 0;
-        return False;
-    }
     if (TTYCursor >= VGAWIDTH * VGAHEIGHT) {
         TTYCursor = VGAWIDTH * VGAHEIGHT - VGAWIDTH;
         return False;
@@ -52,25 +50,23 @@ Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
 }
 U0 TTYPrintC(Char c)
 {
-    stat VgaColor lfg = White;
-    stat VgaColor lbg = Black;
     stat Bool lnfg = False;
     stat Bool lnbg = False;
     stat Bool lnrw = False;
     if (lnrw) {
-        TTYRawPrint(c, lfg, lbg);
+        TTYRawPrint(c, TTYlfg, TTYlbg);
         lnrw = False;
     }
     else if (lnfg) {
-        lfg = VgaColorFromAsciiP(c);
+        TTYlfg = VgaColorFromAsciiP(c);
         lnfg = False;
     }
     else if (lnbg) {
-        lbg = VgaColorFromAsciiP(c);
+        TTYlbg = VgaColorFromAsciiP(c);
         lnbg = False;
     }
     else if (!(c & 0x80)) {
-        TTYRawPrint(c, lfg, lbg);
+        TTYRawPrint(c, TTYlfg, TTYlbg);
     }
     else if (c == (AsciiP)ASCIIPUp) TTYCursor -= 80;
     else if (c == (AsciiP)ASCIIPDown) TTYCursor += 80;
@@ -211,14 +207,43 @@ U0 PrintF(String format, ...) {
                     Bool s = va_arg(args, U32);
                     TTYUPrint(s ? "True" : "False");
                 } break;
+                case 'b': {
+                    U16 s = va_arg(args, U32);
+                    for (I8 i = 15; i >= 0; --i) {
+                        TTYUPrintC((s & (1 << i)) ? '1' : '0');
+                    }
+                } break;                
                 case 'd': {
                     U32 s = va_arg(args, U32);
                     TTYUPrintDec(s);
                 } break;
-                case 'p':
+                case 'i': {
+                    I32 s = va_arg(args, I32);
+                    TTYUPrintDec(s);
+                } break;
+                case 'p': {
+                    U32 s = va_arg(args, U32);
+                    TTYUPrint("0x");
+                    TTYUPrintHex(s);
+                } break;
                 case 'x': {
                     U32 s = va_arg(args, U32);
                     TTYUPrintHex(s);
+                } break;
+                case 'X': {
+                    U32 s = va_arg(args, U32);
+                    U16i t = (U16i)(U16)s;
+                    
+                    TTYUPrintC("0123456789ABCDEF"[t.u8[1] >> 4]);
+                    TTYUPrintC("0123456789ABCDEF"[t.u8[1] & 15]);
+                
+                    TTYUPrintC("0123456789ABCDEF"[t.u8[0] >> 4]);
+                    TTYUPrintC("0123456789ABCDEF"[t.u8[0] & 15]);
+                } break;
+                case 'C': {
+                    U32 s = va_arg(args, U32);                
+                    TTYUPrintC("0123456789ABCDEF"[s >> 4]);
+                    TTYUPrintC("0123456789ABCDEF"[s & 15]);
                 } break;
                 case '%': {
                     TTYUPrintC('%');
@@ -261,9 +286,6 @@ U0 TTYUPrintHex(U32 i) {
     TTYUPrintC("0123456789ABCDEF"[t.u8[0] & 15]);
 }
 U0 TTYUPrintDec(U32 a) {
-    U8 n = a < 0;
-    if (n) a = -a;
-    
     if (!a) {
         TTYUPrintC('0');
         return;
@@ -272,9 +294,6 @@ U0 TTYUPrintDec(U32 a) {
     String s = MAlloc(S + 1);
     MemSet(s, 0, S + 1);
     U32 p = 0;
-    if (n) {
-        TTYUPrintC('-');
-    }
     while (a) {
         s[S-1-p] = '0' + (a % 10);
         a /= 10;
@@ -282,4 +301,11 @@ U0 TTYUPrintDec(U32 a) {
     }
     TTYUPrint(s);
     MFree(s);
+}
+U0 TTYUPrintDecI(I32 a) {
+    if (a < 0) {
+        TTYUPrintC('-');
+        a = -a;
+    }
+    TTYUPrintDec(a);
 }

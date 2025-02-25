@@ -27,22 +27,4 @@ Requirements: 0x79c5 magic number
 ## Asciip
 [Ascii+](ascii+.txt)
 # Thirdparty
-## Vga
-[VGACodePage437](https://en.wikipedia.org/wiki/Code_page_437)
-### Colors
-0 - Black \
-1 - DBlue \
-2 - DGreen \
-3 - DCyan \
-4 - DRed \
-5 - DPurple \
-6 - Brown \
-7 - Gray \
-8 - DGray \
-9 - Blue \
-A - Green \
-B - Cyan \
-C - Red \
-D - Purple \
-E - Yellow \
-F - White
+[Vga](vga.md)

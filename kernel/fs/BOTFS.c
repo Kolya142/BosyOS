@@ -3,9 +3,6 @@
 
 /*
 Bugs:
-delete x len file
-create >x len file
-data overflow
 */
 
 BOTFSHeader BFSGlob;
@@ -19,18 +16,9 @@ U32 BOTFSUWrite(Ptr this, String dir, String name, Ptr buf, U32 size) {
     return size;
 }
 U0 BOTFSInit() {
-    DATAlloc(0x10);
-    DATAlloc(0x11);
-    DATAlloc(0x12);
-    DATAlloc(0x13);
-    DATAlloc(0x14);
-    DATAlloc(0x15);
-    DATAlloc(0x16);
-    DATAlloc(0x17);
-    DATAlloc(0x18);
-    DATAlloc(0x19);
-    DATAlloc(0x1A);
-    DATAlloc(0x1B);
+    for (U16 i = 0x10; i <= 0x1B; ++i) {
+        DATAlloc(i);
+    }    
     DATRead(0x10, &BFSGlob, 0, sizeof(BOTFSHeader));
     if (BFSGlob.magic != 0x674E1D8F) {
         BOTFSFormat();
@@ -80,6 +68,10 @@ U0 BOTFSDWrite(U16 seg, U16 start, U16 end, Ptr buf) {
     }
 }
 U0 BOTFSFormat() {
+    U8 segment[512] = {0};
+    for (U32 i = 0x10; i <= 0x1B; ++i)
+        DATWrite(i, &BFSGlob, 0, sizeof(BOTFSHeader));
+    
     MemSet(&BFSGlob, 0, sizeof(BOTFSHeader));
     BFSGlob.magic = 0x674E1D8F;
     BFSGlob.version = 1;
@@ -96,13 +88,33 @@ U32 BOTFSFind(String name) {
     U32 s = (BFSGlob.bitmap_start - BFSGlob.files_start) / sizeof(BOTFSFile);
     for (U32 i = 0; i < s; ++i) {
         BOTFSFile *file = &files[i];
-        if (!StrCmp(file->name, name)) {
+        if (file->exists && !StrCmp(file->name, name)) {
             MFree(files);
             return i;
         }
     }
     MFree(files);
     return 0xFFFFFFFF;
+}
+BOTFSFileStat BOTFSStat(String name) {
+    BOTFSFile *files = BOTFSFGet();
+
+    U32 s = (BFSGlob.bitmap_start - BFSGlob.files_start) / sizeof(BOTFSFile);
+    for (U32 i = 0; i < s; ++i) {
+        BOTFSFile *file = &files[i];
+        if (file->exists && !StrCmp(file->name, name)) {
+            BOTFSFileStat statt;
+            statt.flags = file->flags;
+            statt.start = (U32)file->start * 512 + (U32)file->shift;
+            statt.size = file->size;
+            statt.exists = True;
+            StrCpy(statt.name, file->name);
+            MFree(files);
+            return statt;
+        }
+    }
+    MFree(files);
+    return (BOTFSFileStat) {.exists = False};
 }
 U0 BOTFSFlush() {
     DATWrite(0x10, &BFSGlob, 0, sizeof(BOTFSHeader));
@@ -114,7 +126,7 @@ U0 BOTFSRead(String name, Ptr buf, U16 shift, U16 count) {
     U32 s = (BFSGlob.bitmap_start - BFSGlob.files_start) / sizeof(BOTFSFile);
     for (U32 i = 0; i < s; ++i) {
         BOTFSFile *file = &files[i];
-        if (!StrCmp(file->name, name)) {
+        if (file->exists && !StrCmp(file->name, name)) {
             BOTFSDRead(file->start+BFSGlob.data_start, file->shift+shift, file->shift+shift+count, buf);
             MFree(files);
             return;
@@ -129,7 +141,7 @@ U0 BOTFSWrite(String name, Ptr buf, U16 shift, U16 count) {
     U32 s = (BFSGlob.bitmap_start - BFSGlob.files_start) / sizeof(BOTFSFile);
     for (U32 i = 0; i < s; ++i) {
         BOTFSFile *file = &files[i];
-        if (!StrCmp(file->name, name)) {
+        if (file->exists && !StrCmp(file->name, name)) {
             BOTFSDWrite(file->start+BFSGlob.data_start, file->shift+shift, file->shift+shift+count, buf);
             return;
         }
@@ -149,12 +161,14 @@ U0 BOTFSCreate(String name, U16 size) {
     for (U32 i = 0; i < s; ++i) {
         if (bitmap[i/8] & (1 << (i%8)))
             continue;
+        if (i + 1 < s && files[i+1].exists && (files[i+1].start + files[i+1].shift) < size + (files[i-1].start + files[i-1].shift + files[i-1].size))
+            continue;
         U32 j;
         if (!i) {
-            j = 0;
+            j = BFSGlob.data_start + 0;
         }
         else {
-            j = files[i - 1].start * 512 + files[i - 1].shift + files[i - 1].size;
+            j = BFSGlob.data_start + files[i - 1].start * 512 + files[i - 1].shift + files[i - 1].size;
         }
         files[i].start = j / 512;
         files[i].shift = j % 512;
@@ -178,7 +192,7 @@ U0 BOTFSDelete(String name) {
 
     U32 s = (BFSGlob.bitmap_start - BFSGlob.files_start) / sizeof(BOTFSFile);
     for (U32 i = 0; i < s; ++i) {
-        if (!StrCmp(files[i].name, name)) {
+        if (files[i].exists && !StrCmp(files[i].name, name)) {
             bitmap[i / 8] &= ~(1 << (i % 8));
             MemSet(&files[i], 0, sizeof(BOTFSFile));
             break;

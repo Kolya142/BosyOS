@@ -15,7 +15,7 @@ os.system("rm build/*")
 
 print("Build kernel")
 project_root = os.path.abspath(".")
-cc = f"gcc \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -Wall -Wextra -c"
+cc = f"gcc \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -c" # -Wall -Wextra -c"
 print(f"Build command: {cc}")
 for root, _, files in os.walk("."):
     for file in files:
@@ -33,4 +33,4 @@ obj_files = " ".join(
 )
 
 print("Link") # evil ld bug fixing      VVVVVVVVVVVVV
-run_command(f"ld -m elf_i386 -T link.ld build/KMain.o {obj_files} -o kernel.b --verbose")
+run_command(f"ld -m elf_i386 -T link.ld build/KMain.o {obj_files} -o kernel.b") # --verbose")

@@ -66,11 +66,14 @@ __attribute__((naked)) U0 KernelMain() {
     VFilesInit();
     DATInit();
     BOTFSInit();
+    SleepM(2000);
+    TTYClear();
+    TTYCursor = 0;
     TTYUPrint(
         "\n"
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n");
     programtest();
-    KDogWatchPStart(0, "Main loop");
+    // KDogWatchPStart(0, "Main loop"); No Watching
     mainloop();
     KDogWatchPEnd(0);
     PowerOff();
@@ -85,7 +88,8 @@ U0 CHelp() {
         "$!Esnake text sound wget$!F\n"
         "$!3words triangle bf hz$!F\n"
         "$!5mus pong testufs testheap$!F\n"
-        "$!6testbfs ls$!F\n"
+        "$!6testbfs ls cat fwrite$!F\n"
+        "$!7touch fclean$!F\n"
         "$!5Features$!F:\n"
         "All Commands: esc-exit\n"
         "$!Asound$!F - $!Balt$!F-play, $!Blshift$!F-save, $!Brshift$!F-load\n"
@@ -101,7 +105,7 @@ U0 CWords() {
     TTYClear();
     TTYCursor = 0;
     while (TTYCursor < 80*20) {
-        WordGen();
+        PrintF("%w");
     }
     TTYUPrintC('\n');
 }
@@ -579,7 +583,54 @@ U0 termrun(const String cmd) {
         BOTFSList(ffiles, 32);
         for (U32 i = 0; i < 32; ++i) {
             if (!ffiles[i]) continue;
-            PrintF("%s ", ffiles[i]);
+            BOTFSFileStat fstat = BOTFSStat(ffiles[i]);
+            PrintF("%s(%C %p %X) ", ffiles[i], fstat.flags, fstat.start, fstat.size);
+        }
+    }
+    else if (StrStartsWith(cmd, "fwrite")) {
+        String file = &cmd[7];
+        BOTFSFileStat fstat = BOTFSStat(file);
+        if (fstat.exists) {
+            U8 *buf = MAlloc(fstat.size);
+            KBRead(buf, fstat.size);
+            BOTFSWrite(file, buf, 0, fstat.size);
+            PrintF(buf);
+            MFree(buf);
+        }
+        else {
+            PrintF("$!CError: file $!F\"%s\"$!C not found$!F", file);
+        }
+    }
+    else if (StrStartsWith(cmd, "fclean")) {
+        PrintF("Do you want to remove all files?\nIf yes rewrite this: \"$!7The quick brown fox jumps over a lazy dog$!F\"\n(Note: gray is 7)?");
+        Char buf[48];
+        KBRead(buf, 48);
+        if (!StrCmp(buf, "$!7The quick brown fox jumps over a lazy dog$!F")) {
+            BOTFSFormat();
+            PrintF("$!ACleaned$!F");
+        }
+    }
+    else if (StrStartsWith(cmd, "touch")) {
+        String file = &cmd[6];
+        BOTFSFileStat fstat = BOTFSStat(file);
+        if (fstat.exists) {
+            PrintF("$!CError: file $!F\"%s\"$!C exists$!F", file);
+        }
+        else {
+            BOTFSCreate(file, 32);
+        }
+    }
+    else if (StrStartsWith(cmd, "cat")) {
+        String file = &cmd[4];
+        BOTFSFileStat fstat = BOTFSStat(file);
+        if (fstat.exists) {
+            U8 *buf = MAlloc(fstat.size);
+            BOTFSRead(file, buf, 0, fstat.size);
+            PrintF(buf);
+            MFree(buf);
+        }
+        else {
+            PrintF("$!CError: file $!F\"%s\"$!C not found$!F", file);
         }
     }
     else if (!StrCmp(cmd, "words")) {
@@ -591,7 +642,10 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "testufs")) {
         U8 buf[1] = {0};
         UFSRead("dev", "random", buf, 1);
-        PrintF("Test: %x", buf[0]);
+        PrintF("Test: %x\n", buf[0]);
+        U8 ubuf[1] = {4};
+        UFSRead("home", "test", ubuf, 4);
+        PrintF("Test home: %s", ubuf);
     }
     else if (!StrCmp(cmd, "testbfs")) {
         BOTFSCreate("test", 10);
@@ -667,27 +721,25 @@ U0 termrun(const String cmd) {
             if (buf[0] == 'y' || buf[0] == 'Y') {
                 Char ubuf[500];
                 if (DATFind(0x6266) == 0xFFFF) {
-                    TTYUPrint("$!CNo code found$!F.\n");
+                    PrintF("$!CNo code found$!F.\n");
                     return;
                 }
                 DATRead(0x6266, ubuf, 0, 500);
                 if (ubuf[0] == '\0') {
-                    TTYUPrint("$!CEmple code$!F.\n");
+                    PrintF("$!CEmple code$!F.\n");
                     return;
                 }
-                TTYUPrint("$!ACode$!F:");
-                TTYUPrint(ubuf);
-                TTYUPrint("\n\n");
+                PrintF("$!ACode$!F: %s\n\n", ubuf);
                 BFInterpret(ubuf);
             }
             else {
-                TTYUPrint("$!DEnter bf code$!F:");
+                PrintF("$!DEnter bf code$!F:");
                 Char ubuf[500];
                 KBRead(ubuf, 500);
                 DATAlloc(0x6266);
                 DATWrite(0x6266, ubuf, 0, 500);
                 BFInterpret(ubuf);
-                TTYUPrint("\n$!ACode saved...$!F");
+                PrintF("\n$!ACode saved...$!F");
             }
         }
         KDogWatchPPlay(0);
@@ -708,7 +760,7 @@ U0 termrun(const String cmd) {
         DATRead(0x1254, buf, 0, 100);
         TTYUPrint(buf);
     }
-    else if (!StrCmp(cmd, "snd")) {
+    else if (!StrCmp(cmd, "$!Csnd$!F")) {
         U16 tones[] = { 61, 59, 57, 55, 55, 57, 59, 61, 63, 64, 64, 65, 66, 66, 65, 64, 63, 62, 64, 61, 61, 62, 63, 61, 59, 57, 56, 56, 57, 58, 59, 63, 61, 59, 56, 57, 59, 60, 62 };
         U16 durations[] = { 136, 136, 272, 272, 272, 272, 272, 136, 136, 136, 272, 136, 136, 272, 136, 136, 136, 136, 272, 136, 272, 272, 272, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136 };
         
@@ -746,11 +798,11 @@ U0 termrun(const String cmd) {
 
 U0 mainloop() {
     Char buffer[50] = {0};
+    KDogWatchPEnd(0);
     for (;;) {
-        KDogWatchPEnd(0);
         TTYUPrint("$!A\\$ $!F");
         KBRead(buffer, 50);
-        KDogWatchPPlay(0);
+        // KDogWatchPPlay(0);
         TTYUPrintC('\n');
         termrun(buffer);
         TTYUPrintC('\n');

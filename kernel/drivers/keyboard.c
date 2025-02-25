@@ -1,6 +1,7 @@
 #include <drivers/keyboard.h>
 
 volatile KBStateS KBState;
+extern U8 MouseCycle;
 
 INT_DEF(KBHandler) {
     INT_START;

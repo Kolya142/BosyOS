@@ -2,6 +2,8 @@
 #include <arch/cpu.h>
 
 U0 PowerOff() {
+    // try 0
+    POut(0x0604, 0x2000);
     // try 1
     POut(0xB004, 0);
     // try 2

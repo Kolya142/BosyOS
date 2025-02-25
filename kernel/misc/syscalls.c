@@ -21,6 +21,16 @@ U0 SCBeep() {
     U16 data = RegGet(REG_ESI);
     Beep(data);
 }
+U0 SCBeepHz() {
+    U16 data1 = RegGet(REG_ESI);
+    U16 data2 = RegGet(REG_EDI);
+    BeepHz(data1, data2);
+}
+U0 SCBeepSPC() {
+    U16 data1 = RegGet(REG_ESI);
+    U16 data2 = RegGet(REG_EDI);
+    BeepSPC(data1, data2);
+}
 U0 SCSleep() {
     U16 data = RegGet(REG_ESI);
     SleepM(data);
@@ -34,10 +44,12 @@ U0 SCPutC() {
 }
 
 U0 SysCallSetup() {
-    SysCallSet(SCPrint,  1);
+    SysCallSet(SCPrint, 1);
     SysCallSet(SCPrintH, 2);
-    SysCallSet(SCBeep,   3);
-    SysCallSet(SCSleep,  4);
-    SysCallSet(SCKey,    5);
-    SysCallSet(SCPutC,   6);
+    SysCallSet(SCBeep, 3);
+    SysCallSet(SCSleep, 4);
+    SysCallSet(SCKey, 5);
+    SysCallSet(SCPutC, 6);
+    SysCallSet(SCBeepHz, 7);
+    SysCallSet(SCBeepSPC, 8);
 }

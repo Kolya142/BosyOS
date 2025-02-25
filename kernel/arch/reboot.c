@@ -2,6 +2,8 @@
 #include <arch/io.h>
 
 U0 PowerReboot() {
+    // try 0
+    POut(0x64, 0xFE);
     // try 1
     for (I32 i = 0; i < 1000; i++) {
         POut(0x92, 0x01);

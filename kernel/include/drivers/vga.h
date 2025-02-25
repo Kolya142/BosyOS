@@ -30,7 +30,8 @@ U0 VgaCursorEnable();
 U0 VgaCursorDisable();
 U0 VgaCursorSetR(U32 c);
 U0 VgaCursorSet(U16 x, U16 y);
-// It doen't work
+U0 VgaGraphicsSet();
+// It's doen't work
 U0 VgaBlinkingSet(Bool state);
 
 U0 VgaFontLoad(const U8 *font);

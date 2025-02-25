@@ -1,4 +1,5 @@
 #include <misc/wordgen.h>
+#include <lib/Graphics.h>
 #include <lib/MemLib.h>
 #include <lib/TTY.h>
 #include <lib/FDL.h>
@@ -6,6 +7,43 @@
 U32 TTYCursor = 0;
 VgaColor TTYlfg = White;
 VgaColor TTYlbg = Black;
+U8 TTYFont[256][3*5] = {
+    ['0'] = {
+        0,1,0,
+        1,0,1,
+        1,1,1,
+        1,0,1,
+        0,1,0,
+    },
+    ['1'] = {
+        0,0,1,
+        0,1,1,
+        0,0,1,
+        0,0,1,
+        0,0,1,
+    },
+    ['2'] = {
+        0,1,0,
+        1,0,1,
+        0,0,1,
+        0,1,0,
+        1,1,1,
+    },
+    ['3'] = {
+        1,1,0,
+        0,0,1,
+        1,1,0,
+        0,0,1,
+        1,1,0,
+    },
+    ['A'] = {
+        0,1,0,
+        1,0,1,
+        1,1,1,
+        1,0,1,
+        1,0,1,
+    },
+};
 U0 TTYClear() {
     for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
         vga[i] = 0x0000;

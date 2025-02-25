@@ -5,6 +5,7 @@
 
 // Drivers
 #include <drivers/keyboard.h>
+#include <drivers/mouse.h>
 #include <drivers/vga.h>
 #include <drivers/pit.h>
 
@@ -12,10 +13,12 @@
 #include <misc/syscall.h>
 #include <misc/wordgen.h>
 #include <misc/vfiles.h>
-#include <misc/bsf.h>
+#include <misc/bsfexe.h>
 
 // Libraries
 #include <lib/KeyboardLib.h>
+#include <lib/Graphics.h>
+#include <lib/Collects.h>
 #include <lib/String.h>
 #include <lib/Random.h>
 #include <lib/MemLib.h>
@@ -54,11 +57,14 @@ __attribute__((naked)) U0 KernelMain() {
     IDTInit();
     PICMap();
     PITInit();
-    KBInit();
     VgaBlinkingSet(False);
     VgaCursorDisable();
     VgaCursorEnable();
-    VgaCursorSet(0, 0);
+    asmv("sti");
+    KBInit();
+    // MouseInit(); // Portal to hell
+    // VgaGraphicsSet();
+    // VRMClear(Purple);
     SysCallInit();
     SysCallSetup();
     UFSInit();
@@ -66,7 +72,7 @@ __attribute__((naked)) U0 KernelMain() {
     VFilesInit();
     DATInit();
     BOTFSInit();
-    SleepM(2000);
+    SleepM(1000);
     TTYClear();
     TTYCursor = 0;
     TTYUPrint(
@@ -89,7 +95,8 @@ U0 CHelp() {
         "$!3words triangle bf hz$!F\n"
         "$!5mus pong testufs testheap$!F\n"
         "$!6testbfs ls cat fwrite$!F\n"
-        "$!7touch fclean$!F\n"
+        "$!7touch fclean collects mouse$!F\n"
+        "$!8boot vrm$!F"
         "$!5Features$!F:\n"
         "All Commands: esc-exit\n"
         "$!Asound$!F - $!Balt$!F-play, $!Blshift$!F-save, $!Brshift$!F-load\n"
@@ -570,6 +577,15 @@ U0 CHz() {
     }
     KDogWatchPPlay(0);
 }
+U0 CBoot() {
+    Ptr data = MAlloc(48 * 256);
+    for (U32 i = 0; i < 48; ++i)
+        ATARead(data+i, 133+i, 1);
+    PrintF("loaded at %p, data: %C", data, ((U8*)data)[0]);
+}
+U32 LazyCalc(U32 x) {
+    return !(x & 1) ? (x / 2) : (x * 3 + 1);
+}
 
 U0 termrun(const String cmd) {
     if (!StrCmp(cmd, "help")) {
@@ -577,6 +593,65 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "cls")) {
         CCls();
+    }
+    else if (!StrCmp(cmd, "vrm")) {
+        VgaGraphicsSet();
+        VRMClear(Purple);
+
+        Bool state[200] = {0};
+        state[0] = True;
+        for (;!KBState.keys['\x1b'];) {
+            for (U32 i = 200; i > 0; --i) {
+                if (state[i-1]) {
+                    state[i] = !state[i];
+                }
+            }
+            U32 count = 0;
+            for (U32 j = 0; j < 200; ++j) {
+                count += state[j];
+                VRMPSet(0, 200 - j, state[j] ? 0xDB : Black);
+                for (U32 i = 320; i > 0; --i) {
+                    VRMPSet(i, 200 - j, vrm[i - 1 + (200 - j) * 320] & 0xff);
+                }
+            }
+            BeepSPC(count + 30, 30);
+            BeepSPC(count + 50, 10);
+            BeepSPC(count + 70, 5);            
+            SleepM(20);
+            KDogWatchPTick(0);
+    }
+    }
+    else if (!StrCmp(cmd, "boot")) {
+        CBoot();
+    }
+    else if (!StrCmp(cmd, "mouse")) {
+        for (;!KBState.keys['\x1b'];) {
+            CCls();
+            TTYCursor = MouseX + MouseY * 80;
+            TTYUPrintC(0xB0);
+            SleepM(10);
+        }
+    }
+    else if (!StrCmp(cmd, "collects")) {
+        FIFO fifo = FIFOInit(1, 10);
+        FIFOWrite(&fifo, "t");
+        FIFOWrite(&fifo, "1");
+        Char c1, c2;
+        FIFORead(&fifo, &c1);
+        FIFORead(&fifo, &c2);
+        PrintF("FIFO: %c%c\n", c1, c2);
+        FIFODestroy(&fifo);
+
+        PrintF("LazyList: ");
+        LazyList lazy = LazyListInit(LazyCalc, 20);
+        for (;;) {
+            U32 elem = LazyListNext(&lazy);
+            PrintF("%d ", elem);
+            if (elem == 1)
+                break;
+        }
+        PrintF("\n");
+        LazyListDestroy(&lazy);
     }
     else if (!StrCmp(cmd, "ls")) {
         String ffiles[32] = {0};

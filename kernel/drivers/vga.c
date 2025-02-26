@@ -69,14 +69,13 @@ U0 VgaGraphicsSet() {
 
     POut(CRTC_INDEX, 0x11);
     POut(CRTC_DATA, PIn(CRTC_DATA) & 0x7F);
-
     U8 crtc[] = {
-	//  0     1     2     3     4     5     6     7
-        0x5F, 0x4F, 0x50, 0x82, 0x54, 0x80, 0xC3, 0x3F,
-	//  8     9     A     B     C     D     E     F
-        0x00, 0x01, 0x0D, 0x0E, 0x00, 0x00, 0x00, 0x00,
-	//  10    11    12    13    14    15    16    17    18
-        0x9C, 0x0E, 0xC8, 0x28, 0x00, 0x9A, 0xBC, 0xA3, 0xFF
+    //  0     1     2     3     4     5     6     7
+        0x5F, 0x4F, 0x55, 0x82, 0x54, 0x80, 0xBF, 0x1F,  
+    //  8     9     A     B     C     D     E     F
+        0x00, 0x01, 0x0D, 0x0E, 0x00, 0x00, 0x00, 0x00,  
+    //  10    11    12    13    14    15    16    17    18
+        0x9C, 0x0E, 0x8F, 0x28, 0x40, 0x96, 0xB9, 0xA3, 0xFF  
     };
     for (int i = 0; i < 25; i++) {
         POut(CRTC_INDEX, i);
@@ -110,26 +109,11 @@ U0 VgaGraphicsSet() {
     POut(ATTRIBUTE_INDEX, 0x20);
 
     // POut(CRTC_INDEX, 0x09); Setuped in crtc table
-    // POut(CRTC_DATA, 0xDF);
-
-    // POut(CRTC_INDEX, 0x12);
-    // POut(CRTC_DATA, 0xC7);
-
-    // POut(CRTC_INDEX, 0x0C);
-    // POut(CRTC_DATA, 0x00);
-    
-    // POut(CRTC_INDEX, 0x0D);
-    // POut(CRTC_DATA, 0x00);
-
-    // POut(CRTC_INDEX, 0x07);
-    // POut(CRTC_DATA, PIn(CRTC_DATA) | 0x40);
-
-	// POut(CRTC_INDEX, 0x14);
-	// POut(CRTC_DATA, 0x40);
-
-	for (U32 i = 0; i < 64000; ++i) {
-		((U8*)0xA0000)[i] = (i) % 16;
-	}
+    for (U32 j = 0; 0; ++j) {
+        for (U32 i = 0; i < 64000; ++i) {
+            ((U8*)0xA0000)[i] = (i / 320 + j) % 16;
+        }
+    }
 }
 
 U0 VgaBlinkingSet(Bool state) {

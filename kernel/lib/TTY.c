@@ -7,43 +7,7 @@
 U32 TTYCursor = 0;
 VgaColor TTYlfg = White;
 VgaColor TTYlbg = Black;
-U8 TTYFont[256][3*5] = {
-    ['0'] = {
-        0,1,0,
-        1,0,1,
-        1,1,1,
-        1,0,1,
-        0,1,0,
-    },
-    ['1'] = {
-        0,0,1,
-        0,1,1,
-        0,0,1,
-        0,0,1,
-        0,0,1,
-    },
-    ['2'] = {
-        0,1,0,
-        1,0,1,
-        0,0,1,
-        0,1,0,
-        1,1,1,
-    },
-    ['3'] = {
-        1,1,0,
-        0,0,1,
-        1,1,0,
-        0,0,1,
-        1,1,0,
-    },
-    ['A'] = {
-        0,1,0,
-        1,0,1,
-        1,1,1,
-        1,0,1,
-        1,0,1,
-    },
-};
+
 U0 TTYClear() {
     for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
         vga[i] = 0x0000;
@@ -297,6 +261,12 @@ U0 PrintF(String format, ...) {
         ++format;
     }
     va_end(args);
+}
+U0 TTYPrintG(Char c) {
+    if (c >= 'a' && c <= 'z') {
+        c -= 'a'-'A';
+    }
+    VRMDrawSprite(vec2((TTYCursor%(320/4))*4, (TTYCursor/(320/4))*6+1), vec2(3, 5), TTYlfg, TTYlbg, TTYFont[c]);
 }
 U0 TTYPrint(String s) {
     for (U32 i = 0; s[i]; i++) {

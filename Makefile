@@ -10,7 +10,7 @@ boot:
 	cd kbootloader; nasm -f bin boot.asm -o boot
 	cat bootloader/main kbootloader/boot > bootsegment
 kernel:
-	cd kernel && python3 build.py && truncate -s 53248 kernel.b  # 52 KB
+	cd kernel && python3 build.py && truncate -s 65536 kernel.b  # 64 KB
 userdata_dump:
 	@if [ -e drive ]; then \
 		dd if=drive of=userdata bs=512 skip=3 count=16; \

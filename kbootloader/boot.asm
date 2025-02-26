@@ -10,7 +10,7 @@ mov al, 'T'
 int 0x10
 
 mov ah, 2  ; read
-mov al, 102 ; 104 sector
+mov al, 128 ; 128 sector
 mov ch, 0  ; cylinder
 mov cl, 20 ; first sector
 mov dh, 0  ; head
@@ -47,7 +47,7 @@ main32:
 
 [bits 32]
 kernel_start:
-    mov ecx, 0xD000
+    mov ecx, 0x10000
     mov esi, 0x90000
     mov edi, 0x300000
     rep movsb

@@ -1,16 +1,24 @@
 #include <lib/Graphics.h>
-U8 *vrm = (U8*)0xA0000;
-
+U8 GCursor[] = {
+    0,0,2,2,2,2,
+    0,1,0,2,2,2,
+    0,1,1,0,2,2,
+    0,1,1,1,0,2,
+    0,1,1,0,2,2,
+    0,1,0,0,2,2,
+    0,0,2,2,0,2,
+    2,2,2,2,2,0,
+};
 Vec2 vec2(I32 x, I32 y)
 {
     return (Vec2) {.x = x, .y = y};
 }
 U0 VRMPSet(U16 x, U16 y, U8 c) {
     if (x >= 320 || y >= 200) return;
-    vrm[y * 320 + x] = c;
+    VRM[y * 320 + x] = c;
 }
 U0 VRMClear(U8 c) {
-    MemSet(vrm, c, 320*200);
+    MemSet(VRM, c, 320*200);
 }
 U0 VRMDrawLine(Vec2 start, Vec2 end, U8 c) {
     I32 dx = abs(end.x - start.x);
@@ -37,10 +45,11 @@ U0 VRMDrawRect(Vec2 start, Vec2 end, U8 c) {
         }
     }
 }
-U0 VRMDrawSprite(Vec2 start, Vec2 size, U8 *sprite) {
-    for (U16 x = 0; x < size.x; ++x) {
-        for (U16 y = 0; y < size.y; ++y) {
-            VRMPSet(x + start.x, y + start.y, sprite[x + y * size.x]);
+U0 VRMDrawSprite(Vec2 start, Vec2 size, U8 c, U8 b, U8 *sprite) {
+    for (U32 y = 0; y < size.y; ++y) {
+        for (U32 x = 0; x < size.x; ++x) { U8 s = sprite[x + y * size.x];
+            if (s == 2) continue;
+            VRMPSet(x + start.x, y + start.y, s == 1 ? c: b);
         }
     }
 }

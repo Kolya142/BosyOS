@@ -1,11 +1,11 @@
 #pragma once
 #include <drivers/vga.h>
 #include <lib/MemLib.h>
-
-extern U8 *vrm;
-
+// Dont Touch this        vvvvv
+#define VRM ((U8*)0xA0000 - 308)
 #define abs(x) ((x) < 0 ? -(x) : (x))
 
+extern U8 GCursor[]; // Graphics Cursor
 
 // Vga gRaphics Mode
 
@@ -19,4 +19,4 @@ U0 VRMPSet(U16 x, U16 y, U8 c);
 U0 VRMClear(U8 c);
 U0 VRMDrawLine(Vec2 start, Vec2 end, U8 c);
 U0 VRMDrawRect(Vec2 start, Vec2 end, U8 c);
-U0 VRMDrawSprite(Vec2 start, Vec2 size, U8 *sprite);
+U0 VRMDrawSprite(Vec2 start, Vec2 size, U8 c, U8 b, U8 *sprite);

@@ -586,7 +586,7 @@ U0 CBoot() {
 U32 LazyCalc(U32 x) {
     return !(x & 1) ? (x / 2) : (x * 3 + 1);
 }
-
+U32 testvar = 0xAB0BA;
 U0 termrun(const String cmd) {
     if (!StrCmp(cmd, "help")) {
         CHelp();
@@ -595,11 +595,21 @@ U0 termrun(const String cmd) {
         CCls();
     }
     else if (!StrCmp(cmd, "vrm")) {
+        // PrintF("%p %p\n", GCursor, testvar);
+        // for (U32 y = 0; y < 8; ++y) {
+        //     for (U32 x = 0; x < 6; ++x) {
+        //         PrintF("%c", ".#"[GCursor[x+y*6] != 2]);
+        //     }
+        //     PrintF("\n");
+        // }
+        // for(;;);
         VgaGraphicsSet();
         VRMClear(Purple);
 
         Bool state[200] = {0};
         state[0] = True;
+        Vec2 cur = vec2(30, 30);
+        U8 *buf = MAlloc(320*200);
         for (;!KBState.keys['\x1b'];) {
             for (U32 i = 200; i > 0; --i) {
                 if (state[i-1]) {
@@ -608,18 +618,37 @@ U0 termrun(const String cmd) {
             }
             U32 count = 0;
             for (U32 j = 0; j < 200; ++j) {
-                count += state[j];
-                VRMPSet(0, 200 - j, state[j] ? 0xDB : Black);
+                count += (state[j]);
+                buf[0 + (200 - j) * 320] = state[j] ? White : Black;
                 for (U32 i = 320; i > 0; --i) {
-                    VRMPSet(i, 200 - j, vrm[i - 1 + (200 - j) * 320] & 0xff);
+                    buf[i + (200 - j) * 320] = buf[i - 1 + (200 - j) * 320] & 0xff;
                 }
             }
+
+            MemCpy(VRM, buf, 320*200);
+
+            VRMDrawSprite(cur, vec2(6, 8), Black, Purple, GCursor);
+
+            String text = "The Quick Brown Fox Jumps Over a Lazy Dog";
+            TTYCursor = 0;
+            for (U32 i = 0; i < 41; ++i) {
+                Char c = text[i];
+                TTYPrintG(c);
+                ++TTYCursor;
+            }
+
+            if (KBState.keys['w']) --cur.y;
+            if (KBState.keys['a']) --cur.x;
+            if (KBState.keys['s']) ++cur.y;
+            if (KBState.keys['d']) ++cur.x;
+
             BeepSPC(count + 30, 30);
             BeepSPC(count + 50, 10);
             BeepSPC(count + 70, 5);            
             SleepM(20);
             KDogWatchPTick(0);
-    }
+        }
+        for(;;);
     }
     else if (!StrCmp(cmd, "boot")) {
         CBoot();

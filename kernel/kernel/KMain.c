@@ -181,7 +181,6 @@ U0 CRand() {
             TTYCursor = c;
         SleepM(1000/120); // 120gh
     }
-    KDogWatchPStart(0, "Main loop");
 }
 U0 CGen() {
     Bool lk = False;
@@ -365,8 +364,11 @@ U0 CSnake() {
     U32 apple = RandomU() % 1300 + 500;
     U32 score = 0;
     U8 dir = 4;
-    for (U32 i = 0; i < 2000; ++i) {
-        vga[i] = 0xF7B0;
+    TTYCursor = 0;
+    TTYlbg = White;
+    for (U32 i = 0; i < TTYWidth * TTYHeight; i++) {
+        TTYPuter(' ');
+        ++TTYCursor;
     }
     Bool game = True;
     while (game) {
@@ -392,7 +394,8 @@ U0 CSnake() {
         }
 
         for (U8 i = 4; i >= 1; --i) {
-            vga[tail[i]] = 0xF7B0;
+            TTYCursor = tail[i];
+            TTYRawPrint(' ', White, White);
             tail[i] = tail[i-1];
         }
         tail[0] = snake;
@@ -406,16 +409,16 @@ U0 CSnake() {
             BeepSPC(50, 70);
         }
 
-        if (dir == 1      && ((snake - 80) < 55555)) {
-            snake -= 80;
+        if (dir == 1      && ((snake - TTYWidth) < 0xFFFFFFF)) {
+            snake -= TTYWidth;
         }
-        else if (dir == 2 && (snake - 1) % 80 != 79) {
+        else if (dir == 2 && (snake - 1) % TTYWidth != TTYWidth - 1) {
             snake -= 1;
         }
-        else if (dir == 3 && ((snake + 80) < 2000))  {
-            snake += 80;
+        else if (dir == 3 && ((snake + TTYWidth) < TTYWidth * TTYHeight) )  {
+            snake += TTYWidth;
         }
-        else if (dir == 4 && ((snake +1) % 80 != 0)) {
+        else if (dir == 4 && ((snake + 1) % TTYWidth != 0)) {
             snake += 1;
         }
 
@@ -444,33 +447,34 @@ U0 CSnake() {
         BeepSPC(30, 20);
         SleepM(100);
     }
-    KDogWatchPStart(0, "Main loop");
+    TTYUPrint("$!F$*0");
 }
 U0 CPong() {
     KDogWatchPEnd(0);
     I32 p1 = 10;
     I32 p2 = 10;
-    I32 ballx = RandomU() % 10 + 40;
+    I32 ballx = RandomU() % 10 + TTYWidth/2;
     I32 bally = RandomU() % 10 + 10;
     I32 ballvx = (RandomU() & 1) ? 1 : -1;
     I32 ballvy = (RandomU() & 1) ? 1 : -1;
     Bool game = True;
     while (game) {
-        for (U32 i = 0; i < 2000; ++i) {
-            vga[i] = 0xF7B0;
-        }
+        TTYClear();
         
         for (U32 y = p1 - 3; y <= p1 + 3; ++y) {
-            vga[y * 80 + 0] = 0x00DB;
+            TTYCursor = y * TTYWidth + 0;
+            TTYRawPrint('#', White, Black);
         }
         for (U32 y = p2 - 3; y <= p2 + 3; ++y) {
-            vga[y * 80 + 79] = 0x00DB;
+            TTYCursor = y * TTYWidth + TTYWidth - 1;
+            TTYRawPrint('#', White, Black);
         }
-        vga[ballx + bally * 80] = 0x09DB;
+        TTYCursor = ballx + bally * TTYWidth;
+        TTYRawPrint('@', White, Black);
         ballx += ballvx;
         bally += ballvy;
 
-        if (bally == 24 || bally == 0) {
+        if (bally == TTYHeight-1 || bally == 0) {
             ballvy = -ballvy;
             BeepSPC(45, 30);
         }
@@ -478,7 +482,7 @@ U0 CPong() {
             ballvx = -ballvx;
             BeepSPC(45, 30);
         }
-        if (ballx == 78 && bally >= p2 - 3 && bally <= p2 + 3) {
+        if (ballx == TTYWidth-1 && bally >= p2 - 3 && bally <= p2 + 3) {
             ballvx = -ballvx;
             BeepSPC(45, 30);
         }
@@ -488,12 +492,12 @@ U0 CPong() {
         if (KBState.keys['s']) {
             ++p1;
         }
-        p2 += (bally - p2) / 5;
-        if (ballx == 79 || ballx == 0) {
-            ballx = 4;
-            bally = 4;
-            ballvx = 1;
-            ballvy = 1;
+        p2 += (bally - p2) / 3;
+        if (ballx == TTYWidth-1 || ballx == 0) {
+            ballx = RandomU() % 10 + TTYWidth/2;
+            bally = RandomU() % 10 + 10;
+            ballvx = (RandomU() & 1) ? 1 : -1;
+            ballvy = (RandomU() & 1) ? 1 : -1;
             BeepSPC(25, 30);
         }
         if (KBState.keys['\x1b']) {
@@ -501,7 +505,6 @@ U0 CPong() {
         }
         SleepM(100);
     }
-    KDogWatchPStart(0, "Main loop");
 }
 U0 BFInterpret(const String code) {
     U32 stack[32] = {0};
@@ -575,7 +578,6 @@ U0 CHz() {
         if (KBState.keys['\x1b']) 
             break;
     }
-    KDogWatchPPlay(0);
 }
 U0 CBoot() {
     Ptr data = MAlloc(48 * 256);
@@ -605,6 +607,9 @@ U0 termrun(const String cmd) {
         // for(;;);
         VgaGraphicsSet();
         VRMClear(Purple);
+        TTYPuter = TTYPutG;
+        TTYWidth = 320  / 6;
+        TTYHeight = 200 / 6;
 
         Bool state[200] = {0};
         state[0] = True;
@@ -629,13 +634,9 @@ U0 termrun(const String cmd) {
 
             VRMDrawSprite(cur, vec2(6, 8), Black, Purple, GCursor);
 
-            String text = "The Quick Brown Fox Jumps Over a Lazy Dog";
             TTYCursor = 0;
-            for (U32 i = 0; i < 41; ++i) {
-                Char c = text[i];
-                TTYPrintG(c);
-                ++TTYCursor;
-            }
+            String text = "The Quick Brown Fox Jumps Over a Lazy Dog0123456789:/.,;`!@ABCDEF HEY Hello, world!";
+            PrintF("%s", text);
 
             if (KBState.keys['w']) --cur.y;
             if (KBState.keys['a']) --cur.x;
@@ -648,7 +649,6 @@ U0 termrun(const String cmd) {
             SleepM(20);
             KDogWatchPTick(0);
         }
-        for(;;);
     }
     else if (!StrCmp(cmd, "boot")) {
         CBoot();

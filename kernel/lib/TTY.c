@@ -7,25 +7,30 @@
 U32 TTYCursor = 0;
 VgaColor TTYlfg = White;
 VgaColor TTYlbg = Black;
+U0(*TTYPuter)(Char) = TTYPutT;
+U32 TTYWidth  = 80;
+U32 TTYHeight = 25;
 
 U0 TTYClear() {
-    for (U32 i = 0; i < VGAWIDTH * VGAHEIGHT; i++) {
-        vga[i] = 0x0000;
+    TTYCursor = 0;
+    for (U32 i = 0; i < TTYWidth * TTYHeight; i++) {
+        TTYPuter(' ');
+        ++TTYCursor;
     }
 }
 Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
     if (c == '\n') {
-        TTYCursor = TTYCursor + VGAWIDTH - TTYCursor % VGAWIDTH;
+        TTYCursor = TTYCursor + TTYWidth - TTYCursor % TTYWidth;
     }
     else if (c == '\r') {
-        TTYCursor = TTYCursor + VGAWIDTH;
+        TTYCursor = TTYCursor + TTYWidth;
     }
     else if (c == '\t') {
         TTYCursor += 4 - TTYCursor % 4;
     }
     else if (c == '\b') {
         TTYCursor--;
-        vga[TTYCursor] = 0x0000;
+        TTYPuter(' ');
     }
     else if (c == (AsciiP)ASCIIPLeft) {
         TTYCursor--;
@@ -34,20 +39,26 @@ Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
         TTYCursor++;
     }
     else if (c == (AsciiP)ASCIIPUp) {
-        TTYCursor -= VGAWIDTH;
+        TTYCursor -= TTYWidth;
     }
     else if (c == (AsciiP)ASCIIPDown) {
-        TTYCursor += VGAWIDTH;
+        TTYCursor += TTYWidth;
     }
     else {
-        vga[TTYCursor] = (U16)((VgaColorGet(fg, bg)<<8) | c);
+        U8 bg1 = TTYlbg;
+        U8 fg1 = TTYlfg;
+        TTYlbg = bg;
+        TTYlfg = fg;
+        TTYPuter(c);
+        TTYlbg = bg1;
+        TTYlfg = fg1;
         TTYCursor++;
     }
-    if (TTYCursor >= VGAWIDTH * VGAHEIGHT) {
-        TTYCursor = VGAWIDTH * VGAHEIGHT - VGAWIDTH;
+    if (TTYCursor >= TTYWidth * TTYHeight) {
+        TTYCursor = TTYWidth * TTYHeight - TTYWidth;
         return False;
     }
-    VgaCursorSet(TTYCursor%VGAWIDTH, TTYCursor/VGAWIDTH);
+    VgaCursorSet(TTYCursor%TTYWidth, TTYCursor/TTYWidth);
     return True;
 }
 U0 TTYPrintC(Char c)
@@ -262,11 +273,15 @@ U0 PrintF(String format, ...) {
     }
     va_end(args);
 }
-U0 TTYPrintG(Char c) {
-    if (c >= 'a' && c <= 'z') {
-        c -= 'a'-'A';
-    }
-    VRMDrawSprite(vec2((TTYCursor%(320/4))*4, (TTYCursor/(320/4))*6+1), vec2(3, 5), TTYlfg, TTYlbg, TTYFont[c]);
+U0 TTYPutG(Char c) {
+    U32 cur = TTYCursor;
+    U32 x = (cur % TTYWidth) * 6;
+    U32 y = (cur / TTYWidth) * 6 + 1;
+    VRMDrawRect(vec2(x, y), vec2(x+6, y+6), TTYlbg);
+    VRMDrawSprite(vec2(x, y), vec2(5, 5), TTYlfg, TTYlbg, TTYFont[c]);
+}
+U0 TTYPutT(Char c) {
+    vga[TTYCursor] = ((((U16)TTYlbg << 4) | (U16)TTYlfg) << 8) | (U16)c;
 }
 U0 TTYPrint(String s) {
     for (U32 i = 0; s[i]; i++) {

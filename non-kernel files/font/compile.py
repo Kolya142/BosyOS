@@ -1,5 +1,5 @@
 form = """
-unsigned char TTYFont[256][3*5] = { // Reference: https://images.all-free-download.com/images/graphiclarge/pixelzim_3x5_6913975.jpg
+unsigned char TTYFont[256][5*5] = { // Reference: https://images.all-free-download.com/images/graphiclarge/pixelzim_3x5_6913975.jpg
 $$
 };
 """

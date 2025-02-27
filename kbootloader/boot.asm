@@ -12,7 +12,7 @@ int 0x10
 mov ah, 2  ; read
 mov al, 128 ; 128 sector
 mov ch, 0  ; cylinder
-mov cl, 20 ; first sector
+mov cl, 36 ; first sector
 mov dh, 0  ; head
 mov dl, byte [BOOTDRIVE]
 mov bx, 0x9000

@@ -30,6 +30,7 @@ typedef union {
     I32 i32;
 } U32i;
 
+extern Bool Debugging;
 
 #define True 1
 #define False 0

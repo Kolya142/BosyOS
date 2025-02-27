@@ -96,7 +96,7 @@ U0 CHelp() {
         "$!5mus pong testufs testheap$!F\n"
         "$!6testbfs ls cat fwrite$!F\n"
         "$!7touch fclean collects mouse$!F\n"
-        "$!8boot vrm$!F"
+        "$!8boot vrm rand1 stat pass deb$!F"
         "$!5Features$!F:\n"
         "All Commands: esc-exit\n"
         "$!Asound$!F - $!Balt$!F-play, $!Blshift$!F-save, $!Brshift$!F-load\n"
@@ -288,7 +288,7 @@ U0 CText() {
         VgaCursorSet(TTYCursor, 0);
     }
 }
-
+Bool Debugging = True;
 U0 CSound() {
     static const U8 KeyToNote[128] = {
         40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
@@ -580,10 +580,14 @@ U0 CHz() {
     }
 }
 U0 CBoot() {
-    Ptr data = MAlloc(48 * 256);
+    Ptr data = MAlloc(48 * 512);
     for (U32 i = 0; i < 48; ++i)
-        ATARead(data+i, 133+i, 1);
-    PrintF("loaded at %p, data: %C", data, ((U8*)data)[0]);
+        ATARead(data+i*512, 163+i, 1);
+    PrintF("loaded at %p\n", data);
+    PrintF("Memory copied, first bytes: %s\n", data); 
+    BsfApp app = BsfFromBytes(data);
+    Bool code = BsfExec(&app);
+    PrintF("Exit code: %B", code);
 }
 U32 LazyCalc(U32 x) {
     return !(x & 1) ? (x / 2) : (x * 3 + 1);
@@ -595,6 +599,45 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "cls")) {
         CCls();
+    }
+    else if (!StrCmp(cmd, "deb")) {
+        Debugging = !Debugging;
+    }
+    else if (!StrCmp(cmd, "stat")) {
+        PrintF("Width: %d, Height: %d", TTYWidth, TTYHeight);
+    }
+    else if (!StrCmp(cmd, "pass")) {
+        PrintF("Enter password: $!A\\$$!0");
+        VgaCursorDisable();
+        Char buf[20] = {0};
+        KBRead(buf, 20);
+        VgaCursorEnable();
+        PrintF("$!Fpassword: %s", buf);
+    }
+    else if (!StrCmp(cmd, "rand1")) {
+        CCls();
+        Char b1[9] = {0};
+        Char b2[9] = {0};
+        Char b3[9] = {0};
+
+        WordGenS(b1, 9);
+        WordGenS(b2, 9);
+        WordGenS(b3, 9);
+
+        for (;!KBState.keys['\x1b'];) {
+            TTYCursor -= TTYCursor % TTYWidth;
+            PrintF("%s and %s and %s - ", b1, b2, b3);
+            for (U32 i = 0; i < 8; ++i) {
+                BeepSPC(b1[i]+20, RandomU()%30);
+                BeepSPC(b2[i]+30, RandomU()%30);
+                BeepSPC(b3[i]+40, RandomU()%30);
+                PrintF("%c%c%c", b1[i], b2[i], b3[i]);
+            }
+            WordGenS(b1, 9);
+            WordGenS(b2, 9);
+            WordGenS(b3, 9);
+            SleepM(100);
+        }
     }
     else if (!StrCmp(cmd, "vrm")) {
         // PrintF("%p %p\n", GCursor, testvar);

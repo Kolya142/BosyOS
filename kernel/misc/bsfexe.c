@@ -9,18 +9,36 @@ BsfApp BsfFromBytes(Byte *app) {
     bapp.data = app + sizeof(BsfHeader);
     return bapp;
 }
+static volatile U32 esp, ebp;
 Bool BsfExec(BsfApp *app) {
     BsfHeader *head = &app->header;
     if (head->Magic != 0x59534F42) { // BOSY
         return False;
     }
 
+    U8 *bossec = app->data + head->CodeS;
+    BsfMeta *meta = (BsfMeta*)bossec;
+    while (meta->meta1 != 0 && meta->meta2 != 1 && (U32)(meta) < (U32)(head->BosSec+bossec)) {
+        meta = &meta[1];
+    }
+    if (meta->meta1 != 0 || meta->meta2 != 1 || (U32)(meta) >= (U32)(head->BosSec+bossec)) {
+        return False;
+    }
+
     MemCpy((Ptr)0x100000, app->data, head->CodeS);
     // TTYUPrintHex(head->CodeS);
     // TTYUPrint((Ptr)0x100000);
-
-    U0(*entry)() = (U0(*)())0x100000;
-    entry();
+    PrintF("%x\n", meta->func);
+    asmV(
+        "movl %%esp, %1\n"
+        "movl %%ebp, %2\n"
+        "movl %%esp, %%ebp\n"
+        "call *%0\n"
+        "movl %2, %%ebp\n"
+        "movl %1, %%esp"
+    :
+    : "r"(meta->func), "m"(esp), "m"(ebp)
+    : "memory", "cc");
 
     // GDTSet(0x100000, 0xFFFFFFFF);
     // GDTLoad();

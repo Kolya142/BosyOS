@@ -2,7 +2,7 @@
 #include <drivers/ide.h>
 #include <lib/Types.h>
 
-#define DAT_SECTORS 16
+#define DAT_SECTORS 32
 
 typedef struct DATHeader {
     U16 magic;

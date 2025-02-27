@@ -10,6 +10,7 @@
 #include <drivers/pit.h>
 
 // Miscellaneous
+#include <misc/driverreg.h>
 #include <misc/syscall.h>
 #include <misc/wordgen.h>
 #include <misc/vfiles.h>
@@ -72,6 +73,7 @@ __attribute__((naked)) U0 KernelMain() {
     VFilesInit();
     DATInit();
     BOTFSInit();
+
     SleepM(1000);
     TTYClear();
     TTYCursor = 0;

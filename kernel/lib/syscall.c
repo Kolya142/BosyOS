@@ -2,6 +2,7 @@
 #include <kernel/KPanic.h>
 #include <misc/syscall.h>
 #include <lib/MemLib.h>
+#include <lib/TTY.h>
 #include <arch/idt.h>
 #include <arch/io.h>
 
@@ -11,14 +12,14 @@ U0 SysCallSet(Ptr func, U8 addr) {
 }
 INT_DEF(SysCallInt) {
     INT_START;
-    U8 call;
-    asmV("movb %%al, %0": "=r"(call));
+    U8 call = regs->eax;
     if (!SysCallT[call]) {
         KDogWatchLog("Invalid SysCall", False);
+        PrintF("Syscall %p %p %p\n", regs->eax, regs->esi, regs->edi);
         goto end;
     }
-    U0 (*sys)() = SysCallT[call];
-    sys();
+    U0 (*sys)(INTRegs *regs) = SysCallT[call];
+    sys(regs);
     end:
     INT_RETURN;
 }

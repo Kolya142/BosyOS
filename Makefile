@@ -48,3 +48,5 @@ load: img
 loadfromrelease:
 	cp release/* .
 releaserun: loadfromrelease run
+driveget:
+	curl https://raw.githubusercontent.com/Kolya142/BosyOS/refs/heads/main/release/drive -o drive

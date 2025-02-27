@@ -25,8 +25,8 @@ U0 IDTInit();
 #define INT_DEF(fn) \
     __attribute__((naked)) U0 fn() { \
         asmv("cli\n" \
-            "pusha\n" \
             "pushf\n" \
+            "pusha\n" \
                        \
             "movl %esp, %eax\n" \
             "pushl %eax\n" \
@@ -35,9 +35,9 @@ U0 IDTInit();
                             \
             "movb $0x20, %al;\n" \
             "outb %al, $0x20\n" \
-                                \
-            "popf\n" \
+            \
             "popa\n" \
+            "popf\n" \
             "sti\n" \
             "iret\n"); \
     } \

@@ -1,7 +1,8 @@
-#include <drivers/pit.h>
 #include <kernel/KDogWatch.h>
-#include <lib/TTY.h>
+#include <misc/driverreg.h>
+#include <drivers/pit.h>
 #include <lib/Time.h>
+#include <lib/TTY.h>
 
 volatile U32 PITTime = 0;
 volatile U32 BosyTime = 0;
@@ -32,11 +33,11 @@ INT_DEF(PITHandler) {
             U32 c = TTYCursor;
             U8 fg0 = TTYlfg;
             U8 bg0 = TTYlbg;
-            TTYCursor = 80*1 - 5 - 8 - 1;
+            TTYCursor = TTYWidth*1 - 5 - 8 - 1;
             PrintF("$!0$*FEIP: %x", regs->eip);
-            TTYCursor = 80*2 - 5 - 8 - 1;
+            TTYCursor = TTYWidth*2 - 5 - 8 - 1;
             PrintF("$!0$*FESP: %x", regs->useresp);
-            TTYCursor = 80*3 - 5 - 8 - 1;
+            TTYCursor = TTYWidth*3 - 5 - 8 - 1;
             PrintF("$!0$*FTim: %x", BosyTime);
             TTYlbg = bg0;
             TTYlfg = fg0;
@@ -46,8 +47,24 @@ INT_DEF(PITHandler) {
     }
 }
 
+static U0 PITDriverHandler(U32 id, U32 *value) {
+    switch (id)
+    {
+    case 0:
+        *value = PITTime;
+        break;
+    case 1:
+        *value = BosyTime;
+        break;
+    default:
+        break;
+    }
+}
+
 U0 PITInit() {
     U16 div = PIT_FREQ / 1900;
+
+    DriverReg(0x09ca4b4d, 0x5fa68611, PITDriverHandler);
 
     POut(0x43, 0x36);
     POut(0x40, div & 0xff);

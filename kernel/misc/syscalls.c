@@ -1,46 +1,107 @@
 #include <kernel/KDogWatch.h>
 #include <drivers/keyboard.h>
+#include <misc/driverreg.h>
 #include <kernel/KPanic.h>
 #include <misc/syscall.h>
 #include <arch/getreg.h>
+#include <lib/Random.h>
 #include <lib/MemLib.h>
 #include <arch/beep.h>
-#include <lib/TTY.h>
+#include <arch/idt.h>
 #include <arch/cpu.h>
+#include <arch/sys.h>
+#include <lib/TTY.h>
 #include <arch/io.h>
 
-U0 SCPrint() {
-    U32 addr = RegGet(REG_ESI);
+U0 SCPrint(INTRegs *regs) {
+    U32 addr = regs->esi;
     TTYUPrint((Ptr)addr);
 }
-U0 SCPrintH() {
-    U32 data = RegGet(REG_ESI);
+U0 SCPrintH(INTRegs *regs) {
+    U32 data = regs->esi;
     TTYUPrintHex(data);
 }
-U0 SCBeep() {
-    U16 data = RegGet(REG_ESI);
+U0 SCBeep(INTRegs *regs) {
+    asmv("sti");
+    U16 data = regs->esi;
     Beep(data);
+    asmv("cli");
 }
-U0 SCBeepHz() {
-    U16 data1 = RegGet(REG_ESI);
-    U16 data2 = RegGet(REG_EDI);
+U0 SCBeepHz(INTRegs *regs) {
+    asmv("sti");
+    U16 data1 = regs->esi;
+    U16 data2 = regs->edi;
     BeepHz(data1, data2);
+    asmv("cli");
 }
-U0 SCBeepSPC() {
-    U16 data1 = RegGet(REG_ESI);
-    U16 data2 = RegGet(REG_EDI);
+U0 SCBeepSPC(INTRegs *regs) {
+    asmv("sti");
+    U16 data1 = regs->esi;
+    U16 data2 = regs->edi;
     BeepSPC(data1, data2);
+    asmv("cli");
 }
-U0 SCSleep() {
-    U16 data = RegGet(REG_ESI);
+U0 SCSleep(INTRegs *regs) {
+    asmv("sti");
+    U16 data = regs->esi;
     SleepM(data);
+    asmv("cli");
 }
-U0 SCKey() {
-    asmV("movb %0, %%al" :: "r"(KBState.Key));
+U0 SCKey(INTRegs *regs) {
+    regs->eax = KBState.Key;
 }
-U0 SCPutC() {
-    U8 c = RegGet(REG_ESI);
+U0 SCPutC(INTRegs *regs) {
+    U8 c = regs->esi;
     TTYUPrintC(c);
+}
+U0 SCMAlloc(INTRegs *regs) {
+    regs->eax = (U32)MAlloc(regs->esi);
+}
+U0 SCFree(INTRegs *regs) {
+    MFree((Ptr)regs->esi);
+}
+U0 SCTime(INTRegs *regs) {
+    U32 time;
+    DriverCall(0x09ca4b4d, 0x5fa68611, 1, &time);
+    regs->eax = time;
+}
+U0 SCTSet(INTRegs *regs) {
+    U32 c = TTYCursor;
+    TTYCursor = regs->esi + regs->edi * TTYWidth;
+    TTYPuter(regs->ebx);
+    TTYCursor = c;
+}
+U0 SCTGet(INTRegs *regs) {
+    regs->eax = vga[regs->esi + regs->edi * TTYWidth] & 0xff;
+}
+U0 SCRandomU(INTRegs *regs) {
+    regs->eax = RandomU();
+}
+U0 SCUpTime(INTRegs *regs) {
+    U32 time;
+    DriverCall(0x09ca4b4d, 0x5fa68611, 0, &time);
+    regs->eax = time;
+}
+U0 SCKeysGet(INTRegs *regs) {
+    U8 *buf = (U8*)regs->esi;
+    if (!buf)
+        return;
+    MemSet(buf, 0, 32);
+    for (U32 i = 0; i < 32; ++i) {
+        for (U32 j = 0; j < 8; ++j) {
+            if (KBState.keys[i*8+j])
+                buf[i] |= (1 << j);
+        }
+    }
+}
+U0 SCReboot() {
+    PowerReboot();
+}
+U0 SCPowerOff() {
+    PowerOff();
+}
+U0 SCDriverACC(INTRegs *regs) {
+    DriverCall(regs->esi, regs->edi, regs->ebx, (Ptr)regs->edx);
 }
 
 U0 SysCallSetup() {
@@ -52,4 +113,16 @@ U0 SysCallSetup() {
     SysCallSet(SCPutC, 6);
     SysCallSet(SCBeepHz, 7);
     SysCallSet(SCBeepSPC, 8);
+
+    SysCallSet(SCMAlloc, 9);
+    SysCallSet(SCFree, 0xA);
+    SysCallSet(SCTime, 0xB);
+    SysCallSet(SCTSet, 0xC);
+    SysCallSet(SCTGet, 0xD);
+    SysCallSet(SCRandomU, 0xE);
+    SysCallSet(SCUpTime, 0xF);
+    SysCallSet(SCKeysGet, 0x10);
+    SysCallSet(SCReboot, 0x11);
+    SysCallSet(SCPowerOff, 0x12);
+    SysCallSet(SCDriverACC, 0x13);
 }

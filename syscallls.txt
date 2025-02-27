@@ -1,0 +1,19 @@
+1 U0 print(const String str); // Input string in mezex format
+2 U0 printhex(U32 num);
+3 U0 beep(U16 dur);
+4 U0 sleep(U32 dur);
+5 U8 getkey();
+6 U0 putc(Char c);
+7 U0 beephz(U16 hz, U16 dur);
+8 U0 beepspc(U8 tone, U16 dur);
+9 Ptr malloc(U32 size);
+a U0 free(Ptr ptr);
+b U32 time(); // Return time in bosy-time format 
+c U0 tset(U16 x, U16 y, U8 c);
+d U8 tget(U16 x, U16 y); // MAKEME
+e U32 randomu();
+f U32 uptime();
+10 U0 keysget(U8 *arr); // Required bitmap with size 32 byte
+11 U0 reboot();
+12 U0 poweroff();
+13 U0 driveracc(U32 d1, U32 d2, U32 id, U32 *value);

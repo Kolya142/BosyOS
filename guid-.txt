@@ -3,5 +3,3 @@ changes:
 bits - from 128 to 64
 hex - from 00000000-0000-0000-0000-000000000000 to 00000000-00000000
 generator - guid8.c
-uses:
-Keyboard driver - ab670b1e-826d8e23

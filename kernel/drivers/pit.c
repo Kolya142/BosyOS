@@ -1,6 +1,8 @@
 #include <kernel/KDogWatch.h>
 #include <misc/driverreg.h>
+#include <kernel/KTasks.h>
 #include <drivers/pit.h>
+#include <lib/MemLib.h>
 #include <lib/Time.h>
 #include <lib/TTY.h>
 
@@ -12,7 +14,7 @@ INT_DEF(PITHandler) {
     static volatile U8 timer = 0;
     PITTime++;
     timer++;
-    if (!timer) {
+    if (timer % 10 == 0) {
         KDogWatchTick();
         RTCUpdate();
         U32 days = 0;
@@ -36,14 +38,24 @@ INT_DEF(PITHandler) {
             TTYCursor = TTYWidth*1 - 5 - 8 - 1;
             PrintF("$!0$*FEIP: %x", regs->eip);
             TTYCursor = TTYWidth*2 - 5 - 8 - 1;
-            PrintF("$!0$*FESP: %x", regs->useresp);
+            PrintF("ESP: %x", regs->useresp);
             TTYCursor = TTYWidth*3 - 5 - 8 - 1;
-            PrintF("$!0$*FTim: %x", BosyTime);
+            PrintF("Tim: %x", BosyTime);
+            TTYCursor = TTYWidth*4 - 5 - 8 - 1;
+            PrintF("mic: %x", TaskTail->regs.eip);
             TTYlbg = bg0;
             TTYlfg = fg0;
             TTYCursor = c;
             VgaCursorEnable();
         }
+        if (TaskTail && TaskHead && TaskingIs) {
+            MemCpy(&TaskTail->regs, regs, sizeof(INTRegs));
+            TaskNext();
+            if (TaskTail) {
+                MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
+                TaskingIs = True;
+            }
+        }        
     }
 }
 

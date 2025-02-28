@@ -1,35 +1,40 @@
 import os
 import sys
+import multiprocessing
+from pathlib import Path
 
 def run_command(command):
     result = os.system(command)
     if result:
         print(f'failed: {command}')
         sys.exit(1)
-        os._exit(1)
-        exit
 
-build_dir = "build"
-os.makedirs(build_dir, exist_ok=True)
-os.system("rm build/*")
+project_root = Path(".").resolve()
+build_dir = project_root / "build"
+build_dir.mkdir(exist_ok=True)
 
 print("Build kernel")
-project_root = os.path.abspath(".")
-cc = f"gcc \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -c" # -Wall -Wextra -c"
+cc = f"ccache gcc \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -mhard-float -mfpmath=387 -c" # -Wall -Wextra -c"
 print(f"Build command: {cc}")
+tasks = []
 for root, _, files in os.walk("."):
+    if "build" in root:
+        continue
     for file in files:
+        source_file = Path(root, file)
+        output_file = Path(build_dir, (root.replace('/', '_') + '_' + file + '.o'))
+        
         if (file != 'KMain.c' and root != 'kernel') and file.endswith(".c"):
-            source_file = os.path.join(root, file)
-            output_file = os.path.join(build_dir, file + ".o")
-            run_command(f"{cc} {source_file} -o {output_file}")
+            tasks.append(f"{cc} {source_file} -o {output_file}")
         if file.endswith('.s'):
-            source_file = os.path.join(root, file)
-            output_file = os.path.join(build_dir, file + ".o")
-            run_command(f"nasm -elf {source_file} {output_file}")
+            tasks.append(f"nasm -f elf32 {source_file} -o {output_file}")
+
+with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+    pool.map(run_command, tasks)
+
 run_command(f"{cc} kernel/KMain.c -o build/KMain.o")
 obj_files = " ".join(
-    [os.path.join(build_dir, file) for file in os.listdir(build_dir) if file.endswith(".o") and file != 'KMain.o']
+    [str(file) for file in build_dir.glob("*.o") if file.name != 'KMain.o']
 )
 
 print("Link") # evil ld bug fixing      VVVVVVVVVVVVV

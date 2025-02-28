@@ -58,34 +58,4 @@ U0 GDTEntrySet(U8 index, U32 base, U32 limit, U8 access, U8 len) {
     GDTEntries[index].length = ((limit >> 16) & 0x0F) | (len & 0xF0);
     GDTEntries[index].access = access;
 }
-U0 SYSUserSetup(Ptr user_entry, Ptr user_stack) { // Switch to RING3
-    TTYUPrint("$!7Switching to user mode\n$!F");
-
-    asmV (
-        "cli               \n" // INT DISABLE
-
-        "movw $0x23, %%ax  \n" // DATA
-        "movw %%ax, %%ds   \n"
-        "movw %%ax, %%es   \n"
-        "movw %%ax, %%fs   \n"
-        "movw %%ax, %%gs   \n"
-
-        "pushl $0x23       \n"
-        "pushl %1          \n"
-        
-        "pushfl            \n"
-        "popl %%eax        \n"
-        "orl $0x200, %%eax \n"
-        "pushl %%eax       \n"
-
-        "pushl $0x1B       \n"
-        "pushl %0          \n"
-
-        "iret              \n"
-
-        :
-        : "r"(user_entry), "r"(user_stack)
-        : "eax", "ecx", "edx"
-    );
-}
 

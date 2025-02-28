@@ -1,10 +1,13 @@
 // Kernel
 #include <kernel/KDogWatch.h>
+#include <kernel/KTasks.h>
 #include <kernel/KPanic.h>
 #include <kernel/KMem.h>
 
 // Drivers
 #include <drivers/keyboard.h>
+#include <drivers/rtl8139.h>
+#include <drivers/serial.h>
 #include <drivers/mouse.h>
 #include <drivers/vga.h>
 #include <drivers/pit.h>
@@ -24,9 +27,10 @@
 #include <lib/Random.h>
 #include <lib/MemLib.h>
 #include <lib/Time.h>
+#include <lib/BosZ.h>
 #include <lib/DAT.h>
 #include <lib/TTY.h>
-#include <lib/BosZ.h>
+#include <lib/IP.h>
 
 // FileSystem
 #include <fs/BOTFS.h>
@@ -35,68 +39,96 @@
 
 // Arch/Cpu Functions
 #include <arch/getreg.h>
+#include <arch/ring3.h>
 #include <arch/beep.h>
 #include <arch/cpu.h>
 #include <arch/gdt.h>
+#include <arch/fpu.h>
 #include <arch/sys.h>
 #include <arch/pic.h>
 
 U0 programtest();
+// extern U0 KernelDebug();
 U0 mainloop();
+U0 loop();
 
-__attribute__((naked)) U0 KernelMain() {
-    if (*(Byte*)(0x7C00 + 510) == 0x55) {
-        for (U32 i = 0x7C00; i < 0x8000; i++) { // Clear bootloader
-            *(Byte*)i = 0;
-        }
-    }
-    HeapInit();
+__attribute__((naked)) U0 KernelMain() {    
+    TTYSwitch(TTYC_VGA);
     TTYClear();
+    TTYCursor = 0;
+
+    HeapInit();
     KDogWatchInit();
     GDTInit();
-    KDogWatchLog("GDT Initialized", False);
     IDTInit();
     PICMap();
     PITInit();
+    KDogWatchLog("System started", False);
     VgaBlinkingSet(False);
     VgaCursorDisable();
     VgaCursorEnable();
-    asmv("sti");
-    KBInit();
-    // MouseInit(); // Portal to hell
+    KDogWatchLog("PIC PIT Vga Initialized", False);
     // VgaGraphicsSet();
     // VRMClear(Purple);
     SysCallInit();
     SysCallSetup();
-    UFSInit();
-    VFSInit();
-    VFilesInit();
-    DATInit();
-    BOTFSInit();
+    
+    KDogWatchLog("SysCalls Initialized", False);
+    // UFSInit();
+    // VFSInit();
+    // VFilesInit();
+    // DATInit();
+    // BOTFSInit();
 
-    SleepM(1000);
-    TTYClear();
-    TTYCursor = 0;
+    KDogWatchLog("Setuping fpu", False);
+    FPUBox();
+    
+    // Drivers
+    KDogWatchLog("Setuping drivers", False);
+    SerialInit();
+    KDogWatchLog("Initialized \"serial\"", False);
+    RTL8139Init();
+    KDogWatchLog("Initialized \"rtl8139\"", False);
+    KBInit();
+    KDogWatchLog("Initialized \"keyboard\"", False);
+    // MouseInit(); // Portal to hell
+    BeepInit();
+    KDogWatchLog("Initialized \"pc speaker\"", False);
+    IDEInit();
+    KDogWatchLog("Initialized \"ide disk\"", False);
+    // Drivers end
+
+    KDogWatchLog("System Initialized", False);
+    // TTYClear();
+    // TTYCursor = 0;
     TTYUPrint(
         "\n"
         "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n");
     programtest();
-    // KDogWatchPStart(0, "Main loop"); No Watching
-    mainloop();
-    KDogWatchPEnd(0);
-    PowerOff();
-}
 
+    SleepM(500);
+
+    mainloop();
+}
+// INT_DEF(KernelDebug) {
+//     U32 c = TTYCursor;
+//     TTYSwitch(TTYC_SER);
+//     TTYCursor = 0;
+//     PrintF("EIP: %08x ESP: %08x EBP: %08x\n", regs->eip, regs->useresp, regs->ebp);
+//     PrintF("EAX: %08x EBX: %08x ECX: %08x EDX: %08x\n", regs->eax, regs->ebx, regs->ecx, regs->edx);
+//     TTYSwitch(TTYC_RES);
+//     TTYCursor = c;
+// }
 U0 CHelp() {
     TTYUPrint(
         "$!5Commands$!F:\n"
-        "$!Ahelp cls hlt gen$!F\n"
-        "$!Btime echo wsave rand$!F\n"
-        "$!Creboot poweroff apple$!F\n"
+        "$!Ahelp cls hlt gen testcom$!F\n"
+        "$!Btime echo wsave rand testfpu$!F\n"
+        "$!Creboot poweroff apple testdrv$!F\n"
         "$!Esnake text sound wget$!F\n"
         "$!3words triangle bf hz$!F\n"
         "$!5mus pong testufs testheap$!F\n"
-        "$!6testbfs ls cat fwrite$!F\n"
+        "$!6testbfs ls cat fwrite testip$!F\n"
         "$!7touch fclean collects mouse$!F\n"
         "$!8boot vrm rand1 stat pass deb$!F"
         "$!5Features$!F:\n"
@@ -562,14 +594,12 @@ U0 BFInterpret(const String code) {
 U0 CHz() {
     KDogWatchPEnd(0);
     for (;;) {
-        for (U32 s = 1; s < 200; ++s) {
-            for (U32 o = 0; o < 50; ++o) {
-                static const U16 tones[12] = {
-                    100, 106, 112, 119, 126, 133, 141, 150, 159, 169, 179, 190
-                };
-                U32 f = 30 + tones[s%12] - o;
+        for (F32 s = 1.; s < 200.; s += 1.) {
+            for (F32 o = 0.; o < 50.; o += 1.) {
+                F32 fr = 440. * pow(2., (o / 12.)) + (1.0f + s / 200.);
+                U32 f = (U32)fr;
                 BeepHz(f, f / 6);
-                TTYUPrintHex(f);
+                TTYUPrintHex(fr);
                 TTYCursor -= 8;
                 if (KBState.keys['\x1b']) 
                     break;
@@ -581,18 +611,117 @@ U0 CHz() {
             break;
     }
 }
-U0 CBoot() {
+U0 CRay() {
+    VgaGraphicsSet();
+    TTYPuter = TTYPutG;
+    TTYWidth = 320  / 6;
+    TTYHeight = 200 / 6;
+    VRMClear(Purple);
+    KDogWatchPEnd(0);
+    U8 map[16 * 16] = {
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,
+        1,0,1,0,1,0,1,0,1,0,1,1,1,0,0,1,
+        1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,
+        1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,
+        1,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,
+        1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,
+        1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    };
+    F32 px = 1., py = 1.;
+    F32 pa = 0;
+    F32 FOV = 3.1415926535897 / 2.;
+    for (;!KBState.keys['\x1b'];) {
+        if (KBState.keys['q']) {
+            pa -= 0.1;
+        }
+        if (KBState.keys['e']) {
+            pa += 0.1;
+        }
+        if (KBState.keys['w']) {
+            F32 dx = cos(pa), dy = sin(pa);
+            px += dx * 0.1;
+            py += dy * 0.1;
+        }
+        if (KBState.keys['s']) {
+            F32 dx = cos(pa), dy = sin(pa);
+            px -= dx * 0.1;
+            py -= dy * 0.1;
+        }
+        if (KBState.keys['a']) {
+            F32 dx = -sin(pa), dy = cos(pa);
+            px -= dx * 0.1;
+            py -= dy * 0.1;
+        }
+        if (KBState.keys['d']) {
+            F32 dx = sin(pa), dy = -cos(pa);
+            px -= dx * 0.1;
+            py -= dy * 0.1;
+        }
+        for (F32 r = 0; r < 320; ++r) {
+            F32 angle = pa + (FOV * ((r / 320.) - .5));
+            F32 dx = cos(angle), dy = sin(angle);
+            F32 dist = 0.;
+
+            F32 rx = px, ry = py;
+
+            while (dist < 160.) {
+                rx += dx * .05;
+                ry += dy * .05;
+                dist += .05;
+
+                U32 mx = (U32)(rx / 1.), my = (U32)(ry / 1.);
+                if (mx >= 16 || my >= 16 || map[my * 16 + mx]) {
+                    break;
+                }
+            }
+            I32 height = (U32)(200. / dist);
+            for (I32 y = 0; y < 200; ++y) {
+                if (y < (100 - height)) {
+                    VRMPSet(r, y, 14);
+                }
+                else if (y > (100 + height)) {
+                    VRMPSet(r, y, 15);
+                }
+                else {
+                    VRMPSet(r, y, max(min((U32)(14./dist), 13), 0));
+                }
+            }
+            TTYCursor = 0;
+            PrintF("%d,%d", (U32)px, (U32)py);
+        }
+        SleepM(100);
+    }
+}
+U0 CBoot(Char id) {
     Ptr data = MAlloc(48 * 512);
     for (U32 i = 0; i < 48; ++i)
         ATARead(data+i*512, 163+i, 1);
     PrintF("loaded at %p\n", data);
     PrintF("Memory copied, first bytes: %s\n", data); 
     BsfApp app = BsfFromBytes(data);
-    Bool code = BsfExec(&app);
-    PrintF("Exit code: %B", code);
+    I32 code = BsfExec(&app, 0, id - 0x30);
+    PrintF("Exit code: %d", code-2);
+    MFree(data);
 }
 U32 LazyCalc(U32 x) {
     return !(x & 1) ? (x / 2) : (x * 3 + 1);
+}
+U0 loop() {
+    for (;;) {
+        U32 c = TTYCursor;
+        TTYCursor = 0;
+        TTYPrintC(0x30 + (PITTime % 10));
+        TTYCursor = c;
+    }
 }
 U32 testvar = 0xAB0BA;
 U0 termrun(const String cmd) {
@@ -600,6 +729,61 @@ U0 termrun(const String cmd) {
         CHelp();
     }
     else if (!StrCmp(cmd, "cls")) {
+        CCls();
+    }
+    else if (!StrCmp(cmd, "testip")) {
+        NetPackage pck;
+
+        U8 payload[] = "Hello, world!";
+        pck.data = payload;
+
+        pck.length = sizeof(payload)-1;
+
+        pck.ip4.verIhl = 0x45;
+        pck.ip4.tos = 0;
+        pck.ip4.len = HtonW(sizeof(NetPackageIP4) + pck.length);
+        pck.ip4.id = 0x1234;
+        pck.ip4.offset = 0;
+        pck.ip4.ttl = 64;
+        pck.ip4.protocol = 0x11;
+        pck.ip4.srcip = HtonD(0xC0A80001);
+        pck.ip4.srcip = HtonD(0xC0A800A0);
+
+        pck.ip4.checksum = 0;
+        pck.ip4.checksum = IPChecksum((U16*)pck.data, sizeof(payload)-1);
+
+        DriverCall(0xbb149088, 0xc3442e1e, 0, (U32*)&pck);
+    }
+    else if (StrStartsWith(cmd, "boot") && StrCmp(cmd, "boot")) {
+        CBoot(cmd[4]);
+    }
+    else if (!StrCmp(cmd, "boot")) {
+        CBoot('1');
+    }
+    else if (!StrCmp(cmd, "ray")) {
+        CRay();
+    }
+    else if (!StrCmp(cmd, "peek")) {
+        PrintF("%x", *(U32*)0x0030462a);
+    }
+    else if (!StrCmp(cmd, "testdrv")) {
+        U32 v = 0x00200023;
+        DriverCall(0x46ef3f2c, 0x27e134cd, 2, &v);
+    }
+    else if (!StrCmp(cmd, "testcom")) {
+        String str = "The quick brown serial jumps over a lazy vga";
+        for (U32 i = 0; str[i]; ++i) {
+            U32 b = str[i];
+            DriverCall(0xa3f13d05, 0x2eb0f0f, 0, &b);
+        }
+    }
+    else if (!StrCmp(cmd, "testfpu")) {
+        F32 x = 0;
+        for (;!KBState.keys['\x1b'];) {
+            TTYCursor = sin(x) * 20. + 20;
+            TTYPrintC(0x30 + (PITTime % 40));
+            x += 0.0001;
+        }
         CCls();
     }
     else if (!StrCmp(cmd, "deb")) {
@@ -695,9 +879,6 @@ U0 termrun(const String cmd) {
             KDogWatchPTick(0);
         }
     }
-    else if (!StrCmp(cmd, "boot")) {
-        CBoot();
-    }
     else if (!StrCmp(cmd, "mouse")) {
         for (;!KBState.keys['\x1b'];) {
             CCls();
@@ -716,7 +897,7 @@ U0 termrun(const String cmd) {
         PrintF("FIFO: %c%c\n", c1, c2);
         FIFODestroy(&fifo);
 
-        PrintF("LazyList: ");
+        PrintF("LazyList(collatz): ");
         LazyList lazy = LazyListInit(LazyCalc, 20);
         for (;;) {
             U32 elem = LazyListNext(&lazy);
@@ -960,12 +1141,12 @@ U0 mainloop() {
 }
 U0 programtest()
 {
-    BsfApp bapp = BsfFromBytes((Ptr)0x8400);
+    // BsfApp bapp = BsfFromBytes((Ptr)0x8400);
     // UserSegment = (Segment) {
     //     .addr = bapp.data,
     //     .length = bapp.header.CodeS,
     // };
-    BsfExec(&bapp);
+    // BsfExec(&bapp);
     // BsfApp bapp = BsfFromBytes("BOSY&\0\0\0\xf4\xb8\xfa\xfa\xbf\xde\xb0\x01\xbe\x11\0\0\0\xcd\x80\xeb\xfe$!AHello, world!$!F\n\0");
     // BsfExec(&bapp);
 }

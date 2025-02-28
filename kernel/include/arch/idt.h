@@ -8,9 +8,17 @@ typedef struct IDTDescriptor {
     U8  attr;
     U16 high;
 } __attribute__((packed)) IDTDescriptor;
+typedef struct INTRegs3 {
+    U32 edi, esi, ebp, useresp, ebx, edx, ecx, eax;
+    U32 eflagsp;
+    U32 ds, es, gs, fs;
+    U32 eip, cs, eflags;
+    U32 esp, ss;
+} __attribute__((packed)) INTRegs3;
 typedef struct INTRegs {
     U32 edi, esi, ebp, useresp, ebx, edx, ecx, eax;
     U32 eflagsp;
+    U32 ds, es, gs, fs;
     U32 eip, cs, eflags;
 } __attribute__((packed)) INTRegs;
 typedef struct IDTR {
@@ -21,12 +29,22 @@ extern volatile U32 IDTNothingCounter;
 U0 IDTSet(U8 i, Ptr p, U8 select, U8 f);
 
 U0 IDTInit();
-
-#define INT_DEF(fn) \
+// remember: all this code is inserted before EVERY interrupt handler
+#define INT_DEF0(fn) \
     __attribute__((naked)) U0 fn() { \
         asmv("cli\n" \
+            "push %fs\n" \
+            "push %gs\n" \
+            "push %es\n" \
+            "push %ds\n" \
             "pushf\n" \
             "pusha\n" \
+                       \
+            "mov $0x10, %ax\n" \
+            "mov %ax, %ds\n" \
+            "mov %ax, %es\n" \
+            "mov %ax, %fs\n" \
+            "mov %ax, %ss\n" \
                        \
             "movl %esp, %eax\n" \
             "pushl %eax\n" \
@@ -38,10 +56,21 @@ U0 IDTInit();
             \
             "popa\n" \
             "popf\n" \
-            "sti\n" \
+            "pop %ds\n" \
+            "pop %es\n" \
+            "pop %gs\n" \
+            "pop %fs\n" \
             "iret\n"); \
     } \
+
+#define INT_DEF(fn) \
+    INT_DEF0(fn) \
     U0 fn##_impl(INTRegs *regs)
 
-#define INT_START  /*asmv("pusha\npushf\n")*/asm("")
-#define INT_RETURN /*POut(0x20, 0x20);asmv("popf\npopa\niret")*/asm("")
+// remember: all this code is inserted before EVERY interrupt handler
+#define INT_DEF3(fn) \
+    INT_DEF0(fn) \
+    U0 fn##_impl(INTRegs3 *regs)
+
+#define INT_START  asm("")
+#define INT_RETURN asm("")

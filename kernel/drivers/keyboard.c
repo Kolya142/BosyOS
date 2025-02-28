@@ -1,4 +1,5 @@
 #include <drivers/keyboard.h>
+#include <misc/driverreg.h>
 
 volatile KBStateS KBState;
 extern U8 MouseCycle;
@@ -48,8 +49,25 @@ INT_DEF(KBHandler) {
     end:
     INT_RETURN;
 }
-
+static U0 KBDriverHandler(U32 id, U32 *value) {
+    switch (id)
+    {
+        case 0:
+            *value = KBState.Key;
+            break;
+        case 1:
+            *value = KBState.SC;
+            break;
+        case 2:
+            *value = (KBState.Ctrl << 2) | (KBState.Shift << 1) | KBState.Super;
+            break;
+        case 3:
+            *value = KBState.keys[*value];
+            break;
+    }
+}
 U0 KBInit() {
+    DriverReg(0x0bb5676c, 0xff3ae302, KBDriverHandler);
     IDTSet(0x21, KBHandler, 0x08, 0x8E);
 }
 U8 KBSCToASCIIP(U8 code)

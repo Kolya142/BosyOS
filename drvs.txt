@@ -1,0 +1,7 @@
+pit: 0x09ca4b4d, 0x5fa68611:  0 - uptime, 1 - time
+beep: 0x46ef3f2c, 0x27e134cd: 0 - beep, 1 - beephz, 2 - beepspc
+ide: 0x6aa73a10, 0xa8b55cb4:  0 - read, 1 - write: uses IDEAsk struct
+mouse: 0x58f8d530, 0xfffe784f: 0 - read x y btn
+keyboard: 0x0bb5676c, 0xff3ae302: 0 - ascii+ key, 1 - scancode, 2 - speckeys(bits: 0-super, 1-shift, 2-ctrl), 3 - getkey
+serial: 0xa3f13d05, 0x2eb0f0f: 0 - send byte, 1 - recv byte, 2 - read buffer status, 3 - set speed
+network: 0xbb149088, 0xc3442e1e: 0 - send bytes, 1 - read bytes, 2 - getmac, 3 - check_status: uses NetPackage

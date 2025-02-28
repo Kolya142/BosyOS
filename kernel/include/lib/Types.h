@@ -6,7 +6,10 @@ typedef uint16_t U16;
 typedef uint32_t U32;
 typedef int16_t  I16;
 typedef int32_t  I32;
+
 typedef void     U0;
+
+typedef float    F32;
 
 typedef U8       Bool;
 typedef U8       Byte;

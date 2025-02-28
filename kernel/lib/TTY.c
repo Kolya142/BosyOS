@@ -1,3 +1,4 @@
+#include <drivers/serial.h>
 #include <misc/wordgen.h>
 #include <lib/Graphics.h>
 #include <lib/MemLib.h>
@@ -55,6 +56,11 @@ Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
         TTYCursor++;
     }
     if (TTYCursor >= TTYWidth * TTYHeight) {
+        MemCpy(vga - 80, vga, 4000); // TODO: add more crosstty
+        for (U32 i = TTYWidth * TTYHeight - TTYWidth; i < TTYWidth * TTYHeight; ++i) {
+            TTYCursor = i;
+            TTYPuter(' ');
+        }
         TTYCursor = TTYWidth * TTYHeight - TTYWidth;
         return False;
     }
@@ -282,6 +288,88 @@ U0 TTYPutG(Char c) {
 }
 U0 TTYPutT(Char c) {
     vga[TTYCursor] = ((((U16)TTYlbg << 4) | (U16)TTYlfg) << 8) | (U16)c;
+}
+U0 TTYPutS(Char c) {
+    U32 x = TTYCursor % 80 + 1;
+    U32 y = TTYCursor / 80 + 1;
+    static const U8 fgs[] = {
+        30, 34, 32, 36, 31, 35, 33, 90,
+        37, 94, 92, 96, 91, 95, 93, 97
+    };
+    static const U8 bgs[] = {
+        40, 44, 42, 46, 41, 45, 43, 100,
+        47, 104, 102, 106, 101, 105, 103, 107
+    };
+    U8 bg = bgs[TTYlbg&0xf];
+    U8 fg = fgs[TTYlfg&0xf];
+    U8 buf[0x1B];
+    U32 index = 0;
+    buf[index++] = ('\x1b');
+    buf[index++] = ('[');
+    buf[index++] = ('0' + (y / 100) % 10);
+    buf[index++] = ('0' + (y / 10) % 10);
+    buf[index++] = ('0' + y % 10);
+    buf[index++] = (';');
+    buf[index++] = ('0' + (x / 100) % 10);
+    buf[index++] = ('0' + (x / 10) % 10);
+    buf[index++] = ('0' + x % 10);
+    buf[index++] = ('f');
+
+    buf[index++] = ('\x1b');
+    buf[index++] = ('[');
+    buf[index++] = ('0' + (bg / 100) % 10);
+    buf[index++] = ('0' + (bg / 10) % 10);
+    buf[index++] = ('0' + bg % 10);
+    buf[index++] = ('m');
+    
+    buf[index++] = ('\x1b');
+    buf[index++] = ('[');
+    buf[index++] = ('0' + (fg / 100) % 10);
+    buf[index++] = ('0' + (fg / 10) % 10);
+    buf[index++] = ('0' + fg % 10);
+    buf[index++] = ('m');
+
+    buf[index++] = c;
+
+    buf[index++] = ('\x1b');
+    buf[index++] = ('[');
+    buf[index++] = ('0');
+    buf[index++] = ('m');
+    
+    // SerialWrite(c);
+    for (U32 i = 0; i < 0x1B; ++i) {
+        SerialWrite(buf[i]);
+    }
+}
+U0 TTYSwitch(TTYContext tc) {
+    static TTYContext prev = TTYC_VGA;
+    static TTYContext curr = TTYC_VGA;
+    switch (tc) {
+        case TTYC_VGA:
+            TTYPuter = TTYPutT;
+            TTYWidth = 80;
+            TTYHeight = 25;
+            prev = curr;
+            curr = tc;
+            break;
+        case TTYC_320:
+            TTYPuter = TTYPutG;
+            TTYWidth = 320/5;
+            TTYHeight = 200/5;
+            prev = curr;
+            curr = tc;
+            break;
+        case TTYC_RES:
+            TTYSwitch(prev);
+            break;
+        case TTYC_SER:
+            TTYPuter = TTYPutS;
+            TTYWidth = 80;
+            TTYHeight = 25;
+            prev = curr;
+            curr = tc;
+            break;
+    }
 }
 U0 TTYPrint(String s) {
     for (U32 i = 0; s[i]; i++) {

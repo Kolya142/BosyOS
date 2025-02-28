@@ -16,3 +16,11 @@ U16 PIn16(U16 port) {
     __asm__ __volatile__("inw %1, %0" : "=a"(ret) : "Nd"(port));
     return ret;
 }
+U0 POut32(U32 port, U16 data) {
+    __asm__ __volatile__("out %0, %1" : : "a"(data), "Nd"(port));
+}
+U32 PIn32(U16 port) {
+    U32 ret;
+    __asm__ __volatile__("in %1, %0" : "=a"(ret) : "Nd"(port));
+    return ret;
+}

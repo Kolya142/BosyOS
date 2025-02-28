@@ -1,3 +1,4 @@
+#include <misc/driverreg.h>
 #include <drivers/pit.h>
 #include <arch/beep.h>
 
@@ -36,4 +37,25 @@ U0 BeepSPC(U8 tone, U16 dur) {
     };
     if (tone >= 128) return;
     BeepHz(NoteTable[tone], dur);
+}
+
+static U0 BeepDriverHandler(U32 id, U32 *value) {
+    switch (id)
+    {
+    case 0:
+        Beep(*value & 0xFFFF);
+        break;
+    case 1:
+        BeepHz((*value >> 16) & 0xFFFF, *value & 0xFFFF);
+        break;
+    case 2:
+        BeepSPC((*value >> 16) & 0xFFFF, *value & 0xFFFF);
+        break;
+    default:
+        break;
+    }
+}
+
+U0 BeepInit() {
+    DriverReg(0x46ef3f2c, 0x27e134cd, BeepDriverHandler);
 }

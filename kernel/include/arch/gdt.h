@@ -31,4 +31,3 @@ U0 GDTInit();
 U0 GDTLoad();
 U0 GDTSet(U32 base, U32 limit);
 U0 GDTEntrySet(U8 index, U32 base, U32 limit, U8 access, U8 len);
-U0 SYSUserSetup(Ptr addr, Ptr stack);

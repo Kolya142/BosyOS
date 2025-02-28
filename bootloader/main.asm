@@ -28,13 +28,19 @@ test al, al
 jnz error2
 mov byte [LOADED], 1
 
+mov ah, 0
+mov dl, byte [BOOTDRIVE]
+int 0x13
+
 mov ah, 2  ; read
 mov al, 2  ; 1K
 mov ch, 0  ; cylinder
 mov cl, 2  ; first sector
 mov dh, 0  ; head
 mov dl, byte [BOOTDRIVE]
-mov bx, 0x8000
+mov bx, 0x800
+mov es, bx
+mov bx, 0
 int 0x13
 jc error
 cmp word [0x8000], 79c5h

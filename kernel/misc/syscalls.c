@@ -1,5 +1,6 @@
 #include <kernel/KDogWatch.h>
 #include <drivers/keyboard.h>
+#include <drivers/serial.h>
 #include <misc/driverreg.h>
 #include <kernel/KPanic.h>
 #include <misc/syscall.h>
@@ -7,11 +8,14 @@
 #include <lib/Random.h>
 #include <lib/MemLib.h>
 #include <arch/beep.h>
+#include <arch/gdt.h>
 #include <arch/idt.h>
 #include <arch/cpu.h>
 #include <arch/sys.h>
 #include <lib/TTY.h>
 #include <arch/io.h>
+
+static INTRegs states[256] = {0};
 
 U0 SCPrint(INTRegs *regs) {
     U32 addr = regs->esi;
@@ -100,8 +104,40 @@ U0 SCReboot() {
 U0 SCPowerOff() {
     PowerOff();
 }
+// ERROR: This function breaks registers
 U0 SCDriverACC(INTRegs *regs) {
+    asmv("sti");
     DriverCall(regs->esi, regs->edi, regs->ebx, (Ptr)regs->edx);
+    asmv("cli");
+}
+U0 SCSaveMe(INTRegs3 *regs) {
+    if (regs->esi > 255) {
+        regs->eax = -1;
+        return;
+    }
+    MemCpy(&states[regs->esi], regs, sizeof(INTRegs));
+    regs->eax = False;
+}
+U0 SCLoadMe(INTRegs3 *regs) {
+    if (regs->esi > 255) {
+        regs->eax = -1;
+        return;
+    }
+    U32 old_ebx = regs->ebx;
+
+    MemCpy(regs, &states[regs->esi], sizeof(INTRegs));
+    
+    regs->ebx = old_ebx;
+    regs->eax = True;
+
+    regs->ss = 0x10;
+    regs->esp = TSS.esp0;
+
+    // TTYSwitch(TTYC_SER);
+    // for (U32 i = 0; i < sizeof(INTRegs)/sizeof(U32); ++i) {
+    //     PrintF("%x", ((U32*)regs)[i]);
+    // }
+    // TTYSwitch(TTYC_RES);
 }
 
 U0 SysCallSetup() {
@@ -125,4 +161,9 @@ U0 SysCallSetup() {
     SysCallSet(SCReboot, 0x11);
     SysCallSet(SCPowerOff, 0x12);
     SysCallSet(SCDriverACC, 0x13);
+    SysCallSet(SCSaveMe, 0x14);
+    SysCallSet(SCLoadMe, 0x15);
+    TTYSwitch(TTYC_SER);
+    PrintF("Syscall 0x15 set at %x\n", (U32)SysCallT[0x15]);
+    TTYSwitch(TTYC_RES);
 }

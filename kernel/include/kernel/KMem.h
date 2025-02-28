@@ -2,7 +2,7 @@
 #include <lib/Types.h>
 #pragma once
 #define HEAP_START 0x700000
-#define HEAP_SIZE 0x100000
+#define HEAP_SIZE 0x1000000
 
 typedef struct HeapMemBlock {
     int size;

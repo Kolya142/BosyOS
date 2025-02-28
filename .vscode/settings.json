@@ -3,7 +3,8 @@
         "*.h": "c",
         "*.c": "c",
         "cstdlib": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "type_traits": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

@@ -1,3 +1,4 @@
+#include <misc/driverreg.h>
 #include <kernel/KPanic.h>
 #include <drivers/ide.h>
 #include <lib/Time.h>
@@ -56,4 +57,18 @@ U0 ATAWrite(Ptr buf, U32 start, U8 count) {
     while (PIn(0x01F7) & 0x80);    // Wait BUSY
     POut(0x01F7, 0xE7);
     while (PIn(0x01F7) & 0x80);    // Wait BUSY
+}
+
+static U0 IDEDriverHandler(U32 id, U32 *value) {
+    IDEAsk *ask = (IDEAsk*)(&value);
+    if (id == 0) {
+        ATARead(ask->buf, ask->start, ask->end);
+    }
+    else if (id == 1) {
+        ATAWrite(ask->buf, ask->start, ask->end);
+    }
+}
+
+U0 IDEInit() {
+    DriverReg(0x6aa73a10, 0xa8b55cb4, IDEDriverHandler);
 }

@@ -28,14 +28,32 @@ compile:
 	fi
 	cat bootsegment userdata kernel/kernel.b usercode/usercode.bin.bsf > drive
 
+QEMU=qemu-system-i386
+QEMU_DRIVE=-drive format=raw,file=drive
+QEMU_MEM=-m 64M
+QEMU_SER=-serial stdio
+QEMU_NET=-netdev user,id=net0 -device rtl8139,netdev=net0
+QEMU_DEBUG=-D ~/bosyos.qemu.log -d int,cpu_reset
+QEMU_AUDIO_LINUX=-audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
+QEMU_AUDIO_MAC=-audiodev coreaudio,id=snd0 -machine pcspk-audiodev=snd0
+QEMU_DISPLAY=-display gtk,zoom-to-fit=on
+QEMU_KVM=--enable-kvm
+QEMU_GDB=-s -S
+
 run:
-	@if [ $(MODE) = "min" ]; then \
-		qemu-system-i386 -drive format=raw,file=drive -m 64M; \
-	elif [ $(SYSTEM) = "macos" ]; then \
-		qemu-system-i386 -drive format=raw,file=drive -m 64M -audiodev coreaudio,id=snd0 -machine pcspk-audiodev=snd0; \
+	@echo -e "\n\n\n\n\n\n\n\n\n\n\n\n"
+	@if [ "$(MODE)" = "min" ]; then \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER); \
+	elif [ "$(MODE)" = "debug" ]; then \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_DEBUG); \
+	elif [ "$(MODE)" = "gdb" ]; then \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_GDB); \
+	elif [ "$(SYSTEM)" = "macos" ]; then \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC); \
 	else \
-		qemu-system-i386 -drive format=raw,file=drive -display gtk,zoom-to-fit=on -m 64M -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 --enable-kvm; \
-	fi && [ $$? -eq 0 ] && make userdata_dump
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM); \
+	fi
+	@make userdata_dump
 
 all: boot kernel prog compile run
 allr: boot kernel prog compile

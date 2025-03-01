@@ -17,18 +17,11 @@ U0 PagingInit() {
     MemSet(Pages, 0, PAGE_SIZE);
     MemSet(PageT, 0, 1024 * PAGE_SIZE);
     SleepM(1000);
+    for (U32 i = 0; i < 1024*1024; ++i) {
+        PageT[i] = (i * PAGE_SIZE) | PAGE_RW | PAGE_PRESENT;
+    }
     for (U32 i = 0; i < 1024; ++i) {
-        Pages[i] = (PAGE_TBL_ADDR + i * PAGE_SIZE) | PAGE_PRESENT | PAGE_RW;
-    }
-    {
-        U32 *pt = (U32*)(PAGE_TBL_ADDR + 0 * PAGE_SIZE);
-        uint32_t ofs = (0x300000 >> 12) & 0x3FF;
-        PagingID(pt+ofs, 0x300000, 0x400000 - 0x300000);
-    }
-    {
-        U32 *pt = (U32*)(PAGE_TBL_ADDR + 1 * PAGE_SIZE);
-        uint32_t ofs = (0x400000 >> 12) & 0x3FF;
-        PagingID(pt+ofs, 0x400000, 0x500000 - 0x400000);
+       Pages[i] = ((U32)&PageT[i * 1024]) | PAGE_RW | PAGE_PRESENT;
     }
     PagingEnable();
 }
@@ -40,16 +33,33 @@ U0 PMap(U32 vaddr, U32 raddr, U32 flags) {
     pt[ptid] = raddr | flags | PAGE_PRESENT;
     Paginginvlpg(vaddr);
 }
+U32 PGet(U32 vaddr) {
+    U32 pdid = vaddr >> 22;
+    U32 ptid = (vaddr >> 12) & 0x3FF;
+    U32* pt = (U32*)(Pages[pdid] & ~0xFFF);
+    return pt[ptid] & ~0xFF;
+}
 Ptr PAlloc() {
     for (U32 i = 0; i < 1024 * 1024 / 8; i++) {
         if (PageBitmap[i] != 0xFF) {
             for (U8 j = 0; j < 8; j++) {
                 if (!(PageBitmap[i] & (1 << j))) {
                     PageBitmap[i] |= (1 << j);
-                    return (Ptr)((i * 8 + j) * PAGE_SIZE);
+                    return 0x1000000 + (Ptr)((i * 8 + j) * PAGE_SIZE);
                 }
             }
         }
     }
     return Null;
+}
+Ptr PFree(Ptr ptr) {
+    U32 index = ((U32)ptr - 0x1000000) / PAGE_SIZE;
+    PageBitmap[index / 8] &= ~(1 << (index % 8));
+}
+Ptr PallocMap(U32 vaddr, U32 flags) {
+    Ptr paddr = PAlloc();
+    if (paddr) {
+        PMap(vaddr, (U32)paddr, flags | PAGE_PRESENT);
+    }
+    return paddr;
 }

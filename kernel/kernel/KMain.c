@@ -82,24 +82,15 @@ __attribute__((naked)) U0 KernelMain() {
     // VFilesInit();
     // DATInit();
     // BOTFSInit();
-    // PagingInit();
-    // KDogWatchLog("Initialized \"paging\"", False);
+    PagingInit();
     
-    // U32 cr0;
-    // asm volatile("mov %%cr0, %0" : "=r"(cr0));
-    // if (!(cr0 & 0x80000000)) {
-    //     KDogWatchLog("Paging is NOT enabled!", True);
-    // }
-    
-    // for (U32 i = 0; i < HEAP_SIZE; i += PAGE_SIZE) {
-    //     PMap(0x1000000+i, HEAP_START+i, PAGE_PRESENT | PAGE_RW);
-    // }
-    // U8 *i = MAlloc(5);
-    // (i-HEAP_START+0x1000000)[0] = 55;
-    // if (i[0] != 55) {
-    //     KDogWatchLog("Paging doen't work!", False);
-    // }
-    // KDogWatchLog("Tested \"paging\"", False);
+    U32 cr0;
+    asm volatile("mov %%cr0, %0" : "=r"(cr0));
+    if (!(cr0 & 0x80000000)) {
+        KDogWatchLog("Paging is NOT enabled!", True);
+    }
+
+    KDogWatchLog("Initialized \"paging\"", False);
 
     KDogWatchLog("Setuping fpu", False);
     FPUBox();
@@ -726,6 +717,9 @@ U0 CRay() {
 }
 U0 CBoot(Char id) {
     Ptr data = MAlloc(48 * 512);
+    for (U32 i = (U32)data; i < (U32)data + 48 * 512; i += 4096) {
+        PMap(i - (U32)data + 0x5000, i, PAGE_PRESENT | PAGE_RW);
+    }
     for (U32 i = 0; i < 48; ++i)
         ATARead(data+i*512, 163+i, 1);
     PrintF("loaded at %p\n", data);

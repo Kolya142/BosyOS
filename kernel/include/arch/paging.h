@@ -16,7 +16,10 @@ U0 PagingID(U32 *first, U32 from, U32 size);
 U0 PagingInit();
 
 U0 PMap(U32 vaddr, U32 raddr, U32 flags);
+U32 PGet(U32 vaddr);
 Ptr PAlloc();
+Ptr PFree(Ptr ptr);
+Ptr PallocMap(U32 vaddr, U32 flags);
 
 // in arch/paging.s
 extern U0 PagingEnable();

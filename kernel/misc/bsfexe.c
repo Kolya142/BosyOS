@@ -1,8 +1,9 @@
-#include <lib/MemLib.h>
-#include <lib/TTY.h>
+#include <arch/paging.h>
 #include <misc/bsfexe.h>
+#include <lib/MemLib.h>
 #include <arch/ring3.h>
 #include <arch/gdt.h>
+#include <lib/TTY.h>
 
 BsfApp BsfFromBytes(Byte *app) {
     BsfApp bapp;
@@ -39,11 +40,14 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     if (s) {
         return code+2;
     }
-
-    MemCpy((Ptr)0x100000, app->data, head->CodeS);
+    U32 ptrb = PGet(0x2000000);
+    U32 ptrb2 = PGet(0x2000000+PAGE_SIZE);
+    Ptr ptr = PallocMap(0x2000000, PAGE_RW | PAGE_USER);
+    Ptr ptr2 = PallocMap(0x2000000+PAGE_SIZE, PAGE_RW | PAGE_USER);
+    MemCpy((Ptr)0x2000000, app->data, head->CodeS);
     // TTYUPrintHex((U32)meta->func);
     // TTYUPrint((Ptr)0x100000);
-    PrintF("%x\n", meta->func);
+    PrintF("%p\n", meta->func);
     // RingSwitch((Ptr)meta->func, (Ptr)0x200000 - 4);
     asmV(
         "movl %%esp, %1\n"
@@ -61,6 +65,9 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
 
     // Ptr stack_addr = (Ptr)0x200000 - 4;
     // SYSUserSetup((Ptr)0x100000, stack_addr);
-
+    PFree(ptr);
+    PFree(ptr2);
+    PMap(0x2000000, ptrb, PAGE_RW | PAGE_USER | PAGE_PRESENT);
+    PMap(0x2000000+PAGE_SIZE, ptrb2, PAGE_RW | PAGE_USER | PAGE_PRESENT);
     return True;
 }

@@ -86,5 +86,13 @@ print.ret:
     int 0x10
     ret
 
+dap_table:
+    db 0x10
+    db 0
+    dw 2
+    dw 0x0800
+    dw 0
+    dq 1
+
 times 510-($-$$) db 0
 dw 0xaa55

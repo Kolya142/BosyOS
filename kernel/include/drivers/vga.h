@@ -35,3 +35,4 @@ U0 VgaGraphicsSet();
 U0 VgaBlinkingSet(Bool state);
 
 U0 VgaFontLoad(const U8 *font);
+U0 VgaInit();

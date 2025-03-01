@@ -12,5 +12,5 @@ U16 HtonW(U16 w) {
     return (w >> 8) | ((w & 0xff) << 8);
 }
 U32 HtonD(U32 w) {
-    return (HtonW(w >> 16) >> 16) | (HtonW(w & 0xffff) << 16);
+    return (HtonW(w >> 16)) | (HtonW(w & 0xffff) << 16);
 }

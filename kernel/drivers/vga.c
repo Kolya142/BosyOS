@@ -1,7 +1,9 @@
+#include <misc/driverreg.h>
 #include <drivers/vga.h>
 #include <lib/ASCIIP.h>
 #include <lib/MemLib.h>
 #include <lib/Time.h>
+
 U16 *vga = (U16*)VGAADDR;
 
 Bool VgaPSet(U16 x, U16 y, U8 ch, U8 c)
@@ -136,4 +138,17 @@ U0 VgaFontLoad(const U8 *font) {
 
 	POut(0x03C4, 0x04);
 	POut(0x03C5, 0x03);
+}
+static U0 VgaDriverHandler(U32 id, U32 *value) {
+    switch (id) {
+        case 0:
+            VgaGraphicsSet();
+            break;
+        default:
+            *value = 0;
+            break;
+    }
+}
+U0 VgaInit() {
+    DriverReg(0xebbfd78c, 0x59687d45, VgaDriverHandler);
 }

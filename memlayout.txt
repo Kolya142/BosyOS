@@ -1,8 +1,9 @@
-0x1000  (virt) - user's application
 0x7c00  (real) - first bootloader
 0x8000  (real) - kernel bootloader
-0x100000(real) - user application
-0x200000(real) - user stack
-0x300000(real) - kernel
-0x600000(real) - kernel stack
-0x700000(real) - kernel heap
+0x0300000(real) - kernel
+0x0600000(real) - kernel stack
+0x0700000(real) - kernel heap
+0x0A00000(real) - kernel heap
+0x0D00000(real) - pages
+0x0F00000(real) - page table
+0x2000000(virt) - user data(application & stack)

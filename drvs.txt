@@ -5,3 +5,6 @@ mouse: 0x58f8d530, 0xfffe784f: 0 - read x y btn
 keyboard: 0x0bb5676c, 0xff3ae302: 0 - ascii+ key, 1 - scancode, 2 - speckeys(bits: 0-super, 1-shift, 2-ctrl), 3 - getkey
 serial: 0xa3f13d05, 0x2eb0f0f: 0 - send byte, 1 - recv byte, 2 - read buffer status, 3 - set speed
 network: 0xbb149088, 0xc3442e1e: 0 - send bytes, 1 - read bytes, 2 - getmac, 3 - check_status: uses NetPackage
+random: 0x8e6d1237, 0xc02dd685: 0 - random 4 bytes, 1 - random 2 bytes, 2 - random 1 byte
+tty: 0xc0d05943, 0x8be5d999: 0 - print string, 1 - read [0] chars from keyboard to [1]+ buf, 2 - get printf, 3 - print char, 4 - get key state
+vga: 0xebbfd78c, 0x59687d45: 0 - enable graphics 320x200

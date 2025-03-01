@@ -14,6 +14,7 @@
 
 // Miscellaneous
 #include <misc/driverreg.h>
+#include <misc/vdrivers.h>
 #include <misc/syscall.h>
 #include <misc/wordgen.h>
 #include <misc/vfiles.h>
@@ -38,6 +39,7 @@
 #include <fs/ufs.h>
 
 // Arch/Cpu Functions
+#include <arch/paging.h>
 #include <arch/getreg.h>
 #include <arch/ring3.h>
 #include <arch/beep.h>
@@ -54,6 +56,7 @@ U0 loop();
 
 __attribute__((naked)) U0 KernelMain() {    
     TTYSwitch(TTYC_VGA);
+    VgaInit();
     TTYClear();
     TTYCursor = 0;
 
@@ -79,6 +82,24 @@ __attribute__((naked)) U0 KernelMain() {
     // VFilesInit();
     // DATInit();
     // BOTFSInit();
+    // PagingInit();
+    // KDogWatchLog("Initialized \"paging\"", False);
+    
+    // U32 cr0;
+    // asm volatile("mov %%cr0, %0" : "=r"(cr0));
+    // if (!(cr0 & 0x80000000)) {
+    //     KDogWatchLog("Paging is NOT enabled!", True);
+    // }
+    
+    // for (U32 i = 0; i < HEAP_SIZE; i += PAGE_SIZE) {
+    //     PMap(0x1000000+i, HEAP_START+i, PAGE_PRESENT | PAGE_RW);
+    // }
+    // U8 *i = MAlloc(5);
+    // (i-HEAP_START+0x1000000)[0] = 55;
+    // if (i[0] != 55) {
+    //     KDogWatchLog("Paging doen't work!", False);
+    // }
+    // KDogWatchLog("Tested \"paging\"", False);
 
     KDogWatchLog("Setuping fpu", False);
     FPUBox();
@@ -96,6 +117,8 @@ __attribute__((naked)) U0 KernelMain() {
     KDogWatchLog("Initialized \"pc speaker\"", False);
     IDEInit();
     KDogWatchLog("Initialized \"ide disk\"", False);
+    VDriversReg();
+    KDogWatchLog("Initialized \"vdrivers\"", False);
     // Drivers end
 
     KDogWatchLog("System Initialized", False);
@@ -736,21 +759,21 @@ U0 termrun(const String cmd) {
 
         U8 payload[] = "Hello, world!";
         pck.data = payload;
-
+        pck.dst = (NetMac){0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         pck.length = sizeof(payload)-1;
 
         pck.ip4.verIhl = 0x45;
         pck.ip4.tos = 0;
-        pck.ip4.len = HtonW(sizeof(NetPackageIP4) + pck.length);
-        pck.ip4.id = 0x1234;
-        pck.ip4.offset = 0;
+        pck.ip4.len = HtonW(sizeof(NetPackageIP4));
+        pck.ip4.id = HtonW(0x1234);
+        pck.ip4.offset = HtonW(0x4000);
         pck.ip4.ttl = 64;
         pck.ip4.protocol = 0x11;
-        pck.ip4.srcip = HtonD(0xC0A80001);
-        pck.ip4.srcip = HtonD(0xC0A800A0);
+        pck.ip4.srcip = HtonD(0xC0A80001);  // 192.168.0.1
+        pck.ip4.dstip = HtonD(0xC0A800A0);  // 192.168.0.160    
 
         pck.ip4.checksum = 0;
-        pck.ip4.checksum = IPChecksum((U16*)pck.data, sizeof(payload)-1);
+        pck.ip4.checksum = IPChecksum((U16*)&pck.ip4, sizeof(NetPackageIP4));
 
         DriverCall(0xbb149088, 0xc3442e1e, 0, (U32*)&pck);
     }

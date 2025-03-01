@@ -336,10 +336,10 @@ U0 TTYPutS(Char c) {
     buf[index++] = ('0');
     buf[index++] = ('m');
     
-    // SerialWrite(c);
-    for (U32 i = 0; i < 0x1B; ++i) {
-        SerialWrite(buf[i]);
-    }
+    SerialWrite(c);
+    // for (U32 i = 0; i < 0x1B; ++i) {
+    //     SerialWrite(buf[i]);
+    // }
 }
 U0 TTYSwitch(TTYContext tc) {
     static TTYContext prev = TTYC_VGA;

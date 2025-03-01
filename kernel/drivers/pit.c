@@ -30,25 +30,31 @@ INT_DEF(PITHandler) {
         }
         days += SystemTime.day - 1;
         BosyTime = (((days * 24 + SystemTime.hour) * 60) + SystemTime.minute) * 60 + SystemTime.second;
-        if (Debugging) {
+        if (0 && Debugging) {
+            TTYSwitch(TTYC_SER);
             VgaCursorDisable();
             U32 c = TTYCursor;
             U8 fg0 = TTYlfg;
             U8 bg0 = TTYlbg;
-            TTYCursor = TTYWidth*1 - 5 - 8 - 1;
-            PrintF("$!0$*FEIP: %x", regs->eip);
-            TTYCursor = TTYWidth*2 - 5 - 8 - 1;
+            TTYCursor = TTYWidth*1-TTYWidth;
+            PrintF("$!F$*0EIP: %x", regs->eip);
+            TTYCursor = TTYWidth*2-TTYWidth;
             PrintF("ESP: %x", regs->useresp);
-            TTYCursor = TTYWidth*3 - 5 - 8 - 1;
+            TTYCursor = TTYWidth*3-TTYWidth;
             PrintF("Tim: %x", BosyTime);
-            TTYCursor = TTYWidth*4 - 5 - 8 - 1;
-            PrintF("mic: %x", TaskTail->regs.eip);
+            // TTYCursor = TTYWidth*4-TTYWidth;
+            // PrintF("mic: %x", TaskTail->regs.eip);
+            TTYCursor = TTYWidth*5-TTYWidth;
+            PrintF("CS: %x", regs->cs);
+            TTYCursor = TTYWidth*6-TTYWidth;
+            PrintF("DS: %x", regs->ds);
             TTYlbg = bg0;
             TTYlfg = fg0;
             TTYCursor = c;
             VgaCursorEnable();
+            TTYSwitch(TTYC_RES);
         }
-        if (TaskTail && TaskHead && TaskingIs) {
+        if (TaskTail && TaskHead && TaskingIs && 0) {
             MemCpy(&TaskTail->regs, regs, sizeof(INTRegs));
             TaskNext();
             if (TaskTail) {

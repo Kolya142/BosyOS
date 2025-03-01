@@ -75,6 +75,8 @@ static U0 RTL8139DriverHandler(U32 id, U32 *value) {
 
 U0 RTL8139Init() {
     RTL8139Start();
+    if (!RTL8139IO)
+        return;
     RTL8139_WRITE8(0x37, 0x10);
     U32 timeout = 100000;
     while (RTL8139_READ8(0x37) & 0x10 && --timeout);

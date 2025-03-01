@@ -1,0 +1,11 @@
+#pragma once
+
+#define DPIT 0x09ca4b4d, 0x5fa68611
+#define DBEEP 0x46ef3f2c, 0x27e134cd
+#define DIDE 0x6aa73a10, 0xa8b55cb4
+#define DMOUSE 0x58f8d530, 0xfffe784f
+#define DKEYBOARD 0x0bb5676c, 0xff3ae302
+#define DSERIAL 0xa3f13d05, 0x2eb0f0f
+#define DNETWORK 0xbb149088, 0xc3442e1e
+#define DRAND 0x8e6d1237, 0xc02dd685
+#define DTTY 0xc0d05943, 0x8be5d999

@@ -127,11 +127,10 @@ U0 SCLoadMe(INTRegs3 *regs) {
 
     MemCpy(regs, &states[regs->esi], sizeof(INTRegs));
     
-    regs->ebx = old_ebx;
     regs->eax = True;
 
-    regs->ss = 0x10;
-    regs->esp = TSS.esp0;
+    // regs->ss = 0x10;
+    // regs->esp = TSS.esp0;
 
     // TTYSwitch(TTYC_SER);
     // for (U32 i = 0; i < sizeof(INTRegs)/sizeof(U32); ++i) {

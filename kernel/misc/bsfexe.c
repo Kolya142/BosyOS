@@ -44,17 +44,17 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     // TTYUPrintHex((U32)meta->func);
     // TTYUPrint((Ptr)0x100000);
     PrintF("%x\n", meta->func);
-    RingSwitch((Ptr)meta->func, (Ptr)0x200000 - 4);
-    // asmV(
-    //     "movl %%esp, %1\n"
-    //     "movl %%ebp, %2\n"
-    //     "movl %%esp, %%ebp\n"
-    //     "jmp *%0\n"
-    //     "movl %2, %%ebp\n"
-    //     "movl %1, %%esp"
-    // :
-    // : "r"(meta->func), "m"(esp), "m"(ebp)
-    // : "memory", "cc");
+    // RingSwitch((Ptr)meta->func, (Ptr)0x200000 - 4);
+    asmV(
+        "movl %%esp, %1\n"
+        "movl %%ebp, %2\n"
+        "movl %%esp, %%ebp\n"
+        "jmp *%0\n"
+        "movl %2, %%ebp\n"
+        "movl %1, %%esp"
+    :
+    : "r"(meta->func), "m"(esp), "m"(ebp)
+    : "memory", "cc");
 
     // GDTSet(0x100000, 0xFFFFFFFF);
     // GDTLoad();

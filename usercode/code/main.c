@@ -30,77 +30,99 @@ void mainer2() {
         drvcall(DSERIAL, 0, str[i]);
     for (;;) {
         U8 c = drvcall(DSERIAL, 1, 0);
+        if (c == ':') {
+            c = drvcall(DSERIAL, 1, 0);
+            if (c == 'q') {
+                break;
+            }
+        }
         syscall(6, c, 0, 0, 0);
     }
     exit(0);
 }
 
 void game() {
-    String hello = "Hello from my game\n";
-    syscall(1, (U32)hello, 0, 0, 0);
-    U32 x = 40;
-    U32 y = 12;
-    String map = 
-        "                                                                                "
-        "                                                                                "
-        "                                                                                "
-        "                                                                                "
-        "                                                                                "
-        "                                                                                "
-        "                                                   ####################         "
-        "                  ##       ##                       #                #          "
-        "                                                     #              #           "
-        "                                                      #            #            "
-        "                               #              #        #          #             "
-        "                                                        #        #              "
-        "                                   #   #                ##########              "
-        "                                                               #                "
-        "                                           #                  #                 "
-        "                                                             #                  "
-        "                                                   #        #                   "
-        "                                                  #        #                    "
-        "                                                 #    #####                     "
-        "                                                #                               "
-        "                                               #                                "
-        "            #  #   ###                        #                                 "
-        "             #  #                            #                                  "
-        "            #  #   ###                      #                                   "
-        "################################################################################";
-    for (;;) {
-        Char c = drvcall(DKEYBOARD, 0, 0);
-        if (!(drvcall(DKEYBOARD, 1, 0) & 0x80)) { // Check key press
-            switch (c) {
-                case 'a': --x; break;
-                case 'd': ++x; break;
-                case '\x1b': exit(0);
-            }
+    U8 keys[32] = {0};
+    U32 tail[5] = {0};
+    tail[0] = 80 * 10 + 39;
+    tail[1] = 80 * 10 + 38;
+    tail[2] = 80 * 10 + 37;
+    tail[3] = 80 * 10 + 36;
+    tail[4] = 80 * 10 + 35;
+    U32 snake = 80 * 10 + 40;
+    U32 apple = drvcall(DRAND, 0, 0) % 1300 + 500;
+    U32 score = 0;
+    U8 dir = 4;
+    
+    Bool game = True;
+    while (game) {
+        if (drvcall(DKEYBOARD, 3, 'w')) {
+            dir = 1;
         }
-        if (map[x + y * 80] == '#') {
-            --y;
+        else if (drvcall(DKEYBOARD, 3, 'a')) {
+            dir = 2;
         }
-        else if (map[x + y * 80 + 80] != '#') {
-            ++y;
+        else if (drvcall(DKEYBOARD, 3, 's')) {
+            dir = 3;
         }
-        for (U32 i = 0; i < 2000; ++i) {
-            Char ch;
-            if (i == x + y * 80) {
-                ch = 'p';
-            }
-            else if (map[i] == '#') {
-                ch = '#';
-            }
-            else {
-                ch = ' ';
-            }
-            ((U16*)0xB8000)[i] = 0x0F00 | ch;
+        else if (drvcall(DKEYBOARD, 3, 'd')) {
+            dir = 4;
         }
+
+        for (U8 i = 4; i >= 1; --i) {
+            ((U16*)0xb8000)[tail[i]] = 0xF000 | ' ';
+            
+            tail[i] = tail[i-1];
+        }
+        tail[0] = snake;
+
+        if (snake == apple) {
+            score++;
+            ((U16*)0xb8000)[apple] = 0xF02E;
+            apple = drvcall(DRAND, 0, 0) % 1300 + 500;
+        }
+
+        if (dir == 1      && ((snake - 80) < 0xFFFFFFF)) {
+            snake -= 80;
+        }
+        else if (dir == 2 && (snake - 1) % 80 != 80 - 1) {
+            snake -= 1;
+        }
+        else if (dir == 3 && ((snake + 80) < 80 * 25) )  {
+            snake += 80;
+        }
+        else if (dir == 4 && ((snake + 1) % 80 != 0)) {
+            snake += 1;
+        }
+
+        for (U8 i = 0; i < 5; ++i) {
+            ((U16*)0xb8000)[tail[i]] = 0xF000 | '#';
+            // if (tail[i] == snake) {
+            //     for (U32 i = 0; i < 2000; ++i) {
+            //         vga[i] ^= 0xFF00;
+            //     }
+            //     TTYCursor = 0;
+            //     TTYUPrint("Game over!\n");
+            //     game = False;
+            //     break;
+            // }
+        }
+        if (drvcall(DKEYBOARD, 3, '\x1b')) {
+            game = False;
+        }
+        ((U16*)0xb8000)[apple] = 0xC000 | ' ';
+
         syscall(4, 100, 0, 0, 0);
     }
+    syscall(1, (U32)"$!F$*0", 0, 0, 0);
     exit(0);
 }
 
-
+void user() {
+    for(;;);
+}
 FUNCTION(mainer, 0, 1)
 FUNCTION(mainer1, 0, 2)
 FUNCTION(mainer2, 0, 3)
 FUNCTION(game, 0, 4)
+FUNCTION(user, 0, 5)

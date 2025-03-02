@@ -17,7 +17,6 @@
 #include <misc/vdrivers.h>
 #include <misc/syscall.h>
 #include <misc/wordgen.h>
-#include <misc/vfiles.h>
 #include <misc/bsfexe.h>
 
 // Libraries
@@ -35,8 +34,6 @@
 
 // FileSystem
 #include <fs/BOTFS.h>
-#include <fs/vfs.h>
-#include <fs/ufs.h>
 
 // Arch/Cpu Functions
 #include <arch/paging.h>
@@ -77,11 +74,7 @@ __attribute__((naked)) U0 KernelMain() {
     SysCallSetup();
     
     KDogWatchLog("SysCalls Initialized", False);
-    // UFSInit();
-    // VFSInit();
-    // VFilesInit();
-    // DATInit();
-    // BOTFSInit();
+    
     PagingInit();
     
     U32 cr0;
@@ -111,18 +104,26 @@ __attribute__((naked)) U0 KernelMain() {
     VDriversReg();
     KDogWatchLog("Initialized \"vdrivers\"", False);
     // Drivers end
+    
+    // FSs
+    KDogWatchLog("Setuping FileSystems", False);
+    DATInit();
+    KDogWatchLog("Initialized \"dat\"", False);
+    BOTFSInit();
+    KDogWatchLog("Initialized \"botfs\"", False);
+    // UFSInit();
+    // KDogWatchLog("Initialized \"ufs\"", False);
+    // VFSInit();
+    // KDogWatchLog("Initialized \"vfs\"", False);
 
     KDogWatchLog("System Initialized", False);
     // TTYClear();
     // TTYCursor = 0;
-    TTYUPrint(
-        "\n"
-        "$!EBosyOS control codes$!F: $*F$!0See *mezex.txt*$*0$!F\n");
-    programtest();
 
     SleepM(500);
 
     mainloop();
+    CpuHalt();
 }
 // INT_DEF(KernelDebug) {
 //     U32 c = TTYCursor;
@@ -716,10 +717,7 @@ U0 CRay() {
     }
 }
 U0 CBoot(Char id) {
-    Ptr data = MAlloc(48 * 512);
-    for (U32 i = (U32)data; i < (U32)data + 48 * 512; i += 4096) {
-        PMap(i - (U32)data + 0x5000, i, PAGE_PRESENT | PAGE_RW);
-    }
+    Ptr data = (Ptr)0x5000;
     for (U32 i = 0; i < 48; ++i)
         ATARead(data+i*512, 163+i, 1);
     PrintF("loaded at %p\n", data);
@@ -740,6 +738,12 @@ U0 loop() {
         TTYCursor = c;
     }
 }
+typedef struct {
+    U16 src_port;
+    U16 dst_port;
+    U16 length;
+    U16 checksum;
+} __attribute__((packed)) UDPHeader;
 U32 testvar = 0xAB0BA;
 U0 termrun(const String cmd) {
     if (!StrCmp(cmd, "help")) {
@@ -749,9 +753,21 @@ U0 termrun(const String cmd) {
         CCls();
     }
     else if (!StrCmp(cmd, "testip")) {
+        NetMac mac;
+        DriverCall(0xbb149088, 0xc3442e1e, 2, (U32*)&mac);
+        PrintF("%C:%C:%C:%C:%C:%C", mac.w1 >> 8, mac.w1 & 0xFF, mac.w2 >> 8, mac.w2 & 0xFF, mac.w3 >> 8, mac.w3 & 0xFF);
+
         NetPackage pck;
 
-        U8 payload[] = "Hello, world!";
+        U8 payload[] = "12345678Hello, world!";
+        UDPHeader udp;
+        udp.src_port = HtonW(1234);
+        udp.dst_port = HtonW(129);
+        udp.length = HtonW(sizeof(payload));
+        udp.checksum = 0;
+        MemCpy(payload, &udp, sizeof(UDPHeader));
+
+
         pck.data = payload;
         pck.dst = (NetMac){0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         pck.length = sizeof(payload)-1;
@@ -764,7 +780,7 @@ U0 termrun(const String cmd) {
         pck.ip4.ttl = 64;
         pck.ip4.protocol = 0x11;
         pck.ip4.srcip = HtonD(0xC0A80001);  // 192.168.0.1
-        pck.ip4.dstip = HtonD(0xC0A800A0);  // 192.168.0.160    
+        pck.ip4.dstip = HtonD(0xC0A81F79);  // 192.168.31.121   
 
         pck.ip4.checksum = 0;
         pck.ip4.checksum = IPChecksum((U16*)&pck.ip4, sizeof(NetPackageIP4));
@@ -949,13 +965,8 @@ U0 termrun(const String cmd) {
         }
     }
     else if (StrStartsWith(cmd, "fclean")) {
-        PrintF("Do you want to remove all files?\nIf yes rewrite this: \"$!7The quick brown fox jumps over a lazy dog$!F\"\n(Note: gray is 7)?");
-        Char buf[48];
-        KBRead(buf, 48);
-        if (!StrCmp(buf, "$!7The quick brown fox jumps over a lazy dog$!F")) {
-            BOTFSFormat();
-            PrintF("$!ACleaned$!F");
-        }
+        BOTFSFormat();
+        PrintF("$!ACleaned$!F");
     }
     else if (StrStartsWith(cmd, "touch")) {
         String file = &cmd[6];
@@ -985,14 +996,6 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "triangle")) {
         CTriangle();
-    }
-    else if (!StrCmp(cmd, "testufs")) {
-        U8 buf[1] = {0};
-        UFSRead("dev", "random", buf, 1);
-        PrintF("Test: %x\n", buf[0]);
-        U8 ubuf[1] = {4};
-        UFSRead("home", "test", ubuf, 4);
-        PrintF("Test home: %s", ubuf);
     }
     else if (!StrCmp(cmd, "testbfs")) {
         BOTFSCreate("test", 10);

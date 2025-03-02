@@ -32,26 +32,30 @@ QEMU=qemu-system-i386
 QEMU_DRIVE=-drive format=raw,file=drive
 QEMU_MEM=-m 64M
 QEMU_SER=-serial stdio
-QEMU_NET=-netdev bridge,id=net0,br=virbr0 -device rtl8139,netdev=net0
-QEMU_DEBUG=-D ~/bosyos.qemu.log -d int,cpu_reset --no-reboot
+QEMU_NET=-netdev bridge,id=net0,br=br0 -device rtl8139,netdev=net0
+QEMU_DEBUG=-D ~/bosyos.qemu.log -d int,cpu_reset --no-reboot --no-shutdown
 QEMU_AUDIO_LINUX=-audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
 QEMU_AUDIO_MAC=-audiodev coreaudio,id=snd0 -machine pcspk-audiodev=snd0
 QEMU_DISPLAY=-display gtk,zoom-to-fit=on
 QEMU_KVM=--enable-kvm
 QEMU_GDB=-s -S
+QEMU_OUT=
 
 run:
+	rm -f ser.in
+	rm -f ser.out
+	mkfifo ser.in ser.out
 	@echo -e "\n\n\n\n\n\n\n\n\n\n\n\n"
 	@if [ "$(MODE)" = "min" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT); \
 	elif [ "$(MODE)" = "debug" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_DEBUG); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_DEBUG) $(QEMU_OUT); \
 	elif [ "$(MODE)" = "gdb" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_GDB); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_GDB) $(QEMU_OUT); \
 	elif [ "$(SYSTEM)" = "macos" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC) $(QEMU_OUT); \
 	else \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_OUT); \
 	fi
 	@make userdata_dump
 

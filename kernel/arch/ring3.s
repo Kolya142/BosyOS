@@ -3,6 +3,7 @@ section .text
 global RingSwitch
 
 RingSwitch:
+    cli
     mov ax, (4 * 8) | 3
     mov ds, ax
     mov es, ax

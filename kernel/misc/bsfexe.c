@@ -1,3 +1,4 @@
+#include <misc/syscall.h>
 #include <arch/paging.h>
 #include <misc/bsfexe.h>
 #include <lib/MemLib.h>
@@ -21,6 +22,8 @@ BsfMeta *BsfMetaLoad(Ptr start, U32 d1, U32 d2, U32 size) { // parsing bossec
     }
     return meta;
 }
+#define PAGES 6
+#define UADDR 0x2000000
 static volatile U32 esp, ebp;
 I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     BsfHeader *head = &app->header;
@@ -32,23 +35,29 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     BsfMeta *meta = BsfMetaLoad(bossec, m1, m2, head->BosSec);
     Bool s;
     I32 code;
+    U32 ptrb[PAGES];
+    U32 ptr[PAGES];
+    for (U32 i = 0; i < PAGES; ++i) {
+        ptrb[i] = PGet(UADDR+PAGE_SIZE*i);
+        ptr[i] = (U32)PallocMap(UADDR+PAGE_SIZE*i, PAGE_RW | PAGE_USER);
+    }
     asmV( // Save state
         "int $0x78\n"
         : "=a"(s), "=b"(code)
         : "a"(0x14), "S"(2)
     );
     if (s) {
+        for (U32 i = 0; i < PAGES; ++i) {
+            PFree((Ptr)ptr[i]);
+            PMap(UADDR+PAGE_SIZE, ptrb[i], PAGE_RW | PAGE_USER | PAGE_PRESENT);
+        }
         return code+2;
     }
-    U32 ptrb = PGet(0x2000000);
-    U32 ptrb2 = PGet(0x2000000+PAGE_SIZE);
-    Ptr ptr = PallocMap(0x2000000, PAGE_RW | PAGE_USER);
-    Ptr ptr2 = PallocMap(0x2000000+PAGE_SIZE, PAGE_RW | PAGE_USER);
-    MemCpy((Ptr)0x2000000, app->data, head->CodeS);
+    MemCpy((Ptr)UADDR, app->data, head->CodeS);
     // TTYUPrintHex((U32)meta->func);
     // TTYUPrint((Ptr)0x100000);
     PrintF("%p\n", meta->func);
-    // RingSwitch((Ptr)meta->func, (Ptr)0x200000 - 4);
+    // RingSwitch((Ptr)meta->func, (Ptr)UADDR+PAGE_SIZE*5 - 4);
     asmV(
         "movl %%esp, %1\n"
         "movl %%ebp, %2\n"
@@ -63,11 +72,5 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     // GDTSet(0x100000, 0xFFFFFFFF);
     // GDTLoad();
 
-    // Ptr stack_addr = (Ptr)0x200000 - 4;
-    // SYSUserSetup((Ptr)0x100000, stack_addr);
-    PFree(ptr);
-    PFree(ptr2);
-    PMap(0x2000000, ptrb, PAGE_RW | PAGE_USER | PAGE_PRESENT);
-    PMap(0x2000000+PAGE_SIZE, ptrb2, PAGE_RW | PAGE_USER | PAGE_PRESENT);
     return True;
 }

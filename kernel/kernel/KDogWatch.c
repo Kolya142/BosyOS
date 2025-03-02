@@ -17,22 +17,17 @@ volatile U32 KDogWatchTicks = 0;
 volatile KDogWatchProfile Profiles[255] = {0};
 
 #define ERR(name, text) INT_DEF(name) { \
-    INT_START; \
-    asm volatile ( \
-        "movw $0x10, %%ax \n" \
-        "movw %%ax, %%ds  \n" \
-        "movw %%ax, %%es  \n" \
-        "movw %%ax, %%fs  \n" \
-        "movw %%ax, %%gs  \n" \
-        :::"ax" \
-    ); \
     KDogWatchLog(text, True); \
-    }
-ERR(DWErr0D, "Cpu Error 0x0D");
-ERR(DWErr0E, "Cpu Error 0x0E");
-ERR(DWErr05, "Cpu Error 0x05");
-ERR(DWErr08, "Cpu Error 0x08");
-
+}
+ERR(DWErr0D, "#GP");
+ERR(DWErr05, "#BOUND");
+ERR(DWErr08, "#Double fault");
+INT_DEF(DWErr0E) {
+    U32 cr2;
+    asm volatile("mov %%cr2, %0" : "=r"(cr2));
+    PrintF("#Page fault code: %p\n", cr2);
+    KDogWatchLog("#Page fault", True);
+}
 U0 KDogWatchInit() {
     IDTSet(0x0D, DWErr0D, 0x08, 0x8E);
     IDTSet(0x0E, DWErr0E, 0x08, 0x8E);

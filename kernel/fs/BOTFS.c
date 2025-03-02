@@ -1,5 +1,4 @@
 #include <fs/BOTFS.h>
-#include <fs/ufs.h>
 
 /*
 Bugs:
@@ -7,14 +6,6 @@ Bugs:
 
 BOTFSHeader BFSGlob;
 
-U32 BOTFSURead(Ptr this, String dir, String name, Ptr buf, U32 size) {
-    BOTFSRead(name, buf, 0, size);
-    return size;
-}
-U32 BOTFSUWrite(Ptr this, String dir, String name, Ptr buf, U32 size) {
-    BOTFSWrite(name, buf, 0, size);
-    return size;
-}
 U0 BOTFSInit() {
     for (U16 i = 0x10; i <= 0x1B; ++i) {
         DATAlloc(i);
@@ -23,7 +14,6 @@ U0 BOTFSInit() {
     if (BFSGlob.magic != 0x674E1D8F) {
         BOTFSFormat();
     }
-    UFSRegister(BOTFSURead, BOTFSUWrite, "home");
 }
 U0 BOTFSDRead(U16 seg, U16 start, U16 end, Ptr buf) {
     U32 i = 0;
@@ -69,8 +59,7 @@ U0 BOTFSDWrite(U16 seg, U16 start, U16 end, Ptr buf) {
 }
 U0 BOTFSFormat() {
     U8 segment[512] = {0};
-    for (U32 i = 0x10; i <= 0x1B; ++i)
-        DATWrite(i, &BFSGlob, 0, sizeof(BOTFSHeader));
+    DATWrite(0x10, &BFSGlob, 0, sizeof(BOTFSHeader));
     
     MemSet(&BFSGlob, 0, sizeof(BOTFSHeader));
     BFSGlob.magic = 0x674E1D8F;
@@ -81,6 +70,9 @@ U0 BOTFSFormat() {
     BFSGlob.data_start = 5;
     BFSGlob.flags = 0;
     BOTFSFlush();
+    MemSet(segment, 0, 512);
+    for (U32 i = 0x11; i <= 0x1B; ++i)
+        DATWrite(i, segment, 0, 512);
 }
 U32 BOTFSFind(String name) {
     BOTFSFile *files = BOTFSFGet();
@@ -143,6 +135,7 @@ U0 BOTFSWrite(String name, Ptr buf, U16 shift, U16 count) {
         BOTFSFile *file = &files[i];
         if (file->exists && !StrCmp(file->name, name)) {
             BOTFSDWrite(file->start+BFSGlob.data_start, file->shift+shift, file->shift+shift+count, buf);
+            MFree(files);
             return;
         }
     }

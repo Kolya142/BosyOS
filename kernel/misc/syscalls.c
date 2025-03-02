@@ -5,6 +5,7 @@
 #include <kernel/KPanic.h>
 #include <misc/syscall.h>
 #include <arch/getreg.h>
+#include <misc/bsfexe.h>
 #include <lib/Random.h>
 #include <lib/MemLib.h>
 #include <arch/beep.h>
@@ -16,6 +17,7 @@
 #include <arch/io.h>
 
 static INTRegs states[256] = {0};
+static U32 statei = 3;
 
 U0 SCPrint(INTRegs *regs) {
     U32 addr = regs->esi;
@@ -116,6 +118,7 @@ U0 SCSaveMe(INTRegs3 *regs) {
         return;
     }
     MemCpy(&states[regs->esi], regs, sizeof(INTRegs));
+    ++statei;
     regs->eax = False;
 }
 U0 SCLoadMe(INTRegs3 *regs) {
@@ -124,6 +127,7 @@ U0 SCLoadMe(INTRegs3 *regs) {
         return;
     }
     U32 old_ebx = regs->ebx;
+    --statei;
 
     MemCpy(regs, &states[regs->esi], sizeof(INTRegs));
     
@@ -137,6 +141,12 @@ U0 SCLoadMe(INTRegs3 *regs) {
     //     PrintF("%x", ((U32*)regs)[i]);
     // }
     // TTYSwitch(TTYC_RES);
+}
+
+U0 SCRun(INTRegs *regs) {
+    Ptr data = (Ptr)0x5000;
+    BsfApp app = BsfFromBytes(data);
+    BsfExec(&app, 0, regs->esi);
 }
 
 U0 SysCallSetup() {
@@ -162,7 +172,5 @@ U0 SysCallSetup() {
     SysCallSet(SCDriverACC, 0x13);
     SysCallSet(SCSaveMe, 0x14);
     SysCallSet(SCLoadMe, 0x15);
-    TTYSwitch(TTYC_SER);
-    PrintF("Syscall 0x15 set at %x\n", (U32)SysCallT[0x15]);
-    TTYSwitch(TTYC_RES);
+    SysCallSet(SCRun, 0x16);
 }

@@ -12,7 +12,7 @@ Boot  DATHeader UserData Kernel
 [2]   [1]       [15]     [...]
 */
 
-#define DAT_FIRST_SEG 3
+#define DAT_FIRST_SEG 0
 
 DATHeader DATHeaderGlob;
 

@@ -10,7 +10,7 @@ mov al, 'T'
 int 0x10
 
 mov ah, 2  ; read
-mov al, 128 ; 128 sector
+mov al, 127 ; 127 sector
 mov ch, 0  ; cylinder
 mov cl, 36 ; first sector
 mov dh, 0  ; head
@@ -20,6 +20,29 @@ mov es, bx
 mov bx, 0
 int 0x13
 jc disk_error
+
+mov ah, 0x0e
+mov al, '1'
+int 0x10
+
+mov ah, 2  ; read
+mov al, 127 ; 127 sector
+mov ch, 2  ; cylinder
+mov cl, 36+127-63-63 ; first sector
+mov dh, 0  ; head
+mov dl, byte [BOOTDRIVE]
+
+mov bx, ((0x9000+127*512) >> 4) ; mov this to es
+mov es, bx
+
+mov bx, (0x9000+127*512)&0xFFFF
+
+int 0x13
+jc disk_error
+
+mov ah, 0x0e
+mov al, '2'
+int 0x10
 
 
 ; call enable_a20

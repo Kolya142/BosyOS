@@ -4,13 +4,15 @@ ifeq ($(shell uname),Darwin)
   SYSTEM=macos
 endif
 
-.PHONY: boot kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun
-boot:
-	cd bootloader; nasm main.asm
-	cd kbootloader; nasm -f bin boot.asm -o boot
-	cat bootloader/main kbootloader/boot > bootsegment
+.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun
 kernel:
-	cd kernel && python3 build.py && truncate -s 65536 kernel.b  # 64 KB
+	cd kernel/boot && nasm boot.asm -o boota.bin && gcc -x c -c -m32 boot._c -o bootc.o -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -mhard-float -mfpmath=387
+	cd kernel/boot && ld -m elf_i386 -T link.ld bootc.o -o bootc.oo
+	cd kernel/boot && objcopy -O binary bootc.oo bootc.bin
+	cd kernel/boot && cat boota.bin bootc.bin > boot.bin
+	cd kernel/boot && truncate -s 1536 boot.bin
+	cd kernel && python3 build.py
+	cp kernel/kernel.b kernel.bin
 userdata_dump:
 	@if [ -e drive ]; then \
 		dd if=drive of=userdata bs=512 skip=3 count=32; \
@@ -26,7 +28,7 @@ compile:
 	elif [ ! -e userdata ]; then \
  		truncate -s 16384 userdata; \
 	fi
-	cat bootsegment userdata kernel/kernel.b usercode/usercode.bin.bsf > drive
+	cat kernel/boot/boot.bin userdata kernel.bin usercode/usercode.bin.bsf > drive
 
 QEMU=qemu-system-i386
 QEMU_DRIVE=-drive format=raw,file=drive
@@ -60,8 +62,8 @@ run:
 	fi
 	@make userdata_dump
 
-all: boot kernel prog compile run
-allr: boot kernel prog compile
+all: kernel prog compile run
+allr: kernel prog compile
 progc: prog compile
 progrun: progc run
 kernelc: kernel compile

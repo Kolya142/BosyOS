@@ -6,7 +6,7 @@ extern PrintF
 global RTL8139IO
 global RTL8139IRQ
 
-; TODO: fix qemu hardcode
+; TODO: remove qemu hardcode
 
 RTL8139Start:
     ; Search RTL8139

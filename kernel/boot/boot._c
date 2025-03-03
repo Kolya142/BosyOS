@@ -1,0 +1,90 @@
+#pragma once
+#include <stdint.h>
+typedef uint8_t  U8;
+typedef int8_t   I8;
+typedef uint16_t U16;
+typedef uint32_t U32;
+typedef int16_t  I16;
+typedef int32_t  I32;
+
+typedef void     U0;
+
+typedef float    F32;
+
+typedef U8       Bool;
+typedef U8       Byte;
+typedef U8       Char;
+
+typedef U0*      Ptr;
+typedef Char*    String;
+
+extern Bool Debugging;
+
+#define True 1
+#define False 0
+#define Null 0
+
+#define stat static volatile
+#define asmv asm volatile
+#define asmV __asm__ volatile
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define swapx(a, b) {a = a ^ b; b = a ^ b; a = a ^ b;}
+U0 POut(U16 port, U8 data);
+U8 PIn(U16 port);
+U0 POut16(U16 port, U16 data);
+U16 PIn16(U16 port);
+
+U0 main() {
+    const static U32 start = 35;
+    const static U32 count = 128;
+    for (U32 j = 0; j < count; ++j) {
+        POut(0x01F6, 0xE0 | ((start >> 24) & 15));
+        POut(0x01F2, 1);
+        U32 sec = start + j;
+        POut(0x01F3, sec & 0xff);
+        POut(0x01F4, (sec >> 8) & 0xff);
+        POut(0x01F5, (sec >> 16) & 0xff);
+        POut(0x01F7, 0x20);
+
+        while (PIn(0x01F7) & 0x80);    // Wait BUSY
+
+        U8 *buf8 = (U8*)0x300000+j*512;
+
+        for (U8 sec = 0; sec < 1; ++sec) {
+            while (!(PIn(0x1F7) & 0x08));
+
+            for (U32 i = 0; i < 256; i++) {
+                U16 word = PIn16(0x01F0);
+                buf8[sec * 512 + (i * 2)] = word & 0xff;
+                buf8[sec * 512 + (i * 2) + 1] = (word >> 8) & 0xff;
+            }
+            while (PIn(0x1F7) & 0x80);
+        }
+    }
+    for (U32 i = 0; i < 1000; ++i) {
+        ((U16*)0xb8000)[i*2+0] = 0x0F00 | "0123456789ABCDEF"[((U8*)0x300000)[i] >> 4];
+        ((U16*)0xb8000)[i*2+1] = 0x0F00 | "0123456789ABCDEF"[((U8*)0x300000)[i] & 15];
+    }    
+    // for(;;);
+    U0(*entry)() = (U0(*)())0x300000;
+    entry();
+}
+
+U0 POut(U16 port, U8 data) {
+    __asm__ __volatile__("outb %0, %1" : : "a"(data), "Nd"(port));
+}
+U8 PIn(U16 port) {
+    U8 ret;
+    __asm__ __volatile__("inb %1, %0" : "=a"(ret) : "Nd"(port));
+    return ret;
+}
+U0 POut16(U16 port, U16 data) {
+    __asm__ __volatile__("outw %0, %1" : : "a"(data), "Nd"(port));
+}
+U16 PIn16(U16 port) {
+    U16 ret;
+    __asm__ __volatile__("inw %1, %0" : "=a"(ret) : "Nd"(port));
+    return ret;
+}

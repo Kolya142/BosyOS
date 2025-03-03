@@ -68,6 +68,12 @@ __attribute__((naked)) U0 KernelMain() {
     TTYClear();
     TTYCursor = 0;
     KDogWatchLog("System started", False);
+
+    U16 mem = MemorySize();
+    if (mem < 64000) {
+        KDogWatchLog("$!CWarning: Memory size lower than 64KB$!F", False);
+    }
+
     VgaBlinkingSet(False);
     VgaCursorDisable();
     VgaCursorEnable();
@@ -112,10 +118,10 @@ __attribute__((naked)) U0 KernelMain() {
     
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
-    DATInit();
-    KDogWatchLog("Initialized \"dat\"", False);
-    BOTFSInit();
-    KDogWatchLog("Initialized \"botfs\"", False);
+    // DATInit();
+    // KDogWatchLog("Initialized \"dat\"", False);
+    // BOTFSInit();
+    // KDogWatchLog("Initialized \"botfs\"", False);
     // UFSInit();
     // KDogWatchLog("Initialized \"ufs\"", False);
     // VFSInit();
@@ -823,7 +829,12 @@ U0 termrun(const String cmd) {
         Debugging = !Debugging;
     }
     else if (!StrCmp(cmd, "stat")) {
-        PrintF("Width: %d, Height: %d", TTYWidth, TTYHeight);
+        Char cpu[49];
+        CpuNameGet(cpu);
+        PrintF("Width: %d, Height: %d\n", TTYWidth, TTYHeight);
+        PrintF("Cpu: %s\n", cpu);
+        U16 mem = MemorySize();
+        PrintF("memory: 0x%2xKB", mem);
     }
     else if (!StrCmp(cmd, "pass")) {
         PrintF("Enter password: $!A\\$$!0");

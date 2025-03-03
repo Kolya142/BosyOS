@@ -33,6 +33,7 @@
 #include <lib/IP.h>
 
 // FileSystem
+#include <fs/ramfs.h>
 #include <fs/BOTFS.h>
 
 // Arch/Cpu Functions
@@ -118,6 +119,8 @@ __attribute__((naked)) U0 KernelMain() {
     
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
+    RFSInit();
+    KDogWatchLog("Initialized \"ramfs\"", False);
     // DATInit();
     // KDogWatchLog("Initialized \"dat\"", False);
     // BOTFSInit();
@@ -132,8 +135,11 @@ __attribute__((naked)) U0 KernelMain() {
     // TTYCursor = 0;
 
     SleepM(500);
-
     mainloop();
+    // TaskNew((U32)mainloop);
+    // TaskNew((U32)loop);
+    // TaskingIs = True;
+    // for(;;);
     CpuHalt();
 }
 // INT_DEF(KernelDebug) {
@@ -725,7 +731,7 @@ U0 CRay() {
 U0 CBoot(Char id) {
     Ptr data = (Ptr)0x5000;
     for (U32 i = 0; i < 48; ++i)
-        ATARead(data+i*512, 163+i, 1);
+        ATARead(data+i*512, 419+i, 1);
     PrintF("loaded at %p\n", data);
     PrintF("Memory copied, first bytes: %s\n", data); 
     BsfApp app = BsfFromBytes(data);
@@ -801,6 +807,17 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "ray")) {
         CRay();
+    }
+    else if (!StrCmp(cmd, "testrfs")) {
+        RFSAdd("test", 50);
+        U32 fd = RFSOpen("test");
+        RFSWrite(fd, "Hello, world!", 14);
+        RFSClose(fd);
+        fd = RFSOpen("test");
+        Char buf[14];
+        RFSRead(fd, buf, 14);
+        RFSClose(fd);
+        PrintF("%s", buf);
     }
     else if (!StrCmp(cmd, "peek")) {
         PrintF("%x", *(U32*)0x0030462a);

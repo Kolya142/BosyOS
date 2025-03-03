@@ -47,7 +47,8 @@ U0 VRMDrawRect(Vec2 start, Vec2 end, U8 c) {
 }
 U0 VRMDrawSprite(Vec2 start, Vec2 size, U8 c, U8 b, U8 *sprite) {
     for (U32 y = 0; y < size.y; ++y) {
-        for (U32 x = 0; x < size.x; ++x) { U8 s = sprite[x + y * size.x];
+        for (U32 x = 0; x < size.x; ++x) {
+            U8 s = sprite[x + y * size.x];
             if (s == 2) continue;
             VRMPSet(x + start.x, y + start.y, s == 1 ? c: b);
         }

@@ -13,6 +13,7 @@ kernel:
 	cd kernel/boot && truncate -s 1536 boot.bin
 	cd kernel && python3 build.py
 	cp kernel/kernel.b kernel.bin
+	truncate -s 131072 kernel.bin
 userdata_dump:
 	@if [ -e drive ]; then \
 		dd if=drive of=userdata bs=512 skip=3 count=32; \

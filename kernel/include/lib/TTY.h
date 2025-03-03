@@ -13,7 +13,6 @@ typedef enum {
 extern U32 TTYCursor;
 extern VgaColor TTYlfg;
 extern VgaColor TTYlbg;
-extern U8 TTYFont[256][5*5];
 extern U0(*TTYPuter)(Char);
 extern U0(*TTYScroller)();
 extern U32 TTYWidth;

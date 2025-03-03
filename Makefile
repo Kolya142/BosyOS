@@ -30,6 +30,7 @@ compile:
 
 QEMU=qemu-system-i386
 QEMU_DRIVE=-drive format=raw,file=drive
+QEMU_MOUSE=
 QEMU_MEM=-m 64M
 QEMU_SER=-serial stdio
 QEMU_NET=-netdev bridge,id=net0,br=br0 -device rtl8139,netdev=net0
@@ -47,15 +48,15 @@ run:
 	mkfifo ser.in ser.out
 	@echo -e "\n\n\n\n\n\n\n\n\n\n\n\n"
 	@if [ "$(MODE)" = "min" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_MOUSE) $(QEMU_OUT); \
 	elif [ "$(MODE)" = "debug" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_DEBUG) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_DEBUG) $(QEMU_MOUSE) $(QEMU_OUT); \
 	elif [ "$(MODE)" = "gdb" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_GDB) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_GDB) $(QEMU_MOUSE) $(QEMU_OUT); \
 	elif [ "$(SYSTEM)" = "macos" ]; then \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC) $(QEMU_MOUSE) $(QEMU_OUT); \
 	else \
-		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT); \
 	fi
 	@make userdata_dump
 

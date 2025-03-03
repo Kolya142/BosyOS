@@ -1,6 +1,6 @@
 #include <lib/String.h>
 
-Char ToUpper(Char a)
+Char UpperTo(Char a)
 {
     if (a == 0x30) {
         return ')';

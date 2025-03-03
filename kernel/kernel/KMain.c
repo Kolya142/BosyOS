@@ -51,7 +51,7 @@ U0 programtest();
 U0 mainloop();
 U0 loop();
 
-__attribute__((naked)) U0 KernelMain() {    
+__attribute__((naked)) U0 KernelMain() {
     TTYSwitch(TTYC_VGA);
     VgaInit();
     TTYClear();
@@ -63,6 +63,10 @@ __attribute__((naked)) U0 KernelMain() {
     IDTInit();
     PICMap();
     PITInit();
+    VgaGraphicsSet();
+    TTYSwitch(TTYC_320);
+    TTYClear();
+    TTYCursor = 0;
     KDogWatchLog("System started", False);
     VgaBlinkingSet(False);
     VgaCursorDisable();
@@ -97,6 +101,7 @@ __attribute__((naked)) U0 KernelMain() {
     KBInit();
     KDogWatchLog("Initialized \"keyboard\"", False);
     // MouseInit(); // Portal to hell
+    // KDogWatchLog("Initialized \"mouse\"", False);
     BeepInit();
     KDogWatchLog("Initialized \"pc speaker\"", False);
     IDEInit();
@@ -627,11 +632,6 @@ U0 CHz() {
     }
 }
 U0 CRay() {
-    VgaGraphicsSet();
-    TTYPuter = TTYPutG;
-    TTYWidth = 320  / 6;
-    TTYHeight = 200 / 6;
-    VRMClear(Purple);
     KDogWatchPEnd(0);
     U8 map[16 * 16] = {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -744,7 +744,7 @@ typedef struct {
     U16 length;
     U16 checksum;
 } __attribute__((packed)) UDPHeader;
-U32 testvar = 0xAB0BA;
+U32 testvar = 0xABAB;
 U0 termrun(const String cmd) {
     if (!StrCmp(cmd, "help")) {
         CHelp();
@@ -867,8 +867,8 @@ U0 termrun(const String cmd) {
         //     PrintF("\n");
         // }
         // for(;;);
-        VgaGraphicsSet();
-        VRMClear(Purple);
+        // VgaGraphicsSet();
+        // VRMClear(Purple);
         TTYPuter = TTYPutG;
         TTYWidth = 320  / 6;
         TTYHeight = 200 / 6;

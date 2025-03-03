@@ -2,6 +2,7 @@
 #include <misc/wordgen.h>
 #include <lib/Graphics.h>
 #include <lib/MemLib.h>
+#include <lib/String.h>
 #include <lib/TTY.h>
 #include <lib/FDL.h>
 #include <stdarg.h>
@@ -9,6 +10,7 @@ U32 TTYCursor = 0;
 VgaColor TTYlfg = White;
 VgaColor TTYlbg = Black;
 U0(*TTYPuter)(Char) = TTYPutT;
+U0(*TTYScroller)() = TTYScrollT;
 U32 TTYWidth  = 80;
 U32 TTYHeight = 25;
 
@@ -56,11 +58,7 @@ Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
         TTYCursor++;
     }
     if (TTYCursor >= TTYWidth * TTYHeight) {
-        MemCpy(vga - 80, vga, 4000); // TODO: add more crosstty
-        for (U32 i = TTYWidth * TTYHeight - TTYWidth; i < TTYWidth * TTYHeight; ++i) {
-            TTYCursor = i;
-            TTYPuter(' ');
-        }
+        TTYScroller();
         TTYCursor = TTYWidth * TTYHeight - TTYWidth;
         return False;
     }
@@ -207,12 +205,21 @@ U0 TTYUPrintC(Char c) {
 U0 PrintF(String format, ...) {
     va_list args;
     va_start(args, format);
+    U8 n = 4;
     while (*format) {
         if (*format == '%' && *(format + 1)) {
             ++format;
+            if (*format >= '0' && *format <= '4') {
+                n = *format - '0';
+                ++format;
+            }
             switch (*format) {
                 case 'c': {
                     Char c = va_arg(args, U32);
+                    TTYUPrintC(c);
+                } break;
+                case 'C': {
+                    Char c = UpperTo(va_arg(args, U32));
                     TTYUPrintC(c);
                 } break;
                 case 'w': {
@@ -220,6 +227,7 @@ U0 PrintF(String format, ...) {
                 } break;
                 case 's': {
                     String s = va_arg(args, String);
+                    if (!s) s = "(null)";
                     TTYUPrint(s);
                 } break;
                 case 'B': {
@@ -228,7 +236,7 @@ U0 PrintF(String format, ...) {
                 } break;
                 case 'b': {
                     U16 s = va_arg(args, U32);
-                    for (I8 i = 15; i >= 0; --i) {
+                    for (I8 i = n * 8 - 1; i >= 0; --i) {
                         TTYUPrintC((s & (1 << i)) ? '1' : '0');
                     }
                 } break;                
@@ -238,7 +246,7 @@ U0 PrintF(String format, ...) {
                 } break;
                 case 'i': {
                     I32 s = va_arg(args, I32);
-                    TTYUPrintDec(s);
+                    TTYUPrintDecI(s);
                 } break;
                 case 'p': {
                     U32 s = va_arg(args, U32);
@@ -247,22 +255,13 @@ U0 PrintF(String format, ...) {
                 } break;
                 case 'x': {
                     U32 s = va_arg(args, U32);
-                    TTYUPrintHex(s);
+                    for (U8 i = n * 2; i > 0; --i)
+                        TTYUPrintC("0123456789abcdef"[(s >> ((i - 1) * 4)) & 0xF]);
                 } break;
                 case 'X': {
                     U32 s = va_arg(args, U32);
-                    U16i t = (U16i)(U16)s;
-                    
-                    TTYUPrintC("0123456789ABCDEF"[t.u8[1] >> 4]);
-                    TTYUPrintC("0123456789ABCDEF"[t.u8[1] & 15]);
-                
-                    TTYUPrintC("0123456789ABCDEF"[t.u8[0] >> 4]);
-                    TTYUPrintC("0123456789ABCDEF"[t.u8[0] & 15]);
-                } break;
-                case 'C': {
-                    U32 s = va_arg(args, U32);                
-                    TTYUPrintC("0123456789ABCDEF"[s >> 4]);
-                    TTYUPrintC("0123456789ABCDEF"[s & 15]);
+                    for (U8 i = n * 2; i > 0; --i)
+                        TTYUPrintC("0123456789ABCDEF"[(s >> ((i - 1) * 4)) & 0xF]);
                 } break;
                 case '%': {
                     TTYUPrintC('%');
@@ -271,6 +270,7 @@ U0 PrintF(String format, ...) {
                     TTYUPrintC('%');
                     TTYUPrintC(*format);
             }
+            n = 4;
             ++format;
             continue;
         }
@@ -341,12 +341,30 @@ U0 TTYPutS(Char c) {
     //     SerialWrite(buf[i]);
     // }
 }
+U0 TTYScrollG() {
+    MemCpy(VRM, VRM+320*6, 64000-320*6);
+    for (U32 i = TTYWidth * TTYHeight - TTYWidth; i < TTYWidth * TTYHeight; ++i) {
+        TTYCursor = i;
+        TTYPuter(' ');
+    }
+}
+U0 TTYScrollT() {
+    MemCpy(vga, vga+80, 4000-80);
+    for (U32 i = TTYWidth * TTYHeight - TTYWidth; i < TTYWidth * TTYHeight; ++i) {
+        TTYCursor = i;
+        TTYPuter(' ');
+    }
+}
+U0 TTYScrollS() {
+
+}
 U0 TTYSwitch(TTYContext tc) {
     static TTYContext prev = TTYC_VGA;
     static TTYContext curr = TTYC_VGA;
     switch (tc) {
         case TTYC_VGA:
             TTYPuter = TTYPutT;
+            TTYScroller = TTYScrollT;
             TTYWidth = 80;
             TTYHeight = 25;
             prev = curr;
@@ -354,8 +372,9 @@ U0 TTYSwitch(TTYContext tc) {
             break;
         case TTYC_320:
             TTYPuter = TTYPutG;
-            TTYWidth = 320/5;
-            TTYHeight = 200/5;
+            TTYScroller = TTYScrollG;
+            TTYWidth = 320/6;
+            TTYHeight = 200/6;
             prev = curr;
             curr = tc;
             break;
@@ -364,6 +383,7 @@ U0 TTYSwitch(TTYContext tc) {
             break;
         case TTYC_SER:
             TTYPuter = TTYPutS;
+            TTYScroller = TTYScrollS;
             TTYWidth = 80;
             TTYHeight = 25;
             prev = curr;

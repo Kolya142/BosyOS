@@ -28,7 +28,7 @@ U0 KBRead(String buf, U32 count) {
                             return;
                     }
                     else {
-                        if (KBState.Shift) key = ToUpper(key);
+                        if (KBState.Shift) key = UpperTo(key);
                         if (bufferi < count - 1) {
                             buf[bufferi++] = key;
                             TTYUPrintC(key);

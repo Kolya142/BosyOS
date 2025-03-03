@@ -8,7 +8,7 @@ for i in range(0x2E, 0x7F):
     char = open(f"chars/{c}.txt").read()
     font[c] = char.replace('\n', '')
 
-text = "The quick brown fox jumps over a lazy dog     Hello, World"
+text = "the quick brown fox jumps over a lazy dog. THE QUICK BROWN FOX JUMPS OVER A LAZY DOG."
 color = (0, 255, 255)
 
 img = np.zeros((5, len(text)*6, 3))

@@ -61,6 +61,7 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     asmV(
         "movl %%esp, %1\n"
         "movl %%ebp, %2\n"
+        "movl $0x2005000, %%esp\n" // 0x2000000+4096*5
         "movl %%esp, %%ebp\n"
         "jmp *%0\n"
         "movl %2, %%ebp\n"

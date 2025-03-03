@@ -10,26 +10,48 @@ I32 MouseX = 40, MouseY = 12;
 U8 MouseBtn = 0;
 U8 MouseCycle = 0;
 I8 MousePacket[3];
+U0 MouseWait(U8 how);
 
-U0 MouseWrite(U16 port, U8 data) {
-    while (PIn(0x64) & 2);
-    POut(port, data);
+U0 MouseWrite(U8 data) {
+    MouseWait(1);
+    POut(0x64, 0xD4);
+    MouseWait(1);
+    POut(0x60, data);
 }
-U8 MouseRead(U16 port) {
-    while (!(PIn(0x64) & 1));
-    return PIn(port);
+U8 MouseRead() {
+    MouseWait(0);
+    return PIn(0x60);
+}
+U0 MouseWait(U8 how) {
+    U16 timeout = 100000;
+    if (!how) {
+        while (--timeout) {
+            if ((PIn(0x64) & 1) == 1)
+                return;
+        }
+        return;
+    }
+    else {
+        while (--timeout) {
+            if ((PIn(0x64) & 2) == 0)
+                return;
+        }
+        return;
+    }
 }
 
 __attribute__((naked)) U0 MouseUpdate() {
     asmv("pushf\npusha");
 
     if (!(PIn(0x64) & 1)) {
+        POut(0x20, 0x20);
         asmv("popa\npopf\niret");
         return;
     }
+    PrintF("mouse: %1X\n", PIn(0x60));
+    // TODO: Make mouse Update
 
     POut(0x20, 0x20);
-
     asmv("popa\npopf\niret");
 }
 
@@ -47,19 +69,6 @@ static U0 MSDriverHandler(U32 id, U32 *value) {
     }
 }
 
-
 U0 MouseInit() {
-    MouseWrite(0x64, 0xD4);
-    MouseWrite(0x60, 0xF4);
-    SleepM(100);
-    U8 ack = MouseRead(0x60);
-    if (ack == 0xFA) {
-        MouseWrite(0x60, 0xF2);
-        PrintF("Mouse initialized\nMouse id: 0x%x\n", MouseRead(0x60));
-    }
-    else {
-        PrintF("Mouse initialization failed\n");
-        // IDTSet(0x2C, (Ptr)MouseUpdate, 8, 0x8E);
-        DriverReg(0x58f8d530, 0xfffe784f, MSDriverHandler);
-    }
+    PrintF("Initializing mouse...\n");
 }

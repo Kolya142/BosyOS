@@ -1,7 +1,7 @@
 #pragma once
 #include <lib/MemLib.h>
 #include <lib/Types.h>
-Char ToUpper(Char a);
+Char UpperTo(Char a);
 U32 StrLen(const Char *str);
 U0 StrCpy(String dst, String src);
 U32 StrCmp(const Char *a, const Char *b);

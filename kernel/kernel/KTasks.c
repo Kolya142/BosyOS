@@ -1,26 +1,61 @@
+#include <kernel/KDogWatch.h>
 #include <kernel/KTasks.h>
+#include <drivers/pit.h>
 #include <lib/MemLib.h>
+#include <arch/cpu.h>
+#include <lib/TTY.h>
 
+// fixing bugs from 1741179362s from unix stamp
+// fixed 90% bugs from 1741183725s from unix stamp
+
+static U32 task_count = 0;
 Bool TaskingIs = False;
 Task *TaskHead = Null;
 Task *TaskTail = Null;
 Task *TaskLast = Null;
-U8 *TaskStacks;
 
 U0 TaskClose() {
-    TaskKill(TaskTail->id);
-    asmv("movl %0, %%esp; movl %1, %%ebp; movl $1, %%esi; jmp *%2"
-        :: "r"(TaskTail->regs.useresp),
-           "r"(TaskTail->regs.ebp),
-           "r"(TaskTail->regs.eip));
+    asmv("cli");
+    U32 id = TaskTail->id;
+    TaskNext();
+    TaskKill(id);
+    TaskTail->flags &= ~TASK_WORKING;
+    asmv("sti");
+    if (TaskHead) {
+        for(;;);
+    }
+    else {
+        KDogWatchLog("No more tasks. Halting", False);
+        CpuHalt();
+    }
+    // for(;;);
+    // asmv("movl %0, %%esp; movl %1, %%ebp; movl $1, %%esi; jmp *%2"
+    //     :: "r"(TaskTail->regs.useresp),
+    //        "r"(TaskTail->regs.ebp),
+    //        "r"(TaskTail->regs.eip));
 }
-
+U0 TSleep(U32 millis) { // TODO: fix waiting
+    // asmv("cli");
+    // TaskTail->flags |= TASK_WAITING;
+    // TaskTail->time = PITTime + millis;
+    // asmv("sti");
+}
 U0 TaskInit() {
-    TaskStacks = MCAlloc(4096*500, 1);
 }
 U0 TaskNext() {
     if (!TaskTail || !TaskHead) return;
-    TaskTail = (TaskTail->next) ? TaskTail->next : TaskHead;
+    for (;;) {
+        TaskTail = (TaskTail->next) ? TaskTail->next : TaskHead;
+        if (TaskTail->flags & TASK_WAITING) {
+            if (PITTime >= TaskTail->time) {
+                TaskTail->flags &= ~TASK_WAITING;
+            }
+            else {
+                continue;
+            }
+        }
+        break;
+    }
 }
 U0 TaskYeild() {
     Bool code = False;
@@ -38,26 +73,38 @@ U0 TaskYeild() {
            "r"(TaskTail->regs.eip));
 }
 
-U32 TaskNew(U32 eip) {
+U32 TaskNew(U32 eip, U16 ds, U16 cs) {
     asmv("cli");
-    static U32 task_count = 0;
     if (task_count >= 500) return -1; 
 
-    U32 *stack = (U32*)(&TaskStacks[task_count * 4096]);
-    stack[1023] = 0;
-    stack[1022] = eip;
-    stack[1021] = 0x08;
-    stack[1020] = 0x202;
+    U32 *stack = MAlloc(4096);
+    stack[4096] = 0;
+    stack[4095] = eip;
+    stack[4094] = 0x08;
+    stack[4093] = 0x202;
     
-    U32 esp = (U32)&stack[1020];
-    
+    U32 esp = (U32)&stack[4092];
+    PrintF("Process with esp $!B%4x$!F created\n", esp);
 
     Task *task = MCAlloc(sizeof(Task), 1);
-    if (task == Null) return -1;
+    if (task == Null) {
+        asmv("sti");
+        return -1;
+    }
 
     task->regs.eip = eip;
-    task->regs.ebp = 0;
+    task->regs.ebp = esp;
     task->regs.useresp = esp;
+    task->regs.eflagsp = 0x202;
+    task->regs.eflags = 0x202;
+    task->regs.ds = ds;
+    task->regs.es = ds;
+    task->regs.fs = ds;
+    task->regs.gs = ds;
+    task->regs.cs = cs;
+    task->flags = TASK_CREATED;
+    
+    task->esp = esp;
     task->id = (TaskLast) ? TaskLast->id + 1 : 0;
     task->next = Null;
 
@@ -94,6 +141,7 @@ U0 TaskKill(U32 id) {
             if (task == TaskTail) {
                 TaskTail = prev ? prev : TaskHead;
             }
+            MFree((Ptr)task->esp);
             MFree(task);
             break;
         }

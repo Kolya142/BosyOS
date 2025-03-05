@@ -30,38 +30,39 @@ INT_DEF(PITHandler) {
         }
         days += SystemTime.day - 1;
         BosyTime = (((days * 24 + SystemTime.hour) * 60) + SystemTime.minute) * 60 + SystemTime.second;
-        if (0 && Debugging) {
-            TTYSwitch(TTYC_SER);
+        if (TaskTail && TaskHead) {
+            // PrintF("Bef RGS: %x\n", regs->eax+regs->ebx+regs->ecx+regs->edx+regs->esi+regs->edi);
+            if (TaskTail->flags & TASK_WORKING)
+                MemCpy(&TaskTail->regs, regs, sizeof(INTRegs));
+            else
+                TaskTail->flags |= TASK_WORKING;
+            TaskNext();
+            MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
+            // PrintF("Aft RGS: %x\n", regs->eax+regs->ebx+regs->ecx+regs->edx+regs->esi+regs->edi);
+        }
+        if (Debugging) {
             VgaCursorDisable();
             U32 c = TTYCursor;
             U8 fg0 = TTYlfg;
             U8 bg0 = TTYlbg;
-            TTYCursor = TTYWidth*1-TTYWidth;
-            PrintF("$!F$*0EIP: %x", regs->eip);
-            TTYCursor = TTYWidth*2-TTYWidth;
+            TTYCursor = TTYWidth*1-13;
+            PrintF("EIP: %x", regs->eip);
+            TTYCursor = TTYWidth*2-13;
             PrintF("ESP: %x", regs->useresp);
-            TTYCursor = TTYWidth*3-TTYWidth;
+            TTYCursor = TTYWidth*3-13;
             PrintF("Tim: %x", BosyTime);
-            // TTYCursor = TTYWidth*4-TTYWidth;
-            // PrintF("mic: %x", TaskTail->regs.eip);
-            TTYCursor = TTYWidth*5-TTYWidth;
+            TTYCursor = TTYWidth*4-13;
+            PrintF("Tsk: %x", TaskTail->id);
+            TTYCursor = TTYWidth*5-13;
             PrintF("CS: %x", regs->cs);
-            TTYCursor = TTYWidth*6-TTYWidth;
+            TTYCursor = TTYWidth*6-13;
             PrintF("DS: %x", regs->ds);
+            TTYCursor = TTYWidth*7-13;
+            PrintF("MS: %x", PITTime);
             TTYlbg = bg0;
             TTYlfg = fg0;
             TTYCursor = c;
-            VgaCursorEnable();
-            TTYSwitch(TTYC_RES);
-        }
-        if (TaskTail && TaskHead && TaskingIs && 0) {
-            MemCpy(&TaskTail->regs, regs, sizeof(INTRegs));
-            TaskNext();
-            if (TaskTail) {
-                MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
-                TaskingIs = True;
-            }
-        }        
+        }   
     }
 }
 

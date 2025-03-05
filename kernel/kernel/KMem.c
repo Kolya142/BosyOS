@@ -1,3 +1,4 @@
+#include <kernel/KDogWatch.h>
 #include <kernel/KMem.h>
 
 unsigned char *Heap = (void*)HEAP_START;
@@ -11,7 +12,7 @@ void HeapInit() {
     HeapFree->free = 1;
 }
 
-void *HeapAlloc(int size) {
+void *HeapAlloc(U32 size) {
     HeapMemBlock *heap_free = HeapFree;
 
     while (heap_free) {
@@ -33,7 +34,7 @@ void *HeapAlloc(int size) {
 
         heap_free = heap_free->next;
     }
-
+    KDogWatchLog("Failed to malloc some memory", False);
     return Null;
 }
 

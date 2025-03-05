@@ -1,10 +1,11 @@
 #include <misc/driverreg.h>
+#include <kernel/KTasks.h>
 #include <drivers/pit.h>
 #include <arch/beep.h>
 
 U0 Beep(U16 dur) {
     POut(0x61, PIn(0x61) | 3);
-    SleepM(dur);
+    TSleep(dur);
     POut(0x61, PIn(0x61) & ~3);
 }
 U0 BeepHz(U16 freq, U16 dur) {
@@ -18,7 +19,7 @@ U0 BeepHz(U16 freq, U16 dur) {
     if (!(tmp & 3)) {
         POut(0x61, tmp | 3);
     }
-    SleepM(dur);
+    TSleep(dur);
     POut(0x61, PIn(0x61) & ~3);
     PITInit(); // PIT back
 }

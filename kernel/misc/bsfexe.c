@@ -58,7 +58,7 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     // TTYUPrint((Ptr)0x100000);
     PrintF("%p\n", meta->func);
     // RingSwitch((Ptr)meta->func, (Ptr)UADDR+PAGE_SIZE*5 - 4);
-    asmV(
+    asmV( // Ring0
         "movl %%esp, %1\n"
         "movl %%ebp, %2\n"
         "movl $0x2005000, %%esp\n" // 0x2000000+4096*5

@@ -17,5 +17,7 @@ extern Task *TaskLast;
 
 U0 TaskInit();
 U0 TaskNext();
+U0 TaskClose();
+extern U0 TaskYeild();
 U32 TaskNew(U32 eip);
 U0 TaskKill(U32 id);

@@ -1,6 +1,6 @@
 Disk Layout:
-name: Boot  DATHeader UserData Kernel UserApplication
-        |     |         |         |          |
-        |    [DAT  Tables]        |          |
-size:  [3]   [1]       [31]     [256]       [48]
-addr:  [0]   [3]       [04]     [035]      [419]
+name:  Boot  zeroes Kernel     UserData
+         |     |         |          |
+         |     |         |          |
+size :  [3]   [32]     [256]     [2048]
+start:  [0]   [03]     [035]      [291]

@@ -3,6 +3,7 @@
 #include <drivers/serial.h>
 #include <misc/driverreg.h>
 #include <kernel/KPanic.h>
+#include <kernel/KTasks.h>
 #include <misc/syscall.h>
 #include <arch/getreg.h>
 #include <misc/bsfexe.h>
@@ -148,6 +149,13 @@ U0 SCRun(INTRegs *regs) {
     BsfApp app = BsfFromBytes(data);
     BsfExec(&app, 0, regs->esi);
 }
+U0 SCYield(INTRegs *regs) {
+    MemCpy(&TaskTail->regs, regs, sizeof(INTRegs));
+    if (regs->ebx) return;
+    TaskNext();
+    MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
+    regs->ebx = 1;
+}
 
 U0 SysCallSetup() {
     SysCallSet(SCPrint, 1);
@@ -173,4 +181,5 @@ U0 SysCallSetup() {
     SysCallSet(SCSaveMe, 0x14);
     SysCallSet(SCLoadMe, 0x15);
     SysCallSet(SCRun, 0x16);
+    SysCallSet(SCYield, 0x17);
 }

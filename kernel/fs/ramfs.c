@@ -38,16 +38,24 @@ U32 RFSOpen(String name) {
 }
 U32 RFSWrite(U32 fd, Ptr buf, U32 count) {
     RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
-    U32 c = (r->head+count)%RFS[r->pos].size-r->head;
-    MemCpy(RFS[r->pos].data+r->head, buf, c);
-    r->head += c;
+    if (r->head >= RFS[r->pos].size) return 0;
+    U32 m = RFS[r->pos].size - r->head;
+    U32 c = min(count, m);    
+    if (c) {
+        MemCpy(RFS[r->pos].data + r->head, buf, c);
+        r->head += c;
+    }
     return c;
 }
 U32 RFSRead(U32 fd, Ptr buf, U32 count) {
     RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
-    U32 c = (r->head+count)%RFS[r->pos].size-r->head;
-    MemCpy(buf, RFS[r->pos].data+r->head, c);
-    r->head += c;
+    if (r->head >= RFS[r->pos].size) return 0;
+    U32 m = RFS[r->pos].size - r->head;
+    U32 c = min(count, m);    
+    if (c) {
+        MemCpy(RFS[r->pos].data + r->head, buf, c);
+        r->head += c;
+    }
     return c;
 }
 U0 RFSClose(U32 fd) {

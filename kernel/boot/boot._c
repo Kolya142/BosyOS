@@ -38,7 +38,7 @@ U16 PIn16(U16 port);
 
 U0 main() {
     const static U32 start = 35;
-    const static U32 count = 128;
+    const static U32 count = 256;
     for (U32 j = 0; j < count; ++j) {
         POut(0x01F6, 0xE0 | ((start >> 24) & 15));
         POut(0x01F2, 1);
@@ -66,7 +66,7 @@ U0 main() {
     for (U32 i = 0; i < 1000; ++i) {
         ((U16*)0xb8000)[i*2+0] = 0x0F00 | "0123456789ABCDEF"[((U8*)0x300000)[i] >> 4];
         ((U16*)0xb8000)[i*2+1] = 0x0F00 | "0123456789ABCDEF"[((U8*)0x300000)[i] & 15];
-    }    
+    }
     // for(;;);
     U0(*entry)() = (U0(*)())0x300000;
     entry();

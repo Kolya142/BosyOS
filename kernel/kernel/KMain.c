@@ -10,6 +10,7 @@
 #include <drivers/serial.h>
 #include <drivers/mouse.h>
 #include <drivers/vga.h>
+#include <drivers/ide.h>
 #include <drivers/pit.h>
 
 // Miscellaneous
@@ -28,13 +29,12 @@
 #include <lib/MemLib.h>
 #include <lib/Time.h>
 #include <lib/BosZ.h>
-#include <lib/DAT.h>
 #include <lib/TTY.h>
 #include <lib/IP.h>
 
 // FileSystem
+#include <fs/minix.h>
 #include <fs/ramfs.h>
-#include <fs/BOTFS.h>
 
 // Arch/Cpu Functions
 #include <arch/paging.h>
@@ -68,11 +68,12 @@ __attribute__((naked)) U0 KernelMain() {
     TTYSwitch(TTYC_320);
     TTYClear();
     TTYCursor = 0;
-    KDogWatchLog("System started", False);
+    KDogWatchLog("System initializing start", False);
 
     U16 mem = MemorySize();
+    PrintF("$!EDetected Memory size $!C- $!B0x%2xKB$!F\n\n", mem);
     if (mem < 64000) {
-        KDogWatchLog("$!CWarning: Memory size lower than 64KB$!F", False);
+        KDogWatchLog("$!CWarning: Memory size < $!B64MB$!F", False);
     }
 
     VgaBlinkingSet(False);
@@ -94,7 +95,7 @@ __attribute__((naked)) U0 KernelMain() {
         KDogWatchLog("Paging is NOT enabled!", True);
     }
 
-    KDogWatchLog("Initialized \"paging\"", False);
+    KDogWatchLog("Initialized \x9Bpaging\x9C", False);
 
     KDogWatchLog("Setuping fpu", False);
     FPUBox();
@@ -102,25 +103,27 @@ __attribute__((naked)) U0 KernelMain() {
     // Drivers
     KDogWatchLog("Setuping drivers", False);
     SerialInit();
-    KDogWatchLog("Initialized \"serial\"", False);
-    RTL8139Init();
-    KDogWatchLog("Initialized \"rtl8139\"", False);
+    KDogWatchLog("Initialized \x9Bserial\x9C", False);
+    // RTL8139Init();
+    // KDogWatchLog("Initialized \"rtl8139\"", False);
     KBInit();
-    KDogWatchLog("Initialized \"keyboard\"", False);
+    KDogWatchLog("Initialized \x9Bkeyboard\x9C", False);
     // MouseInit(); // Portal to hell
     // KDogWatchLog("Initialized \"mouse\"", False);
     BeepInit();
-    KDogWatchLog("Initialized \"pc speaker\"", False);
+    KDogWatchLog("Initialized \x9Bpc speaker\x9C", False);
     IDEInit();
-    KDogWatchLog("Initialized \"ide disk\"", False);
+    KDogWatchLog("Initialized \x9Bide disk\x9C", False);
     VDriversReg();
-    KDogWatchLog("Initialized \"vdrivers\"", False);
+    KDogWatchLog("Initialized \x9Bvdrivers\x9C", False);
     // Drivers end
     
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
     RFSInit();
-    KDogWatchLog("Initialized \"ramfs\"", False);
+    KDogWatchLog("Initialized \x9Bramfs\x9C", False);
+    MXInit();
+    KDogWatchLog("Initialized \"minix fs\"", False);
     // DATInit();
     // KDogWatchLog("Initialized \"dat\"", False);
     // BOTFSInit();
@@ -135,6 +138,7 @@ __attribute__((naked)) U0 KernelMain() {
     // TTYCursor = 0;
 
     SleepM(500);
+    U32 tid1 = TaskNew(0);
     mainloop();
     // TaskNew((U32)mainloop);
     // TaskNew((U32)loop);
@@ -265,168 +269,80 @@ U0 CGen() {
         SleepM(1000/30);
     }
 }
-U0 CText() {
-    CCls();
-    if (DATFind(0x5234) == 0xFFFF) {
-        DATAlloc(0x5234);
-    }
-    else {
-        U8 buf[20*18] = {0};
-        DATRead(0x5234, buf, 0, 20*18);
-        U32 i = 0;
-        for (U32 x = 2; x < 30; ++x) {
-            for (U32 y = 2; y < 20; ++y) {
-                vga[x + y*80] = buf[i] ? (buf[i] | 0x0F00) : 0x0F20;
-                ++i;
-            }
-        }
-    }
-    TTYUPrint("Press p");
-    Bool text = False;
-    Bool lk[256] = {0};
-    KDogWatchPEnd(0);
-    VgaCursorEnable();
-    U32 x = TTYCursor % 80;
-    U32 y = TTYCursor / 80;
-    for (;;) {
-        TTYCursor = 0;
-        VgaCursorSet(x, y);
-        while (!KBState.keys['p']);
-        TTYUPrint("Enter text: ");
-        Char cmd[30] = {0};
-        KBRead(cmd, 30);
-        VgaCursorSet(x, y);
-        if (cmd[0] == ':') {
-            for (U32 i = 0; cmd[i]; ++i) {
-                switch (cmd[i]) {
-                    case 'q': {
-                        U8 buf[20*18] = {0};
-                        U32 i = 0;
-                        for (U32 x = 2; x < 30; ++x) {
-                            for (U32 y = 2; y < 20; ++y) {
-                                buf[i] = vga[x + y*80] & 0xff;
-                                ++i;
-                            }
-                        }
-                        KDogWatchPPlay(0);
-                        DATWrite(0x5234, buf, 0, 20*18);
-                        VgaCursorDisable();
-                        return;
-                    } break;
-                    case 'l': 
-                    --x;
-                    break;
-                    case 'D': 
-                    vga[x--] = 0;
-                    break;
-                    case 'r': 
-                    ++x;
-                    break;
-                    case 'u': 
-                    --y;
-                    break;
-                    case 'd': 
-                    ++y;
-                    break;
-                    case 'c': 
-                    CCls();
-                    break;
-                    case 'n': {
-                        x = 2;
-                        ++y;
-                    } break;
-                }
-            }
-        }
-        else {
-            if (x < 2) x = 2;
-            if (x > 29) x = 29;
-            if (y < 2) y = 2;
-            if (y > 19) y = 19;
-            TTYCursor = x + y * 80;
-            TTYUPrint(cmd);
-        }
-        if (x < 2) x = 2;
-        if (x > 29) x = 29;
-        if (y < 2) y = 2;
-        if (y > 19) y = 19;
-        TTYCursor = x + y * 80;
-        VgaCursorSet(TTYCursor, 0);
-    }
-}
+
 Bool Debugging = True;
 U0 CSound() {
-    static const U8 KeyToNote[128] = {
-        40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
-        60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
-        81, 83, 85, 87, 89, 91, 93, 95,
-        40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
-        60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
-        81, 83, 85, 87, 89, 91, 93, 95,
-        40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
-        60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
-        81, 83, 85, 87, 89, 91, 93, 95,
-        40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
-        60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
-        81, 83, 85, 87, 89, 91, 93, 95
-    };
+    // static const U8 KeyToNote[128] = {
+    //     40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
+    //     60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
+    //     81, 83, 85, 87, 89, 91, 93, 95,
+    //     40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
+    //     60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
+    //     81, 83, 85, 87, 89, 91, 93, 95,
+    //     40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
+    //     60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
+    //     81, 83, 85, 87, 89, 91, 93, 95,
+    //     40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
+    //     60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79,
+    //     81, 83, 85, 87, 89, 91, 93, 95
+    // };
     
-    U8 *Record = MAlloc(555);
-    MemSet(Record, 1, 555);
-    U32 i = 0;
-    Bool start = False;
-    for (;;) {
-        if (KBState.keys['\x1b']) {
-            break;
-        }
-        else if (KBState.keys[ASCIIPAlt]) {
-            for (U32 j = 0; j < 555 && Record[j] != 1; ++j) {
-                if (Record[j])
-                    BeepSPC(Record[j], 3);
-                KDogWatchPTick(0);
-                SleepM(5);
-            }
-        }
-        else if (KBState.keys[ASCIIPLshift]) {
-            BOTFSCreate("mysound", 555);
-            BOTFSWrite("mysound", Record, 0, 555);
-        }
-        else if (KBState.keys[ASCIIPRshift]) {
-            BOTFSRead("mysound", Record, 0, 555);
-        }
-        else if (!(KBState.SC & 0x80)) {
-            if (KBState.Key > 0x80) {
-                Record[i >> 2] = 0;
-            }
-            else {
-                U8 note = KeyToNote[KBState.Key%sizeof(KeyToNote)];
-                TTYUPrintHex(note);
-                BeepSPC(note, 3);
-                Record[i >> 2] = note;
-                start = True;
-            }
-        }
-        else if ((KBState.SC & 0x80)) {
-            Record[i >> 2] = 0;
-        }
-        TTYUPrintHex(i >> 2);
-        if (start) {
-            i = (i+1) % (555 << 2);
-        }
-        TTYCursor -= TTYCursor % 80;
-        KDogWatchPTick(0);
-        SleepM(3);
-    }
+    // U8 *Record = MAlloc(555);
+    // MemSet(Record, 1, 555);
+    // U32 i = 0;
+    // Bool start = False;
+    // for (;;) {
+    //     if (KBState.keys['\x1b']) {
+    //         break;
+    //     }
+    //     else if (KBState.keys[ASCIIPAlt]) {
+    //         for (U32 j = 0; j < 555 && Record[j] != 1; ++j) {
+    //             if (Record[j])
+    //                 BeepSPC(Record[j], 3);
+    //             KDogWatchPTick(0);
+    //             SleepM(5);
+    //         }
+    //     }
+    //     else if (KBState.keys[ASCIIPLshift]) {
+    //         BOTFSCreate("mysound", 555);
+    //         BOTFSWrite("mysound", Record, 0, 555);
+    //     }
+    //     else if (KBState.keys[ASCIIPRshift]) {
+    //         BOTFSRead("mysound", Record, 0, 555);
+    //     }
+    //     else if (!(KBState.SC & 0x80)) {
+    //         if (KBState.Key > 0x80) {
+    //             Record[i >> 2] = 0;
+    //         }
+    //         else {
+    //             U8 note = KeyToNote[KBState.Key%sizeof(KeyToNote)];
+    //             TTYUPrintHex(note);
+    //             BeepSPC(note, 3);
+    //             Record[i >> 2] = note;
+    //             start = True;
+    //         }
+    //     }
+    //     else if ((KBState.SC & 0x80)) {
+    //         Record[i >> 2] = 0;
+    //     }
+    //     TTYUPrintHex(i >> 2);
+    //     if (start) {
+    //         i = (i+1) % (555 << 2);
+    //     }
+    //     TTYCursor -= TTYCursor % 80;
+    //     KDogWatchPTick(0);
+    //     SleepM(3);
+    // }
 }
 U0 CSnake() {
     KDogWatchPEnd(0);
     U32 tail[5] = {0};
-    tail[0] = 80 * 10 + 39;
-    tail[1] = 80 * 10 + 38;
-    tail[2] = 80 * 10 + 37;
-    tail[3] = 80 * 10 + 36;
-    tail[4] = 80 * 10 + 35;
-    U32 snake = 80 * 10 + 40;
+    tail[0] = TTYWidth * 10 + 39;
+    tail[1] = TTYWidth * 10 + 38;
+    tail[2] = TTYWidth * 10 + 37;
+    tail[3] = TTYWidth * 10 + 36;
+    tail[4] = TTYWidth * 10 + 35;
+    U32 snake = TTYWidth * 10 + 40;
     U32 apple = RandomU() % 1300 + 500;
     U32 score = 0;
     U8 dir = 4;
@@ -548,7 +464,7 @@ U0 CPong() {
             ballvx = -ballvx;
             BeepSPC(45, 30);
         }
-        if (ballx == TTYWidth-1 && bally >= p2 - 3 && bally <= p2 + 3) {
+        if (ballx == TTYWidth-1/* && bally >= p2 - 3 && bally <= p2 + 3*/) {
             ballvx = -ballvx;
             BeepSPC(45, 30);
         }
@@ -728,16 +644,24 @@ U0 CRay() {
         SleepM(100);
     }
 }
-U0 CBoot(Char id) {
-    Ptr data = (Ptr)0x5000;
-    for (U32 i = 0; i < 48; ++i)
-        ATARead(data+i*512, 419+i, 1);
-    PrintF("loaded at %p\n", data);
-    PrintF("Memory copied, first bytes: %s\n", data); 
-    BsfApp app = BsfFromBytes(data);
-    I32 code = BsfExec(&app, 0, id - 0x30);
+U0 CBoot(String name) {
+    U8 *block = MAlloc(512*48);
+    
+    MXDirEntry ffiles[32] = {0};
+    MXListRoot(ffiles, 32);
+    for (U32 i = 0; i < 32; ++i) {
+        if (!ffiles[i].inode) break;
+        if (!StrCmp(ffiles[i].name, name)) {
+            MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
+            MXInodeDataRead(&in, block);
+            break;
+        }
+    }
+    PrintF("loaded \"%s\" at %p\n", block, block);
+    BsfApp app = BsfFromBytes(block);
+    I32 code = BsfExec(&app, 0, 1);
     PrintF("Exit code: %d", code-2);
-    MFree(data);
+    MFree(block);
 }
 U32 LazyCalc(U32 x) {
     return !(x & 1) ? (x / 2) : (x * 3 + 1);
@@ -757,12 +681,27 @@ typedef struct {
     U16 checksum;
 } __attribute__((packed)) UDPHeader;
 U32 testvar = 0xABAB;
+U0 tasking1() {
+    for (U32 i = 0; i < 3; ++i) {
+        PrintF("tasking %1x\n", i);
+        TaskYeild();
+    }
+    PrintF("processes end.\nuse task to create new process");
+    TaskClose();
+}
 U0 termrun(const String cmd) {
     if (!StrCmp(cmd, "help")) {
         CHelp();
     }
     else if (!StrCmp(cmd, "cls")) {
         CCls();
+    }
+    else if (!StrCmp(cmd, "task")) {
+        U32 tid2 = TaskNew((U32)tasking1);
+        PrintF("processes setuped.\nuse tasky to yeild process");
+    }
+    else if (!StrCmp(cmd, "tasky")) {
+        TaskYeild();
     }
     else if (!StrCmp(cmd, "testip")) {
         NetMac mac;
@@ -800,24 +739,29 @@ U0 termrun(const String cmd) {
         DriverCall(0xbb149088, 0xc3442e1e, 0, (U32*)&pck);
     }
     else if (StrStartsWith(cmd, "boot") && StrCmp(cmd, "boot")) {
-        CBoot(cmd[4]);
+        CBoot(&cmd[4]);
     }
     else if (!StrCmp(cmd, "boot")) {
-        CBoot('1');
+        CBoot("usercode.bin.bsf");
     }
     else if (!StrCmp(cmd, "ray")) {
         CRay();
     }
     else if (!StrCmp(cmd, "testrfs")) {
+        PrintF("Creating file\n");
         RFSAdd("test", 50);
         U32 fd = RFSOpen("test");
+        PrintF("Writing file\n");
         RFSWrite(fd, "Hello, world!", 14);
         RFSClose(fd);
+        PrintF("\n");
         fd = RFSOpen("test");
         Char buf[14];
+        PrintF("Reading file\n");
         RFSRead(fd, buf, 14);
+        PrintF("Printing file\n");
         RFSClose(fd);
-        PrintF("%s", buf);
+        PrintF("File data: \"%s\"", buf);
     }
     else if (!StrCmp(cmd, "peek")) {
         PrintF("%x", *(U32*)0x0030462a);
@@ -897,9 +841,9 @@ U0 termrun(const String cmd) {
         // for(;;);
         // VgaGraphicsSet();
         // VRMClear(Purple);
-        TTYPuter = TTYPutG;
-        TTYWidth = 320  / 6;
-        TTYHeight = 200 / 6;
+        // TTYPuter = TTYPutG;
+        // TTYWidth = 320  / 6;
+        // TTYHeight = 200 / 6;
 
         Bool state[200] = {0};
         state[0] = True;
@@ -970,54 +914,28 @@ U0 termrun(const String cmd) {
         LazyListDestroy(&lazy);
     }
     else if (!StrCmp(cmd, "ls")) {
-        String ffiles[32] = {0};
-        BOTFSList(ffiles, 32);
+        MXDirEntry ffiles[32] = {0};
+        MXListRoot(ffiles, 32);
         for (U32 i = 0; i < 32; ++i) {
-            if (!ffiles[i]) continue;
-            BOTFSFileStat fstat = BOTFSStat(ffiles[i]);
-            PrintF("%s(%C %p %X) ", ffiles[i], fstat.flags, fstat.start, fstat.size);
-        }
-    }
-    else if (StrStartsWith(cmd, "fwrite")) {
-        String file = &cmd[7];
-        BOTFSFileStat fstat = BOTFSStat(file);
-        if (fstat.exists) {
-            U8 *buf = MAlloc(fstat.size);
-            KBRead(buf, fstat.size);
-            BOTFSWrite(file, buf, 0, fstat.size);
-            PrintF(buf);
-            MFree(buf);
-        }
-        else {
-            PrintF("$!CError: file $!F\"%s\"$!C not found$!F", file);
-        }
-    }
-    else if (StrStartsWith(cmd, "fclean")) {
-        BOTFSFormat();
-        PrintF("$!ACleaned$!F");
-    }
-    else if (StrStartsWith(cmd, "touch")) {
-        String file = &cmd[6];
-        BOTFSFileStat fstat = BOTFSStat(file);
-        if (fstat.exists) {
-            PrintF("$!CError: file $!F\"%s\"$!C exists$!F", file);
-        }
-        else {
-            BOTFSCreate(file, 32);
+            if (!ffiles[i].inode) break;
+
+            PrintF("$!B%s$!F\n", ffiles[i].name);
         }
     }
     else if (StrStartsWith(cmd, "cat")) {
-        String file = &cmd[4];
-        BOTFSFileStat fstat = BOTFSStat(file);
-        if (fstat.exists) {
-            U8 *buf = MAlloc(fstat.size);
-            BOTFSRead(file, buf, 0, fstat.size);
-            PrintF(buf);
-            MFree(buf);
+        MXDirEntry ffiles[32] = {0};
+        MXListRoot(ffiles, 32);
+        for (U32 i = 0; i < 32; ++i) {
+            if (!ffiles[i].inode) break;
+            if (!StrCmp(ffiles[i].name, cmd + 4)) {
+                MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
+                U8 block[1024];
+                MXInodeDataRead(&in, block);
+                PrintF("File content:\n%s", block);
+                return;
+            }
         }
-        else {
-            PrintF("$!CError: file $!F\"%s\"$!C not found$!F", file);
-        }
+        PrintF("$!CFile not found$!F");
     }
     else if (!StrCmp(cmd, "words")) {
         CWords();
@@ -1025,24 +943,24 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "triangle")) {
         CTriangle();
     }
-    else if (!StrCmp(cmd, "testbfs")) {
-        BOTFSCreate("test", 10);
-        BOTFSCreate("trash", 1);
-        PrintF("File: %B\n", BOTFSFind("test") != 0xFFFFFFFF);
-        BOTFSWrite("test", "sus\n", 0, 4);
-        U8 buf[4] = {0};
-        BOTFSRead("test", buf, 0, 4);
-        String ffiles[5] = {0};
-        BOTFSList(ffiles, 5);
-        PrintF("existing files: ");
-        for (U32 i = 0; i < 5; ++i) {
-            if (!ffiles[i]) continue;
-            PrintF("%s ", ffiles[i]);
-        }
-        PrintF("\nData: %s\n", buf);
-        BOTFSDelete("trash");
-        PrintF("Deleted trash: %B\n", BOTFSFind("trash") == 0xFFFFFFFF);    
-    }
+    // else if (!StrCmp(cmd, "testbfs")) {
+    //     BOTFSCreate("test", 10);
+    //     BOTFSCreate("trash", 1);
+    //     PrintF("File: %B\n", BOTFSFind("test") != 0xFFFFFFFF);
+    //     BOTFSWrite("test", "sus\n", 0, 4);
+    //     U8 buf[4] = {0};
+    //     BOTFSRead("test", buf, 0, 4);
+    //     String ffiles[5] = {0};
+    //     BOTFSList(ffiles, 5);
+    //     PrintF("existing files: ");
+    //     for (U32 i = 0; i < 5; ++i) {
+    //         if (!ffiles[i]) continue;
+    //         PrintF("%s ", ffiles[i]);
+    //     }
+    //     PrintF("\nData: %s\n", buf);
+    //     BOTFSDelete("trash");
+    //     PrintF("Deleted trash: %B\n", BOTFSFind("trash") == 0xFFFFFFFF);    
+    // }
     else if (!StrCmp(cmd, "testheap")) {
         TTYUPrint("Test:");
         TTYUPrintHex((U32)MAlloc(3));
@@ -1076,9 +994,6 @@ U0 termrun(const String cmd) {
         KDogWatchPEnd(0);
         PowerOff();
     }
-    else if (!StrCmp(cmd, "text")) {
-        CText();
-    }
     else if (!StrCmp(cmd, "sound")) {
         CSound();
     }
@@ -1087,56 +1002,6 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "pong")) {
         CPong();
-    }
-    else if (!StrCmp(cmd, "bf")) {
-        CCls();
-        TTYUPrint("$!DRun existing code(Y/N)$!F?");
-        KDogWatchPEnd(0);
-        {
-            Char buf[1];
-            KBRead(buf, 2);
-            TTYUPrintC('\n');
-            if (buf[0] == 'y' || buf[0] == 'Y') {
-                Char ubuf[500];
-                if (DATFind(0x6266) == 0xFFFF) {
-                    PrintF("$!CNo code found$!F.\n");
-                    return;
-                }
-                DATRead(0x6266, ubuf, 0, 500);
-                if (ubuf[0] == '\0') {
-                    PrintF("$!CEmple code$!F.\n");
-                    return;
-                }
-                PrintF("$!ACode$!F: %s\n\n", ubuf);
-                BFInterpret(ubuf);
-            }
-            else {
-                PrintF("$!DEnter bf code$!F:");
-                Char ubuf[500];
-                KBRead(ubuf, 500);
-                DATAlloc(0x6266);
-                DATWrite(0x6266, ubuf, 0, 500);
-                BFInterpret(ubuf);
-                PrintF("\n$!ACode saved...$!F");
-            }
-        }
-        KDogWatchPPlay(0);
-    }
-    else if (!StrCmp(cmd, "wsave")) {
-        DATAlloc(0x1254);
-        TTYUPrint("$!BPrevius word$!F: ");
-        U8 buf[100] = {0};
-        DATRead(0x1254, buf, 0, 100);
-        TTYUPrint(buf);
-        TTYUPrint("\n$!CNew word$!F: ");
-        KBRead(buf, 100);
-        DATWrite(0x1254, buf, 0, 100);
-    }
-    else if (!StrCmp(cmd, "wget")) {
-        TTYUPrint("$!Bword$!F: ");
-        U8 buf[100] = {0};
-        DATRead(0x1254, buf, 0, 100);
-        TTYUPrint(buf);
     }
     else if (!StrCmp(cmd, "$!Csnd$!F")) {
         U16 tones[] = { 61, 59, 57, 55, 55, 57, 59, 61, 63, 64, 64, 65, 66, 66, 65, 64, 63, 62, 64, 61, 61, 62, 63, 61, 59, 57, 56, 56, 57, 58, 59, 63, 61, 59, 56, 57, 59, 60, 62 };
@@ -1181,7 +1046,6 @@ U0 mainloop() {
         TTYUPrint("$!A\\$ $!F");
         KBRead(buffer, 50);
         // KDogWatchPPlay(0);
-        TTYUPrintC('\n');
         termrun(buffer);
         TTYUPrintC('\n');
         MemSet(buffer, 0, 50);

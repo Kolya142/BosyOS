@@ -1,7 +1,9 @@
 #include <drivers/keyboard.h>
 #include <misc/driverreg.h>
+#include <lib/TTY.h>
 
 volatile KBStateS KBState;
+static U8 layout;
 extern U8 MouseCycle;
 
 INT_DEF(KBHandler) {
@@ -12,6 +14,12 @@ INT_DEF(KBHandler) {
     U8 scode = PIn(0x60);
     KBState.SC = scode;
     KBState.Key = KBSCToASCIIP(scode);
+    if (KBState.Key == ' ' && !(KBState.SC & 0x80) && KBState.Super) {
+        layout = (layout+1)%2;
+    }
+    if (layout && KBState.Key >= 'a' && KBState.Key <= 'z') {
+        KBState.Key = KBKeyToRus(KBState.Key-'a');
+    }
     if (scode == 0xE0) {
         U8 ext = PIn(0x60);
         if (ext == 0x5B || ext == 0x5C) {
@@ -97,5 +105,10 @@ U8 KBSCToASCIIP(U8 code)
            "\x98"          // 4E: end
            "\x99\x9A"      // 4F-50: down, page down
            "\x9B\x7F"     // 51-52: insert, delete
+        [code];
+}
+U8 KBKeyToRus(U8 code)
+{
+    return "\xc5\xb9\xc2\xb3\xc4\xb1\xc0\xc1\xc9\xbf\xbc\xb5\xcd\xc3\xca\xb8\xba\xbb\xcc\xb6\xb4\xbd\xc8\xbe\xd0"
         [code];
 }

@@ -19,3 +19,4 @@ f U32 uptime();
 13 U0 driveracc(U32 d1, U32 d2, U32 id, U32 *value);
 14 U0 saveme(U8 id);
 15 U0 loadme(U8 id);
+17 U0 yield();

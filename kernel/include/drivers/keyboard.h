@@ -17,3 +17,4 @@ extern volatile KBStateS KBState;
 U0 KBInit();
 
 U8 KBSCToASCIIP(U8 code);
+U8 KBKeyToRus(U8 code);

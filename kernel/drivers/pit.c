@@ -83,7 +83,7 @@ static U0 PITDriverHandler(U32 id, U32 *value) {
 U0 PITInit() {
     U16 div = PIT_FREQ / 1900;
 
-    DriverReg(0x09ca4b4d, 0x5fa68611, PITDriverHandler);
+    DriverReg(0x09ca4b4d, 0x5fa68611, PITDriverHandler, "pit");
 
     POut(0x43, 0x36);
     POut(0x40, div & 0xff);

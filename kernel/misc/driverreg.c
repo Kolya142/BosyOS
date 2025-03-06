@@ -4,15 +4,17 @@ typedef struct Driver {
     U32 d1;
     U32 d2;
     Ptr func;
+    String name;
 } Driver;
 
 static Driver drivearr[50];
 
-U0 DriverReg(U32 d1, U32 d2, Ptr func) {
+U0 DriverReg(U32 d1, U32 d2, Ptr func, String name) {
     for (U32 i = 0; i < 50; ++i) {
         if (!drivearr[i].d1) {
             drivearr[i].d1 = d1;
             drivearr[i].d2 = d2;
+            drivearr[i].name = name;
             drivearr[i].func = func;
             break;
         }

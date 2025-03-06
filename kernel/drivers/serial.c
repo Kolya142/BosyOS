@@ -22,7 +22,7 @@ static U0 SerialDriverHandler(U32 id, U32 *value) {
 }
 
 U0 SerialInit() {
-    DriverReg(0xa3f13d05, 0x2eb0f0f, SerialDriverHandler);
+    DriverReg(0xa3f13d05, 0x2eb0f0f, SerialDriverHandler, "com");
 
     POut(COM1 + 1, 0x00);
     POut(COM1 + 3, 0x80);

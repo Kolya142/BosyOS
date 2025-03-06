@@ -24,21 +24,24 @@ U8 MouseRead() {
 }
 U0 MouseWait(U8 how) {
     U16 timeout = 100000;
-    if (!how) {
+    if (!how) { // Output bit
         while (--timeout) {
-            if ((PIn(0x64) & 1) == 1)
+            if ((PIn(0x64) & 1) == 0)
                 return;
         }
         return;
     }
-    else {
+    else { // Input bit
         while (--timeout) {
-            if ((PIn(0x64) & 2) == 0)
+            if ((PIn(0x64) & 2) == 2)
                 return;
         }
         return;
     }
 }
+
+#define WAITI MouseWait(1)
+#define WAITO MouseWait(0)
 
 __attribute__((naked)) U0 MouseUpdate() {
     asmv("pushf\npusha");
@@ -70,5 +73,32 @@ static U0 MSDriverHandler(U32 id, U32 *value) {
 }
 
 U0 MouseInit() {
-    PrintF("Initializing mouse...\n");
+    U8 ack;
+
+    POut(0x64, 0xA8); // Enable PS/2 second port
+
+    WAITO; // Enable PS/2 second port interrupts
+    POut(0x64, 0x20);
+    WAITI;
+    ack = PIn(0x60);
+    ack |= 1 << 1;
+    WAITO;
+    POut(0x64, 0x60);
+    POut(0x60, ack);
+
+    WAITO; // Enable mouse
+    POut(0x64, 0xD4);
+    POut(0x60, 0xF4);
+    WAITI;
+    ack = MouseRead();
+    if (ack == 0xFA) {
+        WAITO;
+        MouseWrite(0xF2);
+        WAITI;
+        ack = PIn(0x60);
+        PrintF("Mouse Driver initialized\nMouse ack: %x\n", ack);
+        WAITI;
+        ack = PIn(0x60);
+        PrintF("Mouse type: %x\n", ack);
+    }
 }

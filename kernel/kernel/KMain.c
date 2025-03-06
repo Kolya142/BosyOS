@@ -35,6 +35,7 @@
 // FileSystem
 #include <fs/minix.h>
 #include <fs/ramfs.h>
+#include <fs/vfs.h>
 
 // Arch/Cpu Functions
 #include <arch/paging.h>
@@ -52,7 +53,7 @@ U0 programtest();
 U0 mainloop();
 U0 loop();
 
-__attribute__((naked)) U0 KernelMain() {
+U0 KernelMain() {
     TTYSwitch(TTYC_VGA);
     VgaInit();
     TTYClear();
@@ -108,8 +109,8 @@ __attribute__((naked)) U0 KernelMain() {
     // KDogWatchLog("Initialized \"rtl8139\"", False);
     KBInit();
     KDogWatchLog("Initialized \x9Bkeyboard\x9C", False);
-    // MouseInit(); // Portal to hell
-    // KDogWatchLog("Initialized \"mouse\"", False);
+    MouseInit(); // Portal to hell
+    KDogWatchLog("Initialized \"mouse\"", False);
     BeepInit();
     KDogWatchLog("Initialized \x9Bpc speaker\x9C", False);
     IDEInit();
@@ -120,8 +121,13 @@ __attribute__((naked)) U0 KernelMain() {
     
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
+    VFSInit();
+    VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, Null);
+    KDogWatchLog("Initialized \"vfs\"", False);
+
     RFSInit();
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
+
     MXInit();
     KDogWatchLog("Initialized \"minix fs\"", False);
     // DATInit();
@@ -130,8 +136,6 @@ __attribute__((naked)) U0 KernelMain() {
     // KDogWatchLog("Initialized \"botfs\"", False);
     // UFSInit();
     // KDogWatchLog("Initialized \"ufs\"", False);
-    // VFSInit();
-    // KDogWatchLog("Initialized \"vfs\"", False);
 
     KDogWatchLog("System Initialized", False);
     // TTYClear();
@@ -161,7 +165,7 @@ U0 CHelp() {
         "$!Ahelp cls hlt gen testcom$!F\n"
         "$!Btime echo wsave rand testfpu$!F\n"
         "$!Creboot poweroff apple testdrv$!F\n"
-        "$!Esnake text sound wget$!F\n"
+        "$!Esnake text sound wget genpass$!F\n"
         "$!Awords triangle bf hz jump$!F\n"
         "$!Bmus pong testufs testheap$!F\n"
         "$!Ctestbfs ls cat fwrite testip$!F\n"
@@ -492,18 +496,18 @@ U0 CJump() {
     I32 ballvx = (RandomU() & 1) ? 1 : -1;
     I32 ballvy = (RandomU() & 1) ? 1 : -1;
     Bool game = True;
+    TTYClear();
+    for (U32 y = 0; y <= TTYHeight; ++y) {
+        TTYCursor = y * TTYWidth + TTYWidth - 1;
+        TTYRawPrint('#', White, Black);
+        TTYCursor = y * TTYWidth + 0;
+        TTYRawPrint('#', White, Black);
+    }
     while (game) {
-        TTYClear();
         
-        for (U32 y = 0; y <= TTYHeight; ++y) {
-            TTYCursor = y * TTYWidth + TTYWidth - 1;
-            TTYRawPrint('#', White, Black);
-            TTYCursor = y * TTYWidth + 0;
-            TTYRawPrint('#', White, Black);
-        }
         for (I32 x = ballx * 5; x < ballx * 5 + 5; ++x) {
             for (I32 y = bally * 5; y < bally * 5 + 5; ++y) {
-                VRMPSet(x, y, Blue);
+                VRMPSet(x, y, Red);
             }
         }
         ballx += ballvx;
@@ -523,6 +527,11 @@ U0 CJump() {
         }
         if (KBState.keys['\x1b']) {
             game = False;
+        }
+        for (I32 x = ballx * 5; x < ballx * 5 + 5; ++x) {
+            for (I32 y = bally * 5; y < bally * 5 + 5; ++y) {
+                VRMPSet(x, y, Blue);
+            }
         }
         SleepM(100);
     }
@@ -692,7 +701,7 @@ U0 CBoot(String name) {
         if (!ffiles[i].inode) break;
         if (!StrCmp(ffiles[i].name, name)) {
             MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
-            MXInodeDataRead(&in, block);
+            MXInodeRead(&in, block);
             break;
         }
     }
@@ -737,7 +746,7 @@ U0 termasync() {
 }
 U0 termrun(const String cmd) {
     if (cmd[0] == '&') {
-        StrCpy(acmd, &cmd[1]);
+        MemCpy(acmd, &cmd[1], 50);
         TaskNew((U32)termasync, 0x10, 8);
         return;
     }
@@ -849,10 +858,11 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "stat")) {
         Char cpu[49];
         CpuNameGet(cpu);
+        PrintF("Main file: $!A%s$!F\nBuild time: $!B%s$!F\nBuilder: $!C%s$!F\n---------------\n", __FILE__, __DATE__ " $!d-$!B " __TIME__, __BUILD_OS__);
         PrintF("Width: %d, Height: %d\n", TTYWidth, TTYHeight);
-        PrintF("Cpu: %s\n", cpu);
+        PrintF("CPU: %s\n", cpu);
         U16 mem = MemorySize();
-        PrintF("memory: 0x%2xKB", mem);
+        PrintF("RAM: 0x%2xKB", mem);
     }
     else if (!StrCmp(cmd, "pass")) {
         PrintF("Enter password: $!A\\$$!0");
@@ -861,6 +871,20 @@ U0 termrun(const String cmd) {
         KBRead(buf, 20);
         VgaCursorEnable();
         PrintF("$!Fpassword: %s", buf);
+    }
+    else if (!StrCmp(cmd, "genpass")) {
+        PrintF("press some keys\npassword: $!A\\$");
+        U32 t = RandomU();
+        for (U32 i = 0;!KBState.keys['\x1b'];++i) {
+            t ^= RandomU();
+            t ^= 512 * KBState.Key;
+            for (U32 j = 0; j < 3; ++j) {
+                PrintF("%c", "0123456789QWERTYUIOPASDFGHJKLZXCVBNM$#@!^&()-=_+~qwertyuiop[]asdfghjklzxcvbnm:;'/.,<>\""[t % 76]);
+                t ^= RandomU();
+                t ^= 642 * KBState.Key;
+            }
+            SleepM(500);
+        }
     }
     else if (!StrCmp(cmd, "rand1")) {
         CCls();
@@ -979,6 +1003,26 @@ U0 termrun(const String cmd) {
             PrintF("$!B%s$!F\n", ffiles[i].name);
         }
     }
+    else if (StrStartsWith(cmd, "touch")) {
+        MXCreate(cmd + 6, 0x8FFF);
+    }
+    else if (StrStartsWith(cmd, "fwrite")) {
+        String name = cmd + 7;
+        MXDirEntry ffiles[32] = {0};
+        MXListRoot(ffiles, 32);
+        for (U32 i = 0; i < 32; ++i) {
+            if (!ffiles[i].inode) break;
+            if (!StrCmp(ffiles[i].name, name)) {
+                U8 buf[1024];
+                PrintF("write your data: $!A\\$$!F");
+                KBRead(buf, 1024);
+                MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
+                MXWrite(&in, buf, StrLen(buf));
+                return;
+            }
+        }
+        PrintF("$!CFile not found$!F");
+    }
     else if (StrStartsWith(cmd, "cat")) {
         MXDirEntry ffiles[32] = {0};
         MXListRoot(ffiles, 32);
@@ -987,7 +1031,7 @@ U0 termrun(const String cmd) {
             if (!StrCmp(ffiles[i].name, cmd + 4)) {
                 MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
                 U8 block[1024];
-                MXInodeDataRead(&in, block);
+                MXInodeRead(&in, block);
                 PrintF("File content:\n%s", block);
                 return;
             }

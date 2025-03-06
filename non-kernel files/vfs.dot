@@ -1,0 +1,37 @@
+digraph G {
+    VFS -> MountPoints;
+
+    VFS -> VFSRead;
+    VFS -> VFSWrite;
+    VFS -> VFSList;
+    VFS -> VFSMount;
+
+    MountPoints -> Mount1;
+    MountPoints -> Mount2;
+    MountPoints -> Mount3;
+
+    Mount1Name [label="/tmp", shape=box];
+    Mount1Read [label=ramfs_read];
+    Mount1List [label=ramfs_list];
+    Mount1Write [label=ramfs_write];
+    Mount1 -> Mount1Name;
+    Mount1 -> Mount1Read;
+    Mount1 -> Mount1List;
+    Mount1 -> Mount1Write;
+
+    Mount2Name [label="/data", shape=box];
+    Mount2List [label=minix_list];
+    Mount2Read [label=minix_read];
+    Mount2 -> Mount2Name;
+    Mount2 -> Mount2Read;
+    Mount2 -> Mount2List;
+
+    Mount3Name [label="/dev", shape=box];
+    Mount3List [label=driver_list];
+    Mount3Read [label=driver_read];
+    Mount3Write [label=driver_write];
+    Mount3 -> Mount3Name;
+    Mount3 -> Mount3Read;
+    Mount3 -> Mount3List;
+    Mount3 -> Mount3Write;
+}

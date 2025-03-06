@@ -58,5 +58,5 @@ static U0 BeepDriverHandler(U32 id, U32 *value) {
 }
 
 U0 BeepInit() {
-    DriverReg(0x46ef3f2c, 0x27e134cd, BeepDriverHandler);
+    DriverReg(0x46ef3f2c, 0x27e134cd, BeepDriverHandler, "beep");
 }

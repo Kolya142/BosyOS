@@ -84,5 +84,5 @@ U0 RTL8139Init() {
         KDogWatchLog("RTL8139 ERROR: reset timeout!\n", False);
         return;
     }
-    DriverReg(0xbb149088, 0xc3442e1e, RTL8139DriverHandler);
+    DriverReg(0xbb149088, 0xc3442e1e, RTL8139DriverHandler, "rtl8139");
 }

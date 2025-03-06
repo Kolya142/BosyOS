@@ -70,5 +70,5 @@ static U0 IDEDriverHandler(U32 id, U32 *value) {
 }
 
 U0 IDEInit() {
-    DriverReg(0x6aa73a10, 0xa8b55cb4, IDEDriverHandler);
+    DriverReg(0x6aa73a10, 0xa8b55cb4, IDEDriverHandler, "ide");
 }

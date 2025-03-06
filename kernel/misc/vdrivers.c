@@ -41,6 +41,6 @@ static U0 VTTYHandler(U32 id, U32 *value) {
 }
 
 U0 VDriversReg() {
-    DriverReg(0x8e6d1237, 0xc02dd685, VRandHandler);
-    DriverReg(0xc0d05943, 0x8be5d999, VTTYHandler);
+    DriverReg(0x8e6d1237, 0xc02dd685, VRandHandler, "random");
+    DriverReg(0xc0d05943, 0x8be5d999, VTTYHandler, "tty");
 }

@@ -46,3 +46,14 @@ extern Bool Debugging;
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define swapx(a, b) {a = a ^ b; b = a ^ b; a = a ^ b;}
+#if defined(__linux__)
+#define __BUILD_OS__ "Linux"
+#elif defined(__APPLE__)
+#define __BUILD_OS__ "MacOS"
+#elif defined(_WIN32)
+#define __BUILD_OS__ "Windowd"
+#elif defined(__unix__)
+#define __BUILD_OS__ "Unix-like"
+#else
+#define __BUILD_OS__ "Unknown OS"
+#endif

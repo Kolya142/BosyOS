@@ -25,6 +25,11 @@
 #define S_IWOUT  0x0002
 #define S_IXOUT  0x0001
 
+#define S_FT     0xF000
+#define S_UA     0x01C0
+#define S_GA     0x0038
+#define S_OA     0x0007
+
 typedef struct MXDirEntry {
     U16 inode;
     Char name[14];
@@ -55,9 +60,14 @@ typedef struct MXINode {
 
 extern MXSuperBlock MXSB;
 
-Bool MXInodeDataRead(MXINode *inode, U8 *buf);
+Bool MXInodeRead(MXINode *inode, U8 *buf);
+U32 MXZAlloc();
 MXINode MXInodeGet(MXSuperBlock *sb, U32 index);
+U0 MXInodeSet(MXSuperBlock *sb, U32 index, MXINode node);
 U8 *MXDataGet(U32 index, U8 *block);
 U0 MXListRoot(MXDirEntry *arr, U32 count);
+
+U0 MXCreate(String filename, U16 mode);
+U32 MXWrite(MXINode *inode, U8 *buf, U32 count);
 
 U0 MXInit();

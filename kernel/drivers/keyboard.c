@@ -75,7 +75,7 @@ static U0 KBDriverHandler(U32 id, U32 *value) {
     }
 }
 U0 KBInit() {
-    DriverReg(0x0bb5676c, 0xff3ae302, KBDriverHandler);
+    DriverReg(0x0bb5676c, 0xff3ae302, KBDriverHandler, "keyboard");
     IDTSet(0x21, KBHandler, 0x08, 0x8E);
 }
 U8 KBSCToASCIIP(U8 code)

@@ -150,5 +150,5 @@ static U0 VgaDriverHandler(U32 id, U32 *value) {
     }
 }
 U0 VgaInit() {
-    DriverReg(0xebbfd78c, 0x59687d45, VgaDriverHandler);
+    DriverReg(0xebbfd78c, 0x59687d45, VgaDriverHandler, "vga");
 }

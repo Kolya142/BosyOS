@@ -4,7 +4,7 @@ U32 SleepM(U32 millis) {
     U32 s = PITTime;
     U32 e = PITTime + millis;
 
-    while (PITTime < e) asmv("pause");
+    while (PITTime < e);
     return PITTime - s;
 }
 

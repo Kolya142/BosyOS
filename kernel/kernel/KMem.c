@@ -1,10 +1,12 @@
 #include <kernel/KDogWatch.h>
 #include <kernel/KMem.h>
 
-unsigned char *Heap = (void*)HEAP_START;
+#define ALIGNMENT (sizeof(HeapMemBlock))
+
+U8 *Heap = (U8*)HEAP_START;
 HeapMemBlock *HeapFree = Null;
 
-void HeapInit() {
+U0 HeapInit() {
     HeapFree = (HeapMemBlock*)Heap;
     HeapFree->size = HEAP_SIZE;
     HeapFree->ptr = (void *)(Heap + sizeof(HeapMemBlock));
@@ -12,37 +14,41 @@ void HeapInit() {
     HeapFree->free = 1;
 }
 
-void *HeapAlloc(U32 size) {
-    HeapMemBlock *heap_free = HeapFree;
+Ptr HeapAlloc(U32 size) {
+    HeapMemBlock *curr = HeapFree;
+    U32 aligned = (size + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
+    while (curr) {
+        if (curr->free && curr->size >= aligned) {
+            if (curr->size >= aligned + sizeof(HeapMemBlock) + ALIGNMENT) {
+                U32 curr_addr = (U32)curr->ptr;
 
-    while (heap_free) {
-        if (heap_free->size >= size + sizeof(HeapMemBlock) && heap_free->free) {
-            HeapMemBlock *new_block = (HeapMemBlock *)((U32)heap_free->ptr + size);
-            new_block = (HeapMemBlock *)(((U32)new_block + sizeof(HeapMemBlock) - 1) & ~(sizeof(HeapMemBlock) - 1));
+                U32 new_addr = (curr_addr + aligned + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
 
-            new_block->size = heap_free->size - size - sizeof(HeapMemBlock);
-            new_block->ptr = (void *)((U32)new_block + sizeof(HeapMemBlock));
-            new_block->free = 1;
-            new_block->next = heap_free->next;
+                U32 over = (new_addr - curr_addr) + sizeof(HeapMemBlock);
 
-            heap_free->next = new_block;
-            heap_free->size = size;
-            heap_free->free = 0;
+                HeapMemBlock *new_block = (HeapMemBlock*)new_addr;
+                new_block->size = curr->size - aligned - over;
+                new_block->ptr = (U8*)(new_addr + sizeof(HeapMemBlock));
+                new_block->free = 1;
+                new_block->next = curr->next;
+                curr->next = new_block;
 
-            return heap_free->ptr;
+                curr->size = aligned;
+            }
+            curr->free = False;
+            return curr->ptr;
         }
-
-        heap_free = heap_free->next;
+        curr = curr->next;
     }
     KDogWatchLog("Failed to malloc some memory", False);
     return Null;
 }
 
-void HeapFreePtr(void *ptr) {
+U0 HeapFreePtr(Ptr ptr) {
     if (!ptr) return;
     if ((ptr < Heap) || (ptr > Heap + HEAP_SIZE)) return;
 
-    HeapMemBlock *block = (HeapMemBlock *)((unsigned char *)ptr - sizeof(HeapMemBlock));
+    HeapMemBlock *block = (HeapMemBlock *)((U8*)ptr - sizeof(HeapMemBlock));
     block->free = 1;
 
     HeapMemBlock *heap_free = HeapFree;

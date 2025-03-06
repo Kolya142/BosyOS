@@ -137,7 +137,7 @@ __attribute__((naked)) U0 KernelMain() {
     // TTYClear();
     // TTYCursor = 0;
 
-    TSleep(500);
+    SleepM(500);
     U32 tid1 = TaskNew((U32)mainloop, 0x10, 8);
     // mainloop();
     // TaskNew((U32)mainloop);
@@ -162,16 +162,16 @@ U0 CHelp() {
         "$!Btime echo wsave rand testfpu$!F\n"
         "$!Creboot poweroff apple testdrv$!F\n"
         "$!Esnake text sound wget$!F\n"
-        "$!3words triangle bf hz$!F\n"
-        "$!5mus pong testufs testheap$!F\n"
-        "$!6testbfs ls cat fwrite testip$!F\n"
-        "$!7touch fclean collects mouse$!F\n"
-        "$!8boot vrm rand1 stat pass deb$!F"
+        "$!Awords triangle bf hz jump$!F\n"
+        "$!Bmus pong testufs testheap$!F\n"
+        "$!Ctestbfs ls cat fwrite testip$!F\n"
+        "$!Etouch fclean collects mouse$!F\n"
+        "$!Aboot vrm rand1 stat pass deb task$!F\n"
         "$!5Features$!F:\n"
+        "Use '$!7&$!F' at beginning of line to run in new process\n"
         "All Commands: esc-exit\n"
         "$!Asound$!F - $!Balt$!F-play, $!Blshift$!F-save, $!Brshift$!F-load\n"
-        "$!Awsave$!F/$!Awget$!F uses disk\n"
-        "use $!BWASD$!F in $!Atext$!F to move cursor"
+        "$!Awsave$!F/$!Awget$!F uses disk"
     );
 }
 U0 CCls() {
@@ -187,29 +187,29 @@ U0 CWords() {
     TTYUPrintC('\n');
 }
 U0 CTriangle() {
-    TTYClear();
-    TTYCursor = 0;
-    Bool state[25] = {0};
+    Bool state[20] = {0};
     state[0] = True;
+    U8 *buf = MAlloc(32*20);
     for (;!KBState.keys['\x1b'];) {
-        for (U32 i = 25; i > 0; --i) {
+        for (U32 i = 19; i > 0; --i) {
             if (state[i-1]) {
                 state[i] = !state[i];
             }
         }
         U32 count = 0;
-        for (U32 j = 0; j < 25; ++j) {
-            count += state[j];
-            VgaPSet(0, 25 - j, state[j] ? 0xDB : ' ', 0x0F);
-            for (U32 i = 80; i > 0; --i) {
-                VgaPSet(i, 25 - j, vga[i - 1 + (25 - j) * 80] & 0xff, 0x0F);
+        for (U32 j = 0; j < 20; ++j) {
+            count += (state[j]);
+            buf[0 + (19 - j) * 32] = state[j] ? Blue : Black;
+            for (U32 i = 32; i > 0; --i) {
+                buf[i + (19 - j) * 32] = buf[i - 1 + (19 - j) * 32] & 0xff;
             }
         }
-        BeepSPC(count + 30, 30);
-        BeepSPC(count + 50, 10);
-        BeepSPC(count + 70, 5);            
-        TSleep(20);
-        KDogWatchPTick(0);
+
+        for (U32 i = 0; i < 32; ++i) {
+            for (U32 j = 0; j < 20; ++j) {
+                VRMPSet(i + 320 - 32, j + 200 - 20, buf[i+j*32]);
+            }
+        }
     }
 }
 U0 CTime() {
@@ -235,7 +235,7 @@ U0 CRand() {
         BeepSPC(note, dur);
         vga[(v >> 16) % 1999] = v & 0xffff;
         v = calculate_shash(v * 50239 + note ^ dur);
-        if (RandomU() % 5 <= 2) TSleep(RandomU() % 200 + 100);
+        if (RandomU() % 5 <= 2) SleepM(RandomU() % 200 + 100);
         else if (RandomU() % 4 <= 1) {
             BeepSPC(note + 4, dur);
             BeepSPC(note + 7, dur);
@@ -249,7 +249,7 @@ U0 CRand() {
         WordGen();
         if (!(i % 5))
             TTYCursor = c;
-        TSleep(1000/120); // 120gh
+        SleepM(1000/120); // 120gh
     }
 }
 U0 CGen() {
@@ -261,7 +261,7 @@ U0 CGen() {
             }
         }
         KDogWatchPTick(0);
-        TSleep(1000/30);
+        SleepM(1000/30);
     }
 }
 U0 CMus() {
@@ -270,17 +270,15 @@ U0 CMus() {
 
     for (U32 i = 0; i < sizeof(tones) / 2; ++i) {
         BeepSPC(tones[i], durations[i]);
-        TSleep(1000/120);
         KDogWatchPTick(0);
         if (KBState.keys['\x1b']) {
             break;
         }
     }
-    TaskClose();
 }
 
 
-Bool Debugging = True;
+Bool Debugging = False;
 U0 CSound() {
     static const U8 KeyToNote[128] = {
         40, 42, 44, 45, 47, 49, 51, 52, 54, 56, 57, 59,
@@ -310,7 +308,7 @@ U0 CSound() {
                 if (Record[j])
                     BeepSPC(Record[j], 3);
                 KDogWatchPTick(0);
-                TSleep(5);
+                SleepM(5);
             }
         }
         else if (!(KBState.SC & 0x80)) {
@@ -334,7 +332,7 @@ U0 CSound() {
         }
         TTYCursor -= TTYCursor % 80;
         KDogWatchPTick(0);
-        TSleep(3);
+        SleepM(3);
     }
 }
 U0 CSnake() {
@@ -427,14 +425,13 @@ U0 CSnake() {
         TTYRawPrint(' ', Red, Red);
         TTYCursor = 80 / 2 - 4 / 2;
         TTYUPrintHex(score);
-        TSleep(100);
+        SleepM(100);
     }
     TTYUPrint("$!F$*0");
 }
 U0 CPong() {
     KDogWatchPEnd(0);
     I32 p1 = 10;
-    I32 p2 = 10;
     I32 ballx = RandomU() % 10 + TTYWidth/2;
     I32 bally = RandomU() % 10 + 10;
     I32 ballvx = (RandomU() & 1) ? 1 : -1;
@@ -447,7 +444,7 @@ U0 CPong() {
             TTYCursor = y * TTYWidth + 0;
             TTYRawPrint('#', White, Black);
         }
-        for (U32 y = p2 - 3; y <= p2 + 3; ++y) {
+        for (U32 y = 0; y <= TTYHeight; ++y) {
             TTYCursor = y * TTYWidth + TTYWidth - 1;
             TTYRawPrint('#', White, Black);
         }
@@ -464,7 +461,7 @@ U0 CPong() {
             ballvx = -ballvx;
             BeepSPC(45, 30);
         }
-        if (ballx == TTYWidth-1/* && bally >= p2 - 3 && bally <= p2 + 3*/) {
+        if (ballx == TTYWidth-2) {
             ballvx = -ballvx;
             BeepSPC(45, 30);
         }
@@ -474,7 +471,6 @@ U0 CPong() {
         if (KBState.keys['s']) {
             ++p1;
         }
-        p2 += (bally - p2) / 3;
         if (ballx == TTYWidth-1 || ballx == 0) {
             ballx = RandomU() % 10 + TTYWidth/2;
             bally = RandomU() % 10 + 10;
@@ -485,7 +481,50 @@ U0 CPong() {
         if (KBState.keys['\x1b']) {
             game = False;
         }
-        TSleep(100);
+        SleepM(100);
+    }
+}
+U0 CJump() {
+    KDogWatchPEnd(0);
+    I32 p1 = 10;
+    I32 ballx = RandomU() % 10 + TTYWidth/2;
+    I32 bally = RandomU() % 10 + 10;
+    I32 ballvx = (RandomU() & 1) ? 1 : -1;
+    I32 ballvy = (RandomU() & 1) ? 1 : -1;
+    Bool game = True;
+    while (game) {
+        TTYClear();
+        
+        for (U32 y = 0; y <= TTYHeight; ++y) {
+            TTYCursor = y * TTYWidth + TTYWidth - 1;
+            TTYRawPrint('#', White, Black);
+            TTYCursor = y * TTYWidth + 0;
+            TTYRawPrint('#', White, Black);
+        }
+        for (I32 x = ballx * 5; x < ballx * 5 + 5; ++x) {
+            for (I32 y = bally * 5; y < bally * 5 + 5; ++y) {
+                VRMPSet(x, y, Blue);
+            }
+        }
+        ballx += ballvx;
+        bally += ballvy;
+
+        if (bally == TTYHeight-1 || bally == 0) {
+            ballvy = -ballvy;
+            BeepSPC(45, 30);
+        }
+        if (ballx == 1) {
+            ballvx = -ballvx;
+            BeepSPC(45, 30);
+        }
+        if (ballx == TTYWidth-1) {
+            ballvx = -ballvx;
+            BeepSPC(45, 30);
+        }
+        if (KBState.keys['\x1b']) {
+            game = False;
+        }
+        SleepM(100);
     }
 }
 U0 BFInterpret(const String code) {
@@ -641,7 +680,7 @@ U0 CRay() {
             TTYCursor = 0;
             PrintF("%d,%d", (U32)px, (U32)py);
         }
-        TSleep(100);
+        SleepM(100);
     }
 }
 U0 CBoot(String name) {
@@ -682,15 +721,30 @@ typedef struct {
 } __attribute__((packed)) UDPHeader;
 U32 testvar = 0xABAB;
 U0 tasking1() {
-    for (U32 i = 0; i < 3; ++i) {
+    for (U32 i = 0; i < 100; ++i) {
+        TTYCursor -= TTYCursor % 80;
         PrintF("tasking %1x\n", i);
-        // TaskYeild();
     }
     PrintF("processes end.\nuse task to create new process");
     TaskClose();
 }
+Char acmd[50];
+U0 termrun(const String cmd);
+U0 termasync() {
+    PrintF("async command: %s\n", acmd);
+    termrun(acmd);
+    TaskClose();
+}
 U0 termrun(const String cmd) {
-    if (!StrCmp(cmd, "help")) {
+    if (cmd[0] == '&') {
+        StrCpy(acmd, &cmd[1]);
+        TaskNew((U32)termasync, 0x10, 8);
+        return;
+    }
+    else if (!StrCmp(cmd, "jump")) {
+        CJump();
+    }
+    else if (!StrCmp(cmd, "help")) {
         CHelp();
     }
     else if (!StrCmp(cmd, "cls")) {
@@ -699,6 +753,9 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "task")) {
         U32 tid2 = TaskNew((U32)tasking1, 0x10, 8);
         PrintF("processes setuped.\nuse tasky to yeild process");
+    }
+    else if (!StrCmp(cmd, "exit")) {
+        TaskClose();
     }
     // else if (!StrCmp(cmd, "tasky")) {
     //     TaskYeild();
@@ -827,7 +884,7 @@ U0 termrun(const String cmd) {
             WordGenS(b1, 9);
             WordGenS(b2, 9);
             WordGenS(b3, 9);
-            TSleep(100);
+            SleepM(100);
         }
     }
     else if (!StrCmp(cmd, "vrm")) {
@@ -880,7 +937,7 @@ U0 termrun(const String cmd) {
             BeepSPC(count + 30, 30);
             BeepSPC(count + 50, 10);
             BeepSPC(count + 70, 5);            
-            TSleep(20);
+            SleepM(20);
             KDogWatchPTick(0);
         }
     }
@@ -889,7 +946,7 @@ U0 termrun(const String cmd) {
             CCls();
             TTYCursor = MouseX + MouseY * 80;
             TTYUPrintC(0xB0);
-            TSleep(10);
+            SleepM(10);
         }
     }
     else if (!StrCmp(cmd, "collects")) {
@@ -1010,10 +1067,10 @@ U0 termrun(const String cmd) {
         for (U32 i = 0; i < sizeof(tones) / 2; ++i) {
             for (U8 v = 0; v < 2; v++) {
                 BeepSPC(tones[i], durations[i] / 2);
-                TSleep(10);
+                SleepM(10);
             }
             if (i % 4 == 0) BeepSPC(tones[i] - 12, durations[i] / 2);
-            TSleep(1000/70);
+            SleepM(1000/70);
             KDogWatchPTick(0);
             if (KBState.keys['\x1b']) {
                 break;
@@ -1021,7 +1078,7 @@ U0 termrun(const String cmd) {
         }
     }
     else if (!StrCmp(cmd, "mus")) {
-        TaskNew((U32)CMus, 0x10, 0x08);
+        CMus();
     }
     else {
         TTYUPrint("Unk ");

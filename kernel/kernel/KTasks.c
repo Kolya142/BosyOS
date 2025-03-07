@@ -52,9 +52,8 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
         asmv("sti");
         return 0xFFFFFFFF;
     }
-    stack[4095] = 0; // return addr
     
-    U32 esp = (U32)&stack[4095];
+    U32 esp = (U32)(&stack[4094]);
     PrintF("Process with esp $!B%4x$!F created\n", esp);
 
     Task *task = MCAlloc(sizeof(Task), 1);
@@ -67,7 +66,7 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
     task->regs.eflags  = 0x202; // initial cpu flags
     
     task->regs.useresp = esp; // initial stack
-    task->regs.ebp = 0;
+    task->regs.ebp = esp;
 
     task->regs.eip = eip; // InstructionPointer
     

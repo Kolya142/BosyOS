@@ -15,23 +15,23 @@ kernel:
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
 userdata_dump:
-	@if [ -e drive ]; then \
-		dd if=drive of=userdata bs=512 skip=291 count=2048; \
-	else \
-		echo "Error: drive file not found!"; \
-	fi
+	# @if [ -e drive ]; then \
+	# 	dd if=drive of=userdata bs=512 skip=291 count=2048; \
+	# else \
+	# 	echo "Error: drive file not found!"; \
+	# fi
 prog:
 	cd usercode && bash build.sh && python3 bsfexe.py usercode.bin N
-	truncate -s 24576 usercode/usercode.bin.bsf
 compile:
-	@if [ -e drive ]; then \
-		make userdata_dump; \
-	elif [ ! -e userdata ]; then \
- 		truncate -s 1048576 userdata; \
-	fi
-	dd if=kernel/boot/boot.bin bs=512 of=drive seek=0
-	dd if=kernel.bin of=drive bs=512 seek=35
-	dd if=userdata of=drive bs=512 seek=291
+	truncate -s 181760 drive
+	# @if [ -e drive ]; then \
+	# 	make userdata_dump; \
+	# elif [ ! -e userdata ]; then \
+ 	# 	truncate -s 181760 userdata; \
+	# fi
+	dd if=kernel/boot/boot.bin of=drive bs=512 seek=0 count=3 conv=notrunc
+	dd if=kernel.bin of=drive bs=512 seek=35 count=256 conv=notrunc
+	# dd if=userdata of=drive bs=512 seek=291
 
 QEMU=qemu-system-i386
 QEMU_DRIVE=-drive format=raw,file=drive

@@ -75,13 +75,21 @@ static U0 MSDriverHandler(U32 id, U32 *value) {
 U0 MouseInit() {
     U8 ack;
 
+    // Disable mouse
+    POut(0x64, 0xA7);
+
+    while (PIn(0x64) & 1) { // Clear PS/2 buffer
+        PIn(0x60);
+    }
+
     POut(0x64, 0xA8); // Enable PS/2 second port
 
     WAITO; // Enable PS/2 second port interrupts
     POut(0x64, 0x20);
     WAITI;
     ack = PIn(0x60);
-    ack |= 1 << 1;
+
+    ack |= 3;
     WAITO;
     POut(0x64, 0x60);
     POut(0x60, ack);
@@ -89,6 +97,8 @@ U0 MouseInit() {
     WAITO; // Enable mouse
     POut(0x64, 0xD4);
     POut(0x60, 0xF4);
+
+
     WAITI;
     ack = MouseRead();
     if (ack == 0xFA) {
@@ -101,4 +111,5 @@ U0 MouseInit() {
         ack = PIn(0x60);
         PrintF("Mouse type: %x\n", ack);
     }
+    IDTSet(0x2C, MouseUpdate, 0x08, 0x8E);
 }

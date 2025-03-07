@@ -12,17 +12,21 @@ U0 ATARead(Ptr buf, U32 start, U8 count) {
     POut(0x01F5, (start >> 16) & 0xff);
     POut(0x01F7, 0x20);
 
+    SleepM(1);
     while (PIn(0x01F7) & 0x80);    // Wait BUSY
+
     if (PIn(0x01F7) & 1) {
+        PrintF("Try access LBA %x\n", start);
         KPanic("ATA ERROR: Disk Busy wait failed", True);
     }
 
     U8 *buf8 = buf;
 
     for (U8 sec = 0; sec < count; ++sec) {
+        U32 timeout = 1000000;
         while (!(PIn(0x1F7) & 0x08)) {
             if (PIn(0x1F7) & 1) { KPanic("ATA ERROR: BSY Failed!", True); }
-            if (PIn(0x1F7) & 0x80) { KPanic("ATA ERROR: BSY stuck!", True); }
+            if (PIn(0x1F7) & 0x80) { if (!--timeout) { KPanic("ATA ERROR: BSY stuck!", True); } }
         }
 
         for (U32 i = 0; i < 256; i++) {
@@ -30,7 +34,6 @@ U0 ATARead(Ptr buf, U32 start, U8 count) {
             buf8[sec * 512 + (i * 2)] = word & 0xff;
             buf8[sec * 512 + (i * 2) + 1] = (word >> 8) & 0xff;
         }
-        while (PIn(0x1F7) & 0x80);
     }
 }
 U0 ATAWrite(Ptr buf, U32 start, U8 count) {
@@ -39,10 +42,14 @@ U0 ATAWrite(Ptr buf, U32 start, U8 count) {
     POut(0x01F3, start & 0xFF);
     POut(0x01F4, (start >> 8) & 0xFF);
     POut(0x01F5, (start >> 16) & 0xFF);
+    
+    SleepM(1);
+    while (PIn(0x01F7) & 0x80);    // Wait BUSY
+
     POut(0x01F7, 0x30);
 
-    while (PIn(0x01F7) & 0x80);    // Wait BUSY
     if (PIn(0x01F7) & 1) {
+        PrintF("Try access LBA %x\n", start);
         KPanic("ATA ERROR: Disk Busy wait failed", True);
     }
     U8 *buf8 = buf;
@@ -60,7 +67,7 @@ U0 ATAWrite(Ptr buf, U32 start, U8 count) {
 }
 
 static U0 IDEDriverHandler(U32 id, U32 *value) {
-    IDEAsk *ask = (IDEAsk*)(&value);
+    IDEAsk *ask = (IDEAsk*)(value);
     if (id == 0) {
         ATARead(ask->buf, ask->start, ask->end);
     }

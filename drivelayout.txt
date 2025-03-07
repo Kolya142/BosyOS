@@ -2,5 +2,5 @@ Disk Layout:
 name:  Boot  zeroes Kernel     UserData
          |     |         |          |
          |     |         |          |
-size :  [3]   [32]     [256]     [2048]
+size :  [3]   [32]     [256]       [64]
 start:  [0]   [03]     [035]      [291]

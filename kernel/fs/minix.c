@@ -162,7 +162,6 @@ U0 MXListRoot(MXDirEntry *arr, U32 count) {
     }
 }
 U0 MXCreate(String filename, U16 mode) {
-    MXINode parent = MXInodeGet(&MXSB, 1);
     U32 new_inode_num = MXIAlloc();
     if (new_inode_num == 0xFFFFFFFF) {
         return;
@@ -171,9 +170,9 @@ U0 MXCreate(String filename, U16 mode) {
     node.mode = mode;
     node.size = 0;
     node.uid = 1000;
-    node.gid = 271;
+    node.gid = 100;
     node.time = 0;
-    node.nlinks = 0;
+    node.nlinks = 1;
     for (U32 i = 0; i < 8; ++i) {
         node.zone[i] = 0;
     }

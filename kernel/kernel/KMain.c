@@ -35,6 +35,7 @@
 // FileSystem
 #include <fs/minix.h>
 #include <fs/ramfs.h>
+#include <fs/eifs.h>
 #include <fs/vfs.h>
 
 // Arch/Cpu Functions
@@ -109,8 +110,8 @@ U0 KernelMain() {
     // KDogWatchLog("Initialized \"rtl8139\"", False);
     KBInit();
     KDogWatchLog("Initialized \x9Bkeyboard\x9C", False);
-    MouseInit(); // Portal to hell
-    KDogWatchLog("Initialized \"mouse\"", False);
+    // MouseInit(); // Portal to hell
+    // KDogWatchLog("Initialized \"mouse\"", False);
     BeepInit();
     KDogWatchLog("Initialized \x9Bpc speaker\x9C", False);
     IDEInit();
@@ -127,9 +128,11 @@ U0 KernelMain() {
 
     RFSInit();
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
+    EIFInit();
+    KDogWatchLog("Initialized \x9Beifs\x9C", False);
 
-    MXInit();
-    KDogWatchLog("Initialized \"minix fs\"", False);
+    // MXInit();
+    // KDogWatchLog("Initialized \"minix fs\"", False);
     // DATInit();
     // KDogWatchLog("Initialized \"dat\"", False);
     // BOTFSInit();
@@ -693,18 +696,9 @@ U0 CRay() {
     }
 }
 U0 CBoot(String name) {
-    U8 *block = MAlloc(512*48);
+    U8 *block = MAlloc(512*8);
     
-    MXDirEntry ffiles[32] = {0};
-    MXListRoot(ffiles, 32);
-    for (U32 i = 0; i < 32; ++i) {
-        if (!ffiles[i].inode) break;
-        if (!StrCmp(ffiles[i].name, name)) {
-            MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
-            MXInodeRead(&in, block);
-            break;
-        }
-    }
+    EIFRead(name, block, 0, 512*8);
     PrintF("loaded \"%s\" at %p\n", block, block);
     BsfApp app = BsfFromBytes(block);
     I32 code = BsfExec(&app, 0, 1);
@@ -743,6 +737,15 @@ U0 termasync() {
     PrintF("async command: %s\n", acmd);
     termrun(acmd);
     TaskClose();
+}
+U0 listcallback(U32 inode_i, EIFINode *inode) {
+    U32 c = 0;
+    for (U32 i = 0; i < 8; ++i) {
+        if (inode->blocks[i]) {
+            ++c;
+        }
+    }
+    PrintF("$!A%s$!F: blocks $!B%1x$!F, time $!B%x$!F, mode $!B%2x$!F\n", inode->name, c, inode->time, inode->mode);
 }
 U0 termrun(const String cmd) {
     if (cmd[0] == '&') {
@@ -808,7 +811,7 @@ U0 termrun(const String cmd) {
         CBoot(&cmd[4]);
     }
     else if (!StrCmp(cmd, "boot")) {
-        CBoot("usercode.bin.bsf");
+        CBoot("main.bsf");
     }
     else if (!StrCmp(cmd, "ray")) {
         CRay();
@@ -995,48 +998,33 @@ U0 termrun(const String cmd) {
         LazyListDestroy(&lazy);
     }
     else if (!StrCmp(cmd, "ls")) {
-        MXDirEntry ffiles[32] = {0};
-        MXListRoot(ffiles, 32);
-        for (U32 i = 0; i < 32; ++i) {
-            if (!ffiles[i].inode) break;
-
-            PrintF("$!B%s$!F\n", ffiles[i].name);
-        }
+        EIFReadDir(listcallback);
     }
     else if (StrStartsWith(cmd, "touch")) {
-        MXCreate(cmd + 6, 0x8FFF);
+        EIFCreate(cmd + 6, 0xEE00);
     }
     else if (StrStartsWith(cmd, "fwrite")) {
-        String name = cmd + 7;
-        MXDirEntry ffiles[32] = {0};
-        MXListRoot(ffiles, 32);
-        for (U32 i = 0; i < 32; ++i) {
-            if (!ffiles[i].inode) break;
-            if (!StrCmp(ffiles[i].name, name)) {
-                U8 buf[1024];
-                PrintF("write your data: $!A\\$$!F");
-                KBRead(buf, 1024);
-                MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
-                MXWrite(&in, buf, StrLen(buf));
-                return;
-            }
+        U32 file = EIFFind(cmd + 7);
+        if (file == EIF_ERRFD) {
+            PrintF("Error: $!CFile \"%s\" not found$!F\n", cmd + 7);
         }
-        PrintF("$!CFile not found$!F");
+        else {
+            Char buf[512];
+            PrintF("Enter your content: $!A\\$$!F");
+            KBRead(buf, 512);
+            EIFWrite(cmd + 7, buf, 0, StrLen(buf));
+        }
     }
     else if (StrStartsWith(cmd, "cat")) {
-        MXDirEntry ffiles[32] = {0};
-        MXListRoot(ffiles, 32);
-        for (U32 i = 0; i < 32; ++i) {
-            if (!ffiles[i].inode) break;
-            if (!StrCmp(ffiles[i].name, cmd + 4)) {
-                MXINode in = MXInodeGet(&MXSB, ffiles[i].inode);
-                U8 block[1024];
-                MXInodeRead(&in, block);
-                PrintF("File content:\n%s", block);
-                return;
-            }
+        U32 file = EIFFind(cmd + 4);
+        if (file == EIF_ERRFD) {
+            PrintF("Error: $!CFile \"%s\" not found$!F\n", cmd + 4);
         }
-        PrintF("$!CFile not found$!F");
+        else {
+            Char buf[512];
+            EIFRead(cmd + 4, buf, 0, 512);
+            PrintF("File content:\n%s", buf);
+        }
     }
     else if (!StrCmp(cmd, "words")) {
         CWords();

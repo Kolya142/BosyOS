@@ -7,6 +7,8 @@
 #include <lib/FDL.h>
 #include <stdarg.h>
 U32 TTYCursor = 0;
+U32 TTYCursorX = 0;
+U32 TTYCursorY = 0;
 VgaColor TTYlfg = White;
 VgaColor TTYlbg = Black;
 U0(*TTYPuter)(Char) = TTYPutT;
@@ -202,6 +204,21 @@ U0 TTYUPrintC(Char c) {
         }
     }
 }
+U0 SerialPrintF(String format, ...) {
+    static volatile U32 c = 0;
+    asmv("cli");
+    U32 cur = TTYCursor;
+    TTYCursor = c;
+    TTYSwitch(TTYC_SER);
+    va_list args;
+    va_start(args, format);
+    PrintF(format, args);
+    va_end(args);
+    TTYSwitch(TTYC_RES);
+    c = TTYCursor + 1;
+    TTYCursor = cur;
+    asmv("sti");
+}
 U0 PrintF(String format, ...) {
     va_list args;
     va_start(args, format);
@@ -281,22 +298,21 @@ U0 PrintF(String format, ...) {
 }
 
 unsigned char TTYFont[256][5] = {
-    [' '] = {0b00000, 0b00000, 0b00000, 0b00000, 0b00000},
     ['!'] = {0b00100, 0b00100, 0b00100, 0b00000, 0b00100},
-    ['"'] = {0b10100, 0b10100, 0b00000, 0b00000, 0b00000},
+    ['"'] = {0b01010, 0b01010, 0b00000, 0b00000, 0b00000},
     ['#'] = {0b01010, 0b11111, 0b01010, 0b11111, 0b01010},
     ['$'] = {0b00100, 0b01100, 0b01110, 0b00110, 0b00100},
     ['%'] = {0b10001, 0b00010, 0b00100, 0b01000, 0b10001},
-    ['&'] = {0b01100, 0b10000, 0b01101, 0b10010, 0b01101},
-    ['\''] = {0b00010, 0b00010, 0b00000, 0b00000, 0b00000},
+    ['&'] = {0b01100, 0b10010, 0b01101, 0b10010, 0b01101},
+    ['\''] = {0b00100, 0b00100, 0b00000, 0b00000, 0b00000},
     ['('] = {0b00100, 0b01000, 0b01000, 0b01000, 0b00100},
     [')'] = {0b00100, 0b00010, 0b00010, 0b00010, 0b00100},
-    ['*'] = {0b01100, 0b01100, 0b00000, 0b00000, 0b00000},
+    ['*'] = {0b00000, 0b00100, 0b00000, 0b00000, 0b00000},
     ['+'] = {0b00000, 0b00100, 0b01110, 0b00100, 0b00000},
-    ['-'] = {0b00000, 0b00000, 0b01110, 0b00000, 0b00000},
     [','] = {0b00000, 0b00000, 0b00000, 0b00100, 0b01000},
+    ['-'] = {0b00000, 0b00000, 0b01110, 0b00000, 0b00000},
     ['.'] = {0b00000, 0b00000, 0b00000, 0b00110, 0b00110},
-    ['/'] = {0b00000, 0b00000, 0b00000, 0b00000, 0b00000},
+    ['/'] = {0b00001, 0b00010, 0b00100, 0b01000, 0b10000},
     ['0'] = {0b01110, 0b11001, 0b10101, 0b10011, 0b01110},
     ['1'] = {0b00010, 0b00110, 0b00010, 0b00010, 0b00010},
     ['2'] = {0b01110, 0b10001, 0b00001, 0b00010, 0b01111},
@@ -505,10 +521,11 @@ unsigned char TTYFont[256][5] = {
     [0xfe] = {0b00000, 0b00000, 0b00000, 0b00000, 0b00000},
 
 };
+
 U0 TTYPutG(Char c) {
     U32 cur = TTYCursor;
-    U32 x = (cur % TTYWidth) * 6;
-    U32 y = (cur / TTYWidth) * 6 + 1;
+    U32 x = (cur % TTYWidth) * 6 + 0 + TTYCursorX;
+    U32 y = (cur / TTYWidth) * 6 + 1 + TTYCursorY;
     VRMDrawRect(vec2(x, y), vec2(x+6, y+6), TTYlbg);
     for (U32 i = 0; i < 5; ++i) {
         for (U32 j = 0; j < 5; ++j) {
@@ -567,10 +584,10 @@ U0 TTYPutS(Char c) {
     buf[index++] = ('0');
     buf[index++] = ('m');
     
-    SerialWrite(c);
-    // for (U32 i = 0; i < 0x1B; ++i) {
-    //     SerialWrite(buf[i]);
-    // }
+    // SerialWrite(c);
+    for (U32 i = 0; i < 0x1B; ++i) {
+        SerialWrite(buf[i]);
+    }
 }
 U0 TTYScrollG() {
     MemCpy(VRM, VRM+320*6, 64000-320*6);

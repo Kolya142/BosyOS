@@ -8,8 +8,8 @@
 
 I32 MouseX = 40, MouseY = 12;
 U8 MouseBtn = 0;
-U8 MouseCycle = 0;
-I8 MousePacket[3];
+volatile U8 MouseCycle = 0;
+volatile I8 MousePacket[3];
 U0 MouseWait(U8 how);
 
 U0 MouseWrite(U8 data) {
@@ -22,40 +22,68 @@ U8 MouseRead() {
     MouseWait(0);
     return PIn(0x60);
 }
+U0 MouseClean() {
+    while (PIn(0x64) & 1) {
+        PIn(0x60);
+    }
+}
 U0 MouseWait(U8 how) {
-    U16 timeout = 100000;
+    U16 timeout = 100;
     if (!how) { // Output bit
         while (--timeout) {
-            if ((PIn(0x64) & 1) == 0)
+            if ((PIn(0x64) & 1) == 1)
                 return;
+            SleepM(1);
         }
         return;
     }
     else { // Input bit
         while (--timeout) {
-            if ((PIn(0x64) & 2) == 2)
+            if ((PIn(0x64) & 2) == 0)
                 return;
+            SleepM(1);
         }
         return;
     }
 }
 
-#define WAITI MouseWait(1)
-#define WAITO MouseWait(0)
+U0 MouseUpdate() {
+    while ((PIn(0x64) & 1)) {
+        if (!(PIn(0x64) & (1 << 5))) {
+            return;
+        }
 
-__attribute__((naked)) U0 MouseUpdate() {
-    asmv("pushf\npusha");
+        I8 data = PIn(0x60);
+        
+        switch (MouseCycle) {
+            case 0:
+                if (!(data & 8)) {
+                    MouseCycle = 0;
+                    break;
+                }
+                MousePacket[MouseCycle] = data;
+                ++MouseCycle;
+            break;
+            case 1:
+                MousePacket[MouseCycle] = data;
+                ++MouseCycle;
+            break;
+            case 2:
+                MousePacket[MouseCycle] = data;
+                MouseCycle = 0;
 
-    if (!(PIn(0x64) & 1)) {
-        POut(0x20, 0x20);
-        asmv("popa\npopf\niret");
-        return;
+                MouseBtn = MousePacket[0] & 0b111;
+                MouseX += MousePacket[1];
+                MouseY -= MousePacket[2];
+
+                if (MouseX < 0) MouseX = 0;
+                if (MouseY < 0) MouseY = 0;
+                if (MouseX > 319) MouseX = 319;
+                if (MouseY > 199) MouseY = 199;
+            break;
+        }
     }
-    PrintF("mouse: %1X\n", PIn(0x60));
-    // TODO: Make mouse Update
-
-    POut(0x20, 0x20);
-    asmv("popa\npopf\niret");
+    return;
 }
 
 static U0 MSDriverHandler(U32 id, U32 *value) {
@@ -72,44 +100,36 @@ static U0 MSDriverHandler(U32 id, U32 *value) {
     }
 }
 
+static U0 MouseEnable() {
+    PS2Clean();
+
+    PS2Wait(1);
+    POut(0x64, 0xA8);
+
+    PS2Wait(1);
+    POut(0x64, 0xE6);
+
+    // PS2Wait(1);
+    // POut(0x64, 0x20);
+    // U8 conf = PS2Read();
+    // conf |= 0b10;
+    // PS2Write(0x60, conf);
+
+    PS2Write(0xE8, 0);
+
+    PS2Write(0xD4, 0xF4);
+    // U8 ack = PS2Read();
+
+    PS2Clean();
+
+    // if (ack != 0xFA) {
+    //     PrintF("Mouse initialization failed! ACK: %X\n", ack);
+    // }
+}
+
 U0 MouseInit() {
     U8 ack;
+    PS2Clean();
 
-    // Disable mouse
-    POut(0x64, 0xA7);
-
-    while (PIn(0x64) & 1) { // Clear PS/2 buffer
-        PIn(0x60);
-    }
-
-    POut(0x64, 0xA8); // Enable PS/2 second port
-
-    WAITO; // Enable PS/2 second port interrupts
-    POut(0x64, 0x20);
-    WAITI;
-    ack = PIn(0x60);
-
-    ack |= 3;
-    WAITO;
-    POut(0x64, 0x60);
-    POut(0x60, ack);
-
-    WAITO; // Enable mouse
-    POut(0x64, 0xD4);
-    POut(0x60, 0xF4);
-
-
-    WAITI;
-    ack = MouseRead();
-    if (ack == 0xFA) {
-        WAITO;
-        MouseWrite(0xF2);
-        WAITI;
-        ack = PIn(0x60);
-        PrintF("Mouse Driver initialized\nMouse ack: %x\n", ack);
-        WAITI;
-        ack = PIn(0x60);
-        PrintF("Mouse type: %x\n", ack);
-    }
-    IDTSet(0x2C, MouseUpdate, 0x08, 0x8E);
+    MouseEnable();
 }

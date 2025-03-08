@@ -39,7 +39,6 @@ extern Bool Debugging;
 #define False 0
 #define Null 0
 
-#define stat static volatile
 #define asmv asm volatile
 #define asmV __asm__ volatile
 
@@ -51,7 +50,7 @@ extern Bool Debugging;
 #elif defined(__APPLE__)
 #define __BUILD_OS__ "MacOS"
 #elif defined(_WIN32)
-#define __BUILD_OS__ "Windowd"
+#define __BUILD_OS__ "Windows"
 #elif defined(__unix__)
 #define __BUILD_OS__ "Unix-like"
 #else

@@ -1,6 +1,8 @@
 #include <kernel/KDogWatch.h>
 #include <misc/driverreg.h>
 #include <kernel/KTasks.h>
+#include <drivers/mouse.h>
+#include <lib/Graphics.h>
 #include <drivers/pit.h>
 #include <lib/MemLib.h>
 #include <lib/Time.h>
@@ -16,6 +18,22 @@ INT_DEF(PITHandler) {
     timer++;
     if (timer % 10 == 0) {
         KDogWatchTick();
+        MouseUpdate();
+        VRMFlush();
+        Ptr vrm = VRM;
+        VRM = VVRM;
+        VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
+        VRM = vrm;
+
+        if (PITTime % 1000 < 500) {
+            for (U32 i = 0; i < 6; ++i) {
+                for (U32 j = 0; j < 6; ++j) {
+                    U32 x = i + (TTYCursor % TTYWidth)*6 + TTYCursorX;
+                    U32 y = j + (TTYCursor / TTYWidth)*6 + TTYCursorY;
+                    VVRM[x + y * 320] ^= 15;
+                }
+            }
+        }
         RTCUpdate();
         U32 days = 0;
 

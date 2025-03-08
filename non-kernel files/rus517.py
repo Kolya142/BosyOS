@@ -1,4 +1,4 @@
-code = "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЧНЯ" # english alphabet in russian qwerty
+code = "ХЪЖЭБЮЕ" # [];',.`
 alhp = "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
 AC = 0xB1
 

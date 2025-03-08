@@ -3,12 +3,17 @@ import cv2
 
 font = {}
 
-for i in range(0x2E, 0x7F):
+for i in range(0x21, 0x7F):
     c = chr(i)
-    char = open(f"chars/{c}.txt").read()
+    char = open(f"chars/{c.replace('/', 'front slash')}.txt").read()
     font[c] = char.replace('\n', '')
 
-text = "the quick brown fox jumps over a lazy dog. THE QUICK BROWN FOX JUMPS OVER A LAZY DOG."
+for i in range(0x80, 0xFF):
+    c = chr(i)
+    char = open(f"chars/{i:2x}.txt").read()
+    font[c] = char.replace('\n', '')
+
+text = "the quick brown fox jumps over a lazy dog. THE QUICK BROWN FOX JUMPS OVER A LAZY DOG. \xc0\xc1\xb9\xb3\xb6\xc3 \xbd\xb9\xc1 $echo 123 \\//##@!$%^&*()_+-=~`"
 color = (0, 255, 255)
 
 img = np.zeros((5, len(text)*6, 3))

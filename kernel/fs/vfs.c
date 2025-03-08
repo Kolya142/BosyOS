@@ -1,3 +1,4 @@
+#include <lib/Time.h>
 #include <fs/vfs.h>
 
 VFSNode VFSRoot;
@@ -13,6 +14,9 @@ U0 VFSInit() {
     };
 }
 VFSNode* VFSFind(VFSNode parent, String name) {
+    if (!StrCmp(name, "/")) {
+        return &VFSRoot;
+    }
     for (U32 i = 0; i < parent.children.count; ++i) {
         if (!StrCmp(((VFSNode*)parent.children.arr)[i].name, name)) {
             return &((VFSNode*)parent.children.arr)[i];
@@ -26,13 +30,22 @@ List VFSParsePath(const String path) {
     U32 j = 0, i = 0, s = StrLen(path);
     for (i = 0; i < s; ++i) {
         if (path[i] == '/') {
-            buf[j++] = 0;
-            U32 len = StrLen(buf);
-            String pathc = MAlloc(j+1);
-            StrCpy(pathc, buf);
-            ListAppend(&lpath, &pathc);
-            pathc[j] = 0;
-            j = 0;
+            if (j) {
+                buf[j++] = 0;
+                U32 len = StrLen(buf);
+                String pathc = MAlloc(j+1);
+                StrCpy(pathc, buf);
+                ListAppend(&lpath, &pathc);
+                pathc[j] = 0;
+                j = 0;
+            }
+            else {
+                String pathc = MAlloc(2);
+                StrCpy(pathc, "/");
+                pathc[1] = 0;
+                ListAppend(&lpath, &pathc);
+            }
+            continue;
         }
         else {
             if(j < sizeof(buf) - 1) {
@@ -88,10 +101,25 @@ U32 VFSWrite(String name, Ptr buf, U32 count) {
     VFSFreePath(&lpath);
     return res;
 }
-U0 VFSList(String name, VFSNode *buf, U32 count) {
-    
+U0 VFSReadDir(String name, U0(*reader)(String, VFSStat*)) {
+    VFSStat d;
+    d.ino = 0;
+    d.size = 0;
+    d.time = 0;
+    d.mode = VFS_DIR;
+    VFSNode *o = VFSFind(VFSRoot, name);
+    if (!o) {
+        return;
+    }
+    for (U32 i = 0; i < o->children.count; ++i) {
+        VFSNode *v = &o->children.arr[i];
+        reader(v->name, &d);
+    }
+    if (o->list) {
+        o->list(name, reader);
+    }
 }
-U0 VFSMount(String path, U0(*read)(String, Ptr, U32), U0(*write)(String, Ptr, U32), U0(*list)(struct VFSNode*, U32)) {
+U0 VFSMount(String path, U0(*read)(String, Ptr, U32), U0(*write)(String, Ptr, U32), U0(*list)(String, U0(*reader)(String, VFSStat*))) {
     List lpath = VFSParsePath(path);
     String last = ((String*)lpath.arr)[lpath.count - 1];
     String llast = MAlloc(StrLen(last));

@@ -11,6 +11,8 @@ typedef enum {
 } TTYContext;
 
 extern U32 TTYCursor;
+extern U32 TTYCursorX;
+extern U32 TTYCursorY;
 extern VgaColor TTYlfg;
 extern VgaColor TTYlbg;
 extern U0(*TTYPuter)(Char);
@@ -21,6 +23,7 @@ U0 TTYClear();
 Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg);
 U0 TTYPrintC(Char c);
 U0 TTYUPrintC(Char c);
+U0 SerialPrintF(String format, ...);
 U0 PrintF(String format, ...);
 U0 TTYPutG(Char c);
 U0 TTYPutT(Char c);

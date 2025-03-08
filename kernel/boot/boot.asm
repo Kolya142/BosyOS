@@ -13,9 +13,15 @@ int 0x13
 
 cli
 lgdt [gdt_descriptor]
+
 mov eax, cr0
 or eax, 1
 mov cr0, eax
+
+in al, 0x92
+or al, 2
+out 0x92, al
+
 jmp 0x08:protected_mode
 
 tss_base equ tss_start - ($$-$+$$+$)

@@ -12,6 +12,7 @@
 #include <drivers/vga.h>
 #include <drivers/ide.h>
 #include <drivers/pit.h>
+#include <drivers/ps2.h>
 
 // Miscellaneous
 #include <misc/driverreg.h>
@@ -50,6 +51,7 @@
 #include <arch/pic.h>
 
 U0 programtest();
+U0 backgroundloop();
 // extern U0 KernelDebug();
 U0 mainloop();
 U0 loop();
@@ -108,10 +110,12 @@ U0 KernelMain() {
     KDogWatchLog("Initialized \x9Bserial\x9C", False);
     // RTL8139Init();
     // KDogWatchLog("Initialized \"rtl8139\"", False);
+    PS2Init();
+    KDogWatchLog("Initialized \"ps/2\"", False);
     KBInit();
     KDogWatchLog("Initialized \x9Bkeyboard\x9C", False);
-    // MouseInit(); // Portal to hell
-    // KDogWatchLog("Initialized \"mouse\"", False);
+    MouseInit(); // Portal to hell
+    KDogWatchLog("Initialized \"mouse\"", False);
     BeepInit();
     KDogWatchLog("Initialized \x9Bpc speaker\x9C", False);
     IDEInit();
@@ -123,10 +127,10 @@ U0 KernelMain() {
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
     VFSInit();
-    VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, Null);
     KDogWatchLog("Initialized \"vfs\"", False);
 
     RFSInit();
+    // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, (Ptr)RFSReadDirV);
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
     EIFInit();
     KDogWatchLog("Initialized \x9Beifs\x9C", False);
@@ -145,13 +149,15 @@ U0 KernelMain() {
     // TTYCursor = 0;
 
     SleepM(500);
-    U32 tid1 = TaskNew((U32)mainloop, 0x10, 8);
+    U32 tid1 = TaskNew((U32)backgroundloop, 0x10, 8);
+    U32 tid2 = TaskNew((U32)mainloop, 0x10, 8);
     // mainloop();
     // TaskNew((U32)mainloop);
     // TaskNew((U32)loop);
     // TaskingIs = True;
     for(;;);
     CpuHalt();
+
 }
 // INT_DEF(KernelDebug) {
 //     U32 c = TTYCursor;
@@ -971,9 +977,6 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "mouse")) {
         for (;!KBState.keys['\x1b'];) {
             CCls();
-            TTYCursor = MouseX + MouseY * 80;
-            TTYUPrintC(0xB0);
-            SleepM(10);
         }
     }
     else if (!StrCmp(cmd, "collects")) {
@@ -1140,4 +1143,11 @@ U0 programtest()
     // BsfExec(&bapp);
     // BsfApp bapp = BsfFromBytes("BOSY&\0\0\0\xf4\xb8\xfa\xfa\xbf\xde\xb0\x01\xbe\x11\0\0\0\xcd\x80\xeb\xfe$!AHello, world!$!F\n\0");
     // BsfExec(&bapp);
+}
+U0 backgroundloop() {
+    for (;;) {
+        if (MouseBtn & (1 << 1)) {
+            TTYCursor = (MouseX * TTYWidth / 320) + (MouseY * TTYHeight / 200) * TTYWidth;
+        }
+    }
 }

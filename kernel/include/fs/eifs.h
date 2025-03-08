@@ -2,6 +2,7 @@
 #include <drivers/ide.h>
 #include <lib/MemLib.h>
 #include <lib/Types.h>
+#include <fs/vfs.h>
 
 #define EIF_REG   0x8000
 #define EIF_RONLY 0x4000
@@ -56,5 +57,9 @@ U32 EIFFind(const String name);
 U32 EIFWrite(const String name, Ptr buf, U32 offset, U32 count);
 U32 EIFReadDir(U0 (*callback) (U32 inode_i, EIFINode *inode));
 U32 EIFRead(const String name, Ptr buf, U32 offset, U32 count);
+
+U32 EIFReadV(String name, Ptr buf, U32 count);
+U32 EIFWriteV(String name, Ptr buf, U32 count);
+U32 EIFReadDirV(String, U0(*reader)(String, VFSStat*));
 
 U0 EIFInit();

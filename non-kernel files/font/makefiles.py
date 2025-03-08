@@ -2,9 +2,9 @@ import os
 
 os.system("mkdir chars")
 
-for i in range(0x2E, 0x7F):
-    if os.path.exists(f"chars/{chr(i)}.txt"): continue
-    with open(f'chars/{chr(i)}.txt', 'w') as f:
+for i in range(0x21, 0x7F):
+    if os.path.exists(f"chars/{chr(i).replace('/', 'front slash')}.txt"): continue
+    with open(f'chars/{chr(i).replace('/', 'front slash')}.txt', 'w') as f:
         f.write(".....\n.....\n.....\n.....\n.....\n")
 
 for i in range(0x80, 0xFF):

@@ -7,18 +7,24 @@ static U8 layout;
 extern U8 MouseCycle;
 
 INT_DEF(KBHandler) {
-    INT_START;
     if (!(PIn(0x64) & 1)) {
-        goto end;
+        return;
     }
     U8 scode = PIn(0x60);
     KBState.SC = scode;
     KBState.Key = KBSCToASCIIP(scode);
     if (KBState.Key == ' ' && !(KBState.SC & 0x80) && KBState.Super) {
         layout = (layout+1)%2;
+        return;
     }
-    if (layout && KBState.Key >= 'a' && KBState.Key <= 'z') {
-        KBState.Key = KBKeyToRus(KBState.Key-'a');
+    switch (layout)
+    {
+        case 0:
+            // do nothing
+        break;
+        case 1:
+            KBState.Key = KBKeyToRus(KBState.Key);
+        break;
     }
     if (scode == 0xE0) {
         U8 ext = PIn(0x60);
@@ -54,8 +60,6 @@ INT_DEF(KBHandler) {
         }
         KBState.keys[KBState.Key] = True;
     }
-    end:
-    INT_RETURN;
 }
 static U0 KBDriverHandler(U32 id, U32 *value) {
     switch (id)
@@ -76,7 +80,7 @@ static U0 KBDriverHandler(U32 id, U32 *value) {
 }
 U0 KBInit() {
     DriverReg(0x0bb5676c, 0xff3ae302, KBDriverHandler, "keyboard");
-    IDTSet(0x21, KBHandler, 0x08, 0x8E);
+    IDTSet(33, KBHandler, 0x08, 0x8E);
 }
 U8 KBSCToASCIIP(U8 code)
 {
@@ -109,6 +113,15 @@ U8 KBSCToASCIIP(U8 code)
 }
 U8 KBKeyToRus(U8 code)
 {
-    return "\xc5\xb9\xc2\xb3\xc4\xb1\xc0\xc1\xc9\xbf\xbc\xb5\xcd\xc3\xca\xb8\xba\xbb\xcc\xb6\xb4\xbd\xc8\xbe\xd0"
-        [code];
+    if (code == '[') return '\xC6';
+    if (code == ']') return '\xCB';
+    if (code == ';') return '\xB7';
+    if (code == '\'') return '\xCE';
+    if (code == ',') return '\xB2';
+    if (code == '.') return '\xCF';
+    if (code == '`') return '\xB6';
+    if (code >= 'A' && code <= 'Z') code = code - 'A' + 'a';
+    if (code <= 'a' || code >= 'z') return code;
+    return "\xc5\xb9\xc2\xb3\xc4\xb1\xc0\xc1\xc9\xbf\xbc\xb5\xcd\xc3\xca\xb8\xba\xbb\xcc\xb6\xb4\xbd\xc7\xc8\xbe\xd0"
+        [code - 'a'];
 }

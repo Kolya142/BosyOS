@@ -14,8 +14,8 @@ U0 KPanic(const String msg, Bool reboot)
         KDogWatchPEnd(i);
     }
     U32 start = PITTime;
-    stat U16 tones[] = {400, 300, 100, 400, 200, 400, 250};
-    stat U8 tind = 0;
+    static U16 tones[] = {400, 300, 100, 400, 200, 400, 250};
+    static U8 tind = 0;
     U32 ecode = *(int*)msg;
     {
         U32 l = StrLen(msg) - StrLen(msg)%4;

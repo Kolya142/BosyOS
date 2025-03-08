@@ -69,9 +69,9 @@ Bool TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
 }
 U0 TTYPrintC(Char c)
 {
-    stat Bool lnfg = False;
-    stat Bool lnbg = False;
-    stat Bool lnrw = False;
+    static Bool lnfg = False;
+    static Bool lnbg = False;
+    static Bool lnrw = False;
     if (lnrw) {
         TTYRawPrint(c, TTYlfg, TTYlbg);
         lnrw = False;
@@ -97,11 +97,11 @@ U0 TTYPrintC(Char c)
     else if (c == (AsciiP)ASCIIPF2) lnbg = True;
 }
 U0 TTYUPrintC(Char c) {
-    stat Bool lbs = False;
-    stat Bool lds = False; // $
-    stat U8   ldv = 0    ;
-    stat U8   lbd = 0    ;
-    stat U8   lbp = 0    ;
+    static Bool lbs = False;
+    static Bool lds = False; // $
+    static U8   ldv = 0    ;
+    static U8   lbd = 0    ;
+    static U8   lbp = 0    ;
     if (lbs) {
         if (c == '\\') 
             TTYPrintC('\\');

@@ -1,17 +1,21 @@
 #include <kernel/KDogWatch.h>
 #include <kernel/KPanic.h>
-#include <lib/String.h>
+#include <lib/Graphics.h>
 #include <drivers/pit.h>
-#include <arch/beep.h>
-#include <lib/TTY.h>
 #include <lib/MemLib.h>
+#include <lib/String.h>
+#include <arch/beep.h>
 #include <arch/cpu.h>
 #include <arch/sys.h>
+#include <lib/TTY.h>
 
 U0 KPanic(const String msg, Bool reboot)
 {
     for (U8 i = 0; i < 255; ++i) {
         KDogWatchPEnd(i);
+    }
+    for (U32 i = 0; i < 320*200; ++i) {
+        VVRM[i] ^= 15;
     }
     U32 start = PITTime;
     static U16 tones[] = {400, 300, 100, 400, 200, 400, 250};

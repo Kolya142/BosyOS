@@ -205,19 +205,63 @@ U0 TTYUPrintC(Char c) {
     }
 }
 U0 SerialPrintF(String format, ...) {
-    static volatile U32 c = 0;
-    asmv("cli");
-    U32 cur = TTYCursor;
-    TTYCursor = c;
-    TTYSwitch(TTYC_SER);
     va_list args;
     va_start(args, format);
-    PrintF(format, args);
+    U8 n = 4;
+    while (*format) {
+        if (*format == '%' && *(format + 1)) {
+            ++format;
+            if (*format >= '0' && *format <= '4') {
+                n = *format - '0';
+                ++format;
+            }
+            switch (*format) {
+                case 'c': {
+                    Char c = va_arg(args, U32);
+                    SerialWrite(c);
+                } break;
+                case 'C': {
+                    Char c = UpperTo(va_arg(args, U32));
+                    SerialWrite(c);
+                } break;
+                case 'b': {
+                    U16 s = va_arg(args, U32);
+                    for (I8 i = n * 8 - 1; i >= 0; --i) {
+                        SerialWrite((s & (1 << i)) ? '1' : '0');
+                    }
+                } break;
+                case 'p': {
+                    U32 s = va_arg(args, U32);
+                    SerialWrite('0');
+                    SerialWrite('x');
+                    for (U8 i = n * 2; i > 0; --i)
+                        SerialWrite("0123456789ABCDEF"[(s >> ((i - 1) * 4)) & 0xF]);
+                } break;
+                case 'x': {
+                    U32 s = va_arg(args, U32);
+                    for (U8 i = n * 2; i > 0; --i)
+                        SerialWrite("0123456789abcdef"[(s >> ((i - 1) * 4)) & 0xF]);
+                } break;
+                case 'X': {
+                    U32 s = va_arg(args, U32);
+                    for (U8 i = n * 2; i > 0; --i)
+                        SerialWrite("0123456789ABCDEF"[(s >> ((i - 1) * 4)) & 0xF]);
+                } break;
+                case '%': {
+                    SerialWrite('%');
+                } break;
+                default:
+                    SerialWrite('%');
+                    SerialWrite(*format);
+            }
+            n = 4;
+            ++format;
+            continue;
+        }
+        SerialWrite(*format);
+        ++format;
+    }
     va_end(args);
-    TTYSwitch(TTYC_RES);
-    c = TTYCursor + 1;
-    TTYCursor = cur;
-    asmv("sti");
 }
 U0 PrintF(String format, ...) {
     va_list args;

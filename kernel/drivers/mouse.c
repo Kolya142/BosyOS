@@ -6,6 +6,7 @@
 #include <lib/Time.h>
 #include <lib/TTY.h>
 
+I32 MouseVX = 40*2, MouseVY = 12*2;
 I32 MouseX = 40, MouseY = 12;
 U8 MouseBtn = 0;
 volatile U8 MouseCycle = 0;
@@ -73,13 +74,15 @@ U0 MouseUpdate() {
                 MouseCycle = 0;
 
                 MouseBtn = MousePacket[0] & 0b111;
-                MouseX += MousePacket[1];
-                MouseY -= MousePacket[2];
+                MouseVX += MousePacket[1];
+                MouseVY -= MousePacket[2];
 
-                if (MouseX < 0) MouseX = 0;
-                if (MouseY < 0) MouseY = 0;
-                if (MouseX > 319) MouseX = 319;
-                if (MouseY > 199) MouseY = 199;
+                if (MouseVX < 0) MouseVX = 0;
+                if (MouseVY < 0) MouseVY = 0;
+                if (MouseVX > 319*2) MouseVX = 319*2;
+                if (MouseVY > 199*2) MouseVY = 199*2;
+                MouseX = MouseVX / 2;
+                MouseY = MouseVY / 2;
             break;
         }
     }

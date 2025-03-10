@@ -5,7 +5,8 @@
         "cstdlib": "c",
         "typeinfo": "c",
         "type_traits": "c",
-        "limits": "c"
+        "limits": "c",
+        "random": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

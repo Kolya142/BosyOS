@@ -111,12 +111,13 @@ U0 VgaGraphicsSet() {
     POut(ATTRIBUTE_INDEX, 0x20);
 
     // POut(CRTC_INDEX, 0x09); Setuped in crtc table
-    for (U32 j = 0; 0; ++j) {
-        for (U32 i = 0; i < 64000; ++i) {
-            ((U8*)0xA0000)[i] = (i / 320 + j) % 16;
-        }
-    }
+    // for (U32 j = 0; 0; ++j) {
+    //     for (U32 i = 0; i < 64000; ++i) {
+    //         ((U8*)0xA0000)[i] = (i / 320 + j) % 16;
+    //     }
+    // }
 }
+
 
 U0 VgaBlinkingSet(Bool state) {
 	// POut(0x03C0, 0x10);

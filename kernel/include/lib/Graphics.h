@@ -1,8 +1,7 @@
 #pragma once
 #include <drivers/vga.h>
 #include <lib/MemLib.h>
-// Dont Touch this        vvvvv
-#define VVRM ((U8*)0xA0000 - 308)
+#define VVRM ((U8*)0xA0000-308)
 #define abs(x) ((x) < 0 ? -(x) : (x))
 
 

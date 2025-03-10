@@ -13,7 +13,7 @@ output = []
 for b in data:
     if b == 0:
         output.append("\\0")
-    elif 0x20 <= b <= 0x79:
+    elif 0x20 <= b <= 0x79 and chr(b) != '"':
         output.append(chr(b))
     elif b == 0x0A:
         output.append("\\n")
@@ -23,6 +23,8 @@ for b in data:
         output.append("\\t")
     elif b == ord('\b'):
         output.append("\\b")
+    elif b == ord('"'):
+        output.append("\\\"")
     else:
         output.append(f"\\x{b:02x}")
 

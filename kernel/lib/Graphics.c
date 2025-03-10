@@ -1,6 +1,6 @@
 #include <lib/Graphics.h>
-
-U8 *VRM = (U8*)0x3000;
+Bool VRMState = True;
+U8 *VRM = (U8*)0x30000;
 U8 GCursor[] = {
     0,0,2,2,2,2,
     0,1,0,2,2,2,
@@ -25,6 +25,7 @@ U0 VRMClear(U8 c) {
 U0 VRMFlush() {
     MemCpy(VVRM, VRM, 320*200);
 }
+
 U0 VRMDrawLine(Vec2 start, Vec2 end, U8 c) {
     I32 dx = abs(end.x - start.x);
     I32 dy = abs(end.y - start.y);

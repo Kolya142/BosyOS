@@ -26,8 +26,7 @@ static U0 VTTYHandler(U32 id, U32 *value) {
     else if (id == 1) {
         KBRead((String)&value[1], value[0]);
     }
-    else if (id == 2) { // Give printf function
-        *value = (U32)PrintF;
+    else if (id == 2) {
     }
     else if (id == 3) {
         TTYUPrintC((Char)value);

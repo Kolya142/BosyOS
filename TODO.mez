@@ -1,0 +1,16 @@
+TODO List for $!BBosyOS
+$!A=== Main ===
+$!D- $!BProcesses $!F(Planned)
+$!D- $!BFix file system $!F(Planned)
+$!D- $!BFix applications loader $!F(Planned)
+
+$!A=== Kernel Improvement ===$!F
+$!D- $!BInterrupts[IRQ, APIC, PIC] $!F(Planned)
+
+$!A=== Special ===
+$!D- $!BUSB HID $!F(Planned)
+$!D- $!BTCP/IP $!F(Planned)
+$!D- $!BUDP $!F(Planned)
+$!D- $!BMezex terminal(non-kernel) $!F(Planned)
+$!D- $!BPrograming Language $!F(Planned)
+$!F

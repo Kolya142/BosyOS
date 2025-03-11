@@ -74,12 +74,12 @@ U0 SCTime(INTRegs *regs) {
 }
 U0 SCTSet(INTRegs *regs) {
     U32 c = TTYCursor;
-    TTYCursor = regs->esi + regs->edi * TTYWidth;
-    TTYPuter(regs->ebx);
-    TTYCursor = c;
+    // TTYCursor = regs->esi + regs->edi * TTerm.width;
+    // TTYPuter(regs->ebx);
+    // TTYCursor = c;
 }
 U0 SCTGet(INTRegs *regs) {
-    regs->eax = vga[regs->esi + regs->edi * TTYWidth] & 0xff;
+    regs->eax = vga[regs->esi + regs->edi * TTerm.width] & 0xff;
 }
 U0 SCRandomU(INTRegs *regs) {
     regs->eax = RandomU();

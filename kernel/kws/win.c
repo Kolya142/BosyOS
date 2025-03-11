@@ -2,16 +2,12 @@
 #include <kws/win.h>
 
 U0 WinPrint(U32 x, U32 y, String text) {
-    U32 c = TTYCursor;
-    U32 wx = TTYCursorX;
-    U32 wy = TTYCursorY;
-    TTYCursor = 0;
-    TTYCursorX = x;
-    TTYCursorY = y;
+    TTYGSX = x;
+    TTYGSY = y;
+    Ptr render = TTerm.render;
+    TTerm.render = TTYRenderGS;
     TTYUPrint(text);
-    TTYCursor = c;
-    TTYCursorX = wx;
-    TTYCursorY = wy;
+    TTerm.render = render;
 }
 Win WinMake(U32 x, U32 y, U32 w, U32 h, String title) {
     Win win;
@@ -33,7 +29,7 @@ U0 WinDraw(Win *win) {
     VRMState = False;
     VRMDrawRect(vec2(win->x, win->y), vec2(win->x+win->w, win->y+7), White);
     VRMDrawRect(vec2(win->x, win->y+7), vec2(win->x+win->w, win->y+8), Gray);
-    WinPrint(win->x, win->y, win->title);
+    WinPrint(win->x, win->y+1, win->title);
 
     for (U32 i = 0; i < win->w; ++i) {
         for (U32 j = 0; j < win->h; ++j) {

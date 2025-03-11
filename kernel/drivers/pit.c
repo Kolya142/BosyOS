@@ -31,8 +31,8 @@ INT_DEF(PITHandler) {
         if (PITTime % 1000 < 500) {
             for (U32 i = 0; i < 6; ++i) {
                 for (U32 j = 0; j < 6; ++j) {
-                    U32 x = i + (TTYCursor % TTYWidth)*6 + TTYCursorX;
-                    U32 y = j + (TTYCursor / TTYWidth)*6 + TTYCursorY;
+                    U32 x = i + (TTYCursor % TTerm.width)*6;
+                    U32 y = j + (TTYCursor / TTerm.width)*6;
                     VVRM[x + y * 320] ^= 15;
                 }
             }
@@ -62,27 +62,31 @@ INT_DEF(PITHandler) {
             MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
             // PrintF("Aft RGS: %x\n", regs->eax+regs->ebx+regs->ecx+regs->edx+regs->esi+regs->edi);
         }
+        TTerm.render();
+        // U32 c = TTYCursor;
+        // TTYCursor = TTerm.width - 8;
+        // PrintF("%d:%d:%d", SystemTime.hour, SystemTime.minute, SystemTime.second);
+        // TTerm.render();
+        // TTYCursor = c;
         if (Debugging) {
+            TTerm.render();
             VgaCursorDisable();
             U32 c = TTYCursor;
-            U8 fg0 = TTYlfg;
-            U8 bg0 = TTYlbg;
-            TTYCursor = TTYWidth*1-13;
+            TTYCursor = TTerm.width*2-13;
             PrintF("EIP: %x", regs->eip);
-            TTYCursor = TTYWidth*2-13;
+            TTYCursor = TTerm.width*3-13;
             PrintF("ESP: %x", regs->useresp);
-            TTYCursor = TTYWidth*3-13;
+            TTYCursor = TTerm.width*4-13;
             PrintF("Tim: %x", BosyTime);
-            TTYCursor = TTYWidth*4-13;
+            TTYCursor = TTerm.width*5-13;
             PrintF("Tsk: %x", TaskTail->id);
-            TTYCursor = TTYWidth*5-13;
+            TTYCursor = TTerm.width*6-13;
             PrintF("CS: %x", regs->cs);
-            TTYCursor = TTYWidth*6-13;
+            TTYCursor = TTerm.width*7-13;
             PrintF("DS: %x", regs->ds);
-            TTYCursor = TTYWidth*7-13;
+            TTYCursor = TTerm.width*8-13;
             PrintF("MS: %x", PITTime);
-            TTYlbg = bg0;
-            TTYlfg = fg0;
+            TTerm.render();
             TTYCursor = c;
         }   
     }

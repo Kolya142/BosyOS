@@ -215,25 +215,4 @@ U32 EIFWriteV(String name, Ptr buf, U32 count) {
     VFSWrite(name, buf, count);
 }
 U32 EIFReadDirV(String, U0(*reader)(String, VFSStat*)) {
-    U32 c = 0;
-    for (U32 i = 0; i < 16 * EIF_BLOCK / sizeof(EIFINode); ++i) {
-        EIFINode node;
-        EIFIGet(i, &node);
-        if (node.mode) {
-            VFSStat s;
-            s.ino = i;
-            s.mode = VFS_REG | VFS_EXEC | VFS_READ | VFS_WRIT;
-            s.time = node.time;
-            U32 C = 0;
-            for (U32 i = 0; i < 8; ++i) {
-                if (node.blocks[i]) {
-                    ++C;
-                }
-            }
-            s.size = C;
-            reader(node.name, &s);
-            ++c;
-        }
-    }
-    return c;
 }

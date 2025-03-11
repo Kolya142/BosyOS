@@ -64,21 +64,20 @@ U0 mainloop();
 U0 loop();
 
 U0 KernelMain() {
-    TTYSwitch(TTYC_VGA);
+    HeapInit();
+    TTYInit();
+    // TTYSwitch(TTYC_VGA);
     VgaInit();
     TTYClear();
+    TTerm.render = TTYRenderS;
     TTYCursor = 0;
-
-    HeapInit();
     KDogWatchInit();
     GDTInit();
     IDTInit();
     PICMap();
     PITInit();
-    KDogWatchLog("Switching to 640x480", False);
+    KDogWatchLog("\x07Switching to 640x480", False);
     VgaGraphicsSet();
-    TTYSwitch(TTYC_320);
-    TTYClear();
     TTYCursor = 0;
     KDogWatchLog("System initializing start", False);
 
@@ -153,6 +152,8 @@ U0 KernelMain() {
     // KDogWatchLog("Initialized \"ufs\"", False);
 
     KDogWatchLog("System Initialized", False);
+    TTerm.render = TTYRenderG;
+    KDogWatchLog("Entering shell\x07", False);
     // TTYClear();
     // TTYCursor = 0;
 
@@ -169,11 +170,11 @@ U0 KernelMain() {
 }
 // INT_DEF(KernelDebug) {
 //     U32 c = TTYCursor;
-//     TTYSwitch(TTYC_SER);
+//     // TTYSwitch(TTYC_SER);
 //     TTYCursor = 0;
 //     PrintF("EIP: %08x ESP: %08x EBP: %08x\n", regs->eip, regs->useresp, regs->ebp);
 //     PrintF("EAX: %08x EBX: %08x ECX: %08x EDX: %08x\n", regs->eax, regs->ebx, regs->ecx, regs->edx);
-//     TTYSwitch(TTYC_RES);
+//     // TTYSwitch(TTYC_RES);
 //     TTYCursor = c;
 // }
 
@@ -202,5 +203,8 @@ U0 programtest()
     // BsfExec(&bapp);
 }
 U0 backgroundloop() {
+    // for (;;) {
+
+    // }
     TaskClose();
 }

@@ -75,7 +75,7 @@ U0 KPanic(const String msg, Bool reboot)
             TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
             TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
             TTYUPrint("\n");
-            TTYCursor -= TTYWidth;
+            TTYCursor -= TTerm.width;
         }
         Beep(tones[tind]);
         tind = (tind + 1) % (sizeof(tones) / sizeof(U16));

@@ -5,16 +5,16 @@
 static U0 SerialDriverHandler(U32 id, U32 *value) {
     switch (id) {
         case 0:
-            SerialWrite(*value);
+            SerialWrite(*((U8*)value));
             break;
         case 1:
-            *value = SerialRead();
+            *((U8*)value) = SerialRead();
             break;
         case 2:
-            *value = SerialBufState();
+            *((U8*)value) = SerialBufState();
             break;
         case 3:
-            SerialSetSpeed(*value);
+            SerialSetSpeed(*((U8*)value));
             break;
         default:
             *value = 0;

@@ -72,16 +72,6 @@ U32 RFSWriteV(String name, Ptr buf, U32 count) {
     RFSClose(fd);
 }
 U32 RFSReadDirV(String, U0(*reader)(String, VFSStat*)) {
-    for (U32 i = 0; i < RFS_SIZE; ++i) {
-        if (RFS[i].exists) {
-            VFSStat s;
-            s.ino = i;
-            s.size = RFS[i].size;
-            s.mode = VFS_REG | VFS_EXEC | VFS_READ | VFS_WRIT;
-            s.time = 0;
-            reader(RFS[i].name, &s);
-        }
-    }
 }
 U0 RFSClose(U32 fd) {
     RFSFileDescriptor *r = (RFSFileDescriptor*)fd;

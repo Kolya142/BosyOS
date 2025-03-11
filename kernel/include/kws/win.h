@@ -1,7 +1,7 @@
 #pragma once
-#include <lib/Graphics.h>
+#include <lib/graphics/Graphics.h>
 #include <kws/input.h>
-#include <lib/Piel.h>
+#include <lib/graphics/Piel.h>
 
 typedef struct Win
 {

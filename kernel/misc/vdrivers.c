@@ -1,7 +1,7 @@
-#include <lib/KeyboardLib.h>
+#include <lib/IO/KeyboardLib.h>
 #include <misc/vdrivers.h>
-#include <lib/Random.h>
-#include <lib/TTY.h>
+#include <drivers/misc/random.h>
+#include <lib/IO/TTY.h>
 
 static U0 VRandHandler(U32 id, U32 *value) {
     switch (id) {

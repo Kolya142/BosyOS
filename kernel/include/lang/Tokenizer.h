@@ -1,5 +1,5 @@
 #pragma once
-#include <lib/String.h>
+#include <lib/strings/String.h>
 #include <lib/Types.h>
 
 #define TOK_NUMBER 1

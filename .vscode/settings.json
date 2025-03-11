@@ -6,7 +6,8 @@
         "typeinfo": "c",
         "type_traits": "c",
         "limits": "c",
-        "random": "c"
+        "random": "c",
+        "charconv": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

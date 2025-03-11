@@ -1,6 +1,6 @@
-#include <drivers/pit.h>
-#include <lib/String.h>
-#include <lib/TTY.h>
+#include <drivers/time/pit.h>
+#include <lib/strings/String.h>
+#include <lib/IO/TTY.h>
 #include <fs/eifs.h>
 EIFSuperBlock EFSB;
 

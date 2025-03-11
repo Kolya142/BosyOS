@@ -31,10 +31,10 @@ for root, _, files in os.walk("."):
         if file.endswith('.s'):
             tasks.append(f"nasm -f elf32 {source_file} -o {output_file}")
 
-with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-    pool.map(run_command, tasks)
-# for t in tasks:
-#     run_command(t)
+# with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+#     pool.map(run_command, tasks)
+for t in tasks:
+    run_command(t)
 
 run_command(f"{cc} kernel/KMain.c -o build/KMain.o")
 obj_files = " ".join(

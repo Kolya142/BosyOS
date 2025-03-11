@@ -1,13 +1,13 @@
 #include <kernel/KDogWatch.h>
 #include <kernel/KPanic.h>
-#include <lib/Graphics.h>
-#include <drivers/pit.h>
-#include <lib/MemLib.h>
-#include <lib/String.h>
-#include <arch/beep.h>
-#include <arch/cpu.h>
-#include <arch/sys.h>
-#include <lib/TTY.h>
+#include <lib/graphics/Graphics.h>
+#include <drivers/time/pit.h>
+#include <lib/memory/MemLib.h>
+#include <lib/strings/String.h>
+#include <drivers/sys/beep.h>
+#include <arch/x86/cpu/cpu.h>
+#include <arch/x86/sys/sys.h>
+#include <lib/IO/TTY.h>
 
 U0 KPanic(const String msg, Bool reboot)
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include <lib/Types.h>
-#include <arch/idt.h>
+#include <arch/x86/sys/idt.h>
 
 struct Task;
 typedef struct Task Task;

@@ -1,4 +1,4 @@
-#include <lib/MemLib.h>
+#include <lib/memory/MemLib.h>
 #include <lib/Types.h>
 #pragma once
 #define HEAP_START 0x0700000

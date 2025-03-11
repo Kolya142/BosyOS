@@ -1,6 +1,6 @@
 #include <misc/wordgen.h>
-#include <lib/Random.h>
-#include <lib/Time.h>
+#include <drivers/misc/random.h>
+#include <lib/time/Time.h>
 
 U0 WordGenS(String str, U32 size)
 {

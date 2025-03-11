@@ -1,26 +1,27 @@
 // Kernel
 #include <kernel/KDogWatch.h>
 #include <kernel/KTasks.h>
-#include <kernel/KShell.h>
 #include <kernel/KPanic.h>
+#include <kernel/KShell.h>
 #include <kernel/KMem.h>
 
 // Drivers
-#include <drivers/keyboard.h>
-#include <drivers/rtl8139.h>
-#include <drivers/serial.h>
-#include <drivers/mouse.h>
-#include <drivers/vga.h>
-#include <drivers/ide.h>
-#include <drivers/pit.h>
-#include <drivers/ps2.h>
+#include <drivers/input/keyboard.h>
+#include <drivers/network/rtl8139.h>
+#include <drivers/serial/serial.h>
+#include <drivers/input/mouse.h>
+#include <drivers/misc/random.h>
+#include <drivers/video/vga.h>
+#include <drivers/disk/ide.h>
+#include <drivers/time/pit.h>
+#include <drivers/input/ps2.h>
+#include <drivers/sys/beep.h>
 
 // Miscellaneous
 #include <misc/driverreg.h>
 #include <misc/vdrivers.h>
-#include <misc/syscall.h>
+#include <lib/sys/syscall.h>
 #include <misc/wordgen.h>
-#include <misc/bsfexe.h>
 
 // Lang
 #include <lang/Tokenizer.h>
@@ -29,16 +30,17 @@
 #include <kws/win.h>
 
 // Libraries
-#include <lib/KeyboardLib.h>
-#include <lib/Graphics.h>
-#include <lib/Collects.h>
-#include <lib/String.h>
-#include <lib/Random.h>
-#include <lib/MemLib.h>
-#include <lib/Time.h>
-#include <lib/BosZ.h>
-#include <lib/TTY.h>
-#include <lib/IP.h>
+#include <lib/IO/KeyboardLib.h>
+#include <lib/graphics/Graphics.h>
+#include <lib/memory/Collects.h>
+#include <lib/strings/String.h>
+#include <lib/memory/MemLib.h>
+#include <lib/time/Time.h>
+#include <lib/IO/BosZ.h>
+#include <lib/formats/ELF.h>
+#include <lib/formats/bsfexe.h>
+#include <lib/IO/TTY.h>
+#include <lib/net/IP.h>
 
 // FileSystem
 #include <fs/minix.h>
@@ -47,15 +49,14 @@
 #include <fs/vfs.h>
 
 // Arch/Cpu Functions
-#include <arch/paging.h>
-#include <arch/getreg.h>
-#include <arch/ring3.h>
-#include <arch/beep.h>
-#include <arch/cpu.h>
-#include <arch/gdt.h>
-#include <arch/fpu.h>
-#include <arch/sys.h>
-#include <arch/pic.h>
+#include <arch/x86/sys/paging.h>
+#include <arch/x86/sys/ring3.h>
+#include <arch/x86/cpu/cpu.h>
+#include <arch/x86/sys/gdt.h>
+#include <arch/x86/cpu/fpu.h>
+#include <arch/x86/sys/sys.h>
+#include <arch/x86/cpu/pic.h>
+
 
 U0 programtest();
 U0 backgroundloop();

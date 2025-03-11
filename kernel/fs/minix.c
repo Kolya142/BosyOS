@@ -1,8 +1,8 @@
-#include <drivers/ide.h>
-#include <lib/String.h>
-#include <lib/MemLib.h>
+#include <drivers/disk/ide.h>
+#include <lib/strings/String.h>
+#include <lib/memory/MemLib.h>
 #include <fs/minix.h>
-#include <lib/TTY.h>
+#include <lib/IO/TTY.h>
 
 #define SS 291
 #define BLOCK_SIZE 1024

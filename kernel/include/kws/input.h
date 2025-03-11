@@ -1,7 +1,7 @@
 #pragma once
 #include <lib/Types.h>
-#include <lib/Time.h>
-#include <lib/TTY.h>
+#include <lib/time/Time.h>
+#include <lib/IO/TTY.h>
 
 typedef struct KWSInputData {
     I32 mousex;

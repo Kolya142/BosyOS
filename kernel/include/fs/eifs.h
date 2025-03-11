@@ -1,6 +1,6 @@
 #pragma once
-#include <drivers/ide.h>
-#include <lib/MemLib.h>
+#include <drivers/disk/ide.h>
+#include <lib/memory/MemLib.h>
 #include <lib/Types.h>
 #include <fs/vfs.h>
 

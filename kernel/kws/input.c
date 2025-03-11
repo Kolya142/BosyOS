@@ -1,5 +1,5 @@
-#include <drivers/keyboard.h>
-#include <drivers/mouse.h>
+#include <drivers/input/keyboard.h>
+#include <drivers/input/mouse.h>
 #include <kws/input.h>
 
 U0 KWSUpdate(KWSInputData *inp) {

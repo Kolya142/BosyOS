@@ -1,0 +1,36 @@
+digraph G {
+    rankdir=TB;
+    
+    subgraph cluster_Hardware {
+        label="Hardware";
+        Drivers;
+    }
+
+    subgraph cluster_Kernel {
+        label="Kernel";
+        IO [label="Kernel IO (Tasks, Processes, ...)"];
+        KernelLoop;
+        MemoryManager;
+        KAPI;
+        Misc;
+        Libraries;
+        Libraries -> Drivers;
+        KWS;
+        
+        KernelLoop -> IO;
+        KernelLoop -> MemoryManager;
+        KernelLoop -> KWS;
+        KernelLoop -> Drivers;
+        KAPI -> IO;
+        KAPI -> MemoryManager;
+        KAPI -> Libraries;
+        KAPI -> Misc;
+        Misc -> Libraries;
+    }
+
+    subgraph cluster_UserSpace {
+        label="User Space";
+        Program;
+        Program -> KAPI;
+    }
+}

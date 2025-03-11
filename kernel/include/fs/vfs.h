@@ -1,7 +1,7 @@
 #pragma once
-#include <lib/Collects.h>
-#include <lib/String.h>
-#include <lib/MemLib.h>
+#include <lib/memory/Collects.h>
+#include <lib/strings/String.h>
+#include <lib/memory/MemLib.h>
 #include <lib/Types.h>
 
 typedef struct VFSStat {

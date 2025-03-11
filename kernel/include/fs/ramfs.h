@@ -1,6 +1,6 @@
 #pragma once
-#include <lib/String.h>
-#include <lib/MemLib.h>
+#include <lib/strings/String.h>
+#include <lib/memory/MemLib.h>
 #include <lib/Types.h>
 #include <fs/vfs.h>
 // RamFileSystem

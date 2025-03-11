@@ -1,4 +1,4 @@
-#include <lib/String.h>
+#include <lib/strings/String.h>
 #include <kws/win.h>
 
 U0 WinPrint(U32 x, U32 y, String text) {

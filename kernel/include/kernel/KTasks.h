@@ -25,4 +25,7 @@ U0 TaskNext();
 U0 TaskClose();
 U32 TaskNew(U32 eip, U16 ds, U16 cs);
 U0 TaskKill(U32 id);
+
+U32 TFork();
+
 // U0 TSleep(U32 millis);

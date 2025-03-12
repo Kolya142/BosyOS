@@ -44,21 +44,22 @@ QEMU_AUDIO_LINUX=-audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
 QEMU_AUDIO_MAC=-audiodev coreaudio,id=snd0 -machine pcspk-audiodev=snd0
 QEMU_DISPLAY=-display gtk,zoom-to-fit=on
 QEMU_KVM=--enable-kvm
+QEMU_USB=-device piix3-usb-uhci,id=usb
 QEMU_GDB=-s -S
 QEMU_OUT=
 
 run:
 	@echo -e "\n\n\n\n\n\n\n\n\n\n\n\n"
 	@if [ "$(MODE)" = "min" ]; then \
-		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_MOUSE) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT); \
 	elif [ "$(MODE)" = "debug" ]; then \
-		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_DEBUG) $(QEMU_MOUSE) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_DEBUG) $(QEMU_MOUSE) $(QEMU_OUT); \
 	elif [ "$(MODE)" = "gdb" ]; then \
-		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_SER) $(QEMU_GDB) $(QEMU_MOUSE) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_GDB) $(QEMU_MOUSE) $(QEMU_OUT); \
 	elif [ "$(SYSTEM)" = "macos" ]; then \
-		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC) $(QEMU_MOUSE) $(QEMU_OUT); \
+		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC) $(QEMU_MOUSE) $(QEMU_OUT); \
 	else \
-		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-reboot --no-shutdown;\
+		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-reboot --no-shutdown;\
 	fi
 	@make userdata_dump
 

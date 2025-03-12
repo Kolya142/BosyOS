@@ -632,7 +632,7 @@ U0 termrun(const String cmd) {
         CJump();
     }
     else if (!StrCmp(cmd, "lex")) {
-        String data = "0123 qwerty 4q \"5g\" $@#a!";
+        String data = "qwe !1rty1";
         Token tok;
         while (*data) {
             data += TokenNext(data, &tok);
@@ -653,6 +653,7 @@ U0 termrun(const String cmd) {
                 PrintF("Vendor $!B%d$!F, \n", dev->vendorid);
                 PrintF("DevID $!B%d$!F, ", dev->deviceid);
                 PrintF("Class $!d%s$!F, ", PCIClasses[dev->classcode]);
+                PrintF("Class $!d%d$!F, ", dev->classcode);
                 PrintF("Subclass $!B%d$!F, ", dev->subclass);
                 PrintF("\n\n");
                 SleepM(1000);
@@ -722,6 +723,9 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "exit")) {
         TaskClose();
+    }
+    else if (!StrCmp(cmd, "fork")) {
+        PrintF("Fork result: %d", TFork());
     }
     // else if (!StrCmp(cmd, "tasky")) {
     //     TaskYeild();

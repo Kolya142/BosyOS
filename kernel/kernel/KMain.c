@@ -8,9 +8,11 @@
 // Drivers
 #include <drivers/input/keyboard.h>
 #include <drivers/network/rtl8139.h>
+#include <drivers/controllers/usb.h>
 #include <drivers/serial/serial.h>
 #include <drivers/input/mouse.h>
 #include <drivers/misc/random.h>
+#include <drivers/video/vesa.h>
 #include <drivers/video/vga.h>
 #include <drivers/disk/ide.h>
 #include <drivers/time/pit.h>
@@ -78,8 +80,9 @@ U0 KernelMain() {
     IDTInit();
     PICMap();
     PITInit();
-    KDogWatchLog("\x07Switching to 640x480", False);
+    KDogWatchLog("\x07Switching to 320x200", False);
     VgaGraphicsSet();
+    // VESAInit();
     TTYCursor = 0;
     KDogWatchLog("System initializing start", False);
 
@@ -118,6 +121,8 @@ U0 KernelMain() {
     PCIInit();
     PCIDevicesCheck();
     KDogWatchLog("Initialized \"PCI\"", False);
+    USBInit();
+    KDogWatchLog("Initialized \"USB\"", False);
     SerialInit();
     KDogWatchLog("Initialized \x9Bserial\x9C", False);
     // RTL8139Init();

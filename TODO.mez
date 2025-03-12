@@ -1,15 +1,15 @@
 TODO List for $!BBosyOS
 $!A=== Main ===
 $!D- $!BPCI Devices $!F(Done)
-$!D- $!BProcesses $!F(Planned)
+$!D- $!BProcesses $!F(In Process)
 $!D- $!BFix file system $!F(Planned)
 $!D- $!BFix applications loader $!F(Planned)
 
-$!A=== Kernel Improvement ===$!F
-$!D- $!BInterrupts[IRQ, APIC, PIC] $!F(Planned)
+$!A=== Kernel Improvement ===
+$!D- $!BBetter Interrupts[IRQ, APIC, PIC] $!F(Planned)
 
 $!A=== Special ===
-$!D- $!BUSB HID $!F(Planned)
+$!D- $!BUSB HID $!F(In Process)
 $!D- $!BTCP/IP $!F(Planned)
 $!D- $!BUDP $!F(Planned)
 $!D- $!BReal Sound $!F(Planned)

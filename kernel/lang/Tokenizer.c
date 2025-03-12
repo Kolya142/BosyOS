@@ -17,12 +17,17 @@ U32 TokenNext(String str, Token *tok) {
                     tok->str[1] = str[1];
                     ++str;
                 }
+                ++pos;
                 break;
             }
             else if (*str == '"') {
                 tok->type = TOK_STR;
                 ++str;
                 continue;
+            }
+            else if (*str == ' ') {
+                ++pos;
+                break;
             }
             else {
                 tok->type = TOK_WORD;
@@ -32,9 +37,17 @@ U32 TokenNext(String str, Token *tok) {
             if (*str == '"') break;
         }
         else {
-            if ((*str == ' ') || (*str == '\n') || (*str == '\r') || (*str == '\t')) break; 
-            if ((tok->type == TOK_NUMBER) && (*str < '0' || *str > '9')) break;
-            if ((*str >= '!' && *str <= '/') || (*str >= ':' && *str <= '@') || (*str >= '[' && *str <= '`') || (*str >= '{' && *str <= '~')) break;
+            if ((*str == ' ') || (*str == '\n') || (*str == '\r') || (*str == '\t')) {
+                ++pos;
+                break; 
+            }
+            if ((tok->type == TOK_NUMBER) && (*str < '0' || *str > '9')) {
+                break;
+            }
+            if ((*str >= '!' && *str <= '/') || (*str >= ':' && *str <= '@') || (*str >= '[' && *str <= '`') || (*str >= '{' && *str <= '~')) {
+                ++pos;
+                break;
+            }
         }
         tok->str[pos] = *str;
         ++pos;

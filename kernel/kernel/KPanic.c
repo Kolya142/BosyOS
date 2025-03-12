@@ -14,9 +14,6 @@ U0 KPanic(const String msg, Bool reboot)
     for (U8 i = 0; i < 255; ++i) {
         KDogWatchPEnd(i);
     }
-    for (U32 i = 0; i < 320*200; ++i) {
-        VVRM[i] ^= 15;
-    }
     U32 start = PITTime;
     static U16 tones[] = {400, 300, 100, 400, 200, 400, 250};
     static U8 tind = 0;

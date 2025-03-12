@@ -23,19 +23,19 @@ INT_DEF(PITHandler) {
         if (VRMState) {
             VRMFlush();
             Ptr vrm = VRM;
-            VRM = VVRM;
-            VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
-            VRM = vrm;
+            // VRM = VRM;
+            // VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
+            // VRM = vrm;
         }
-        if (PITTime % 1000 < 500) {
-            for (U32 i = 0; i < 6; ++i) {
-                for (U32 j = 0; j < 6; ++j) {
-                    U32 x = i + (TTYCursor % TTerm.width)*6;
-                    U32 y = j + (TTYCursor / TTerm.width)*6;
-                    VVRM[x + y * 320] ^= 15;
-                }
-            }
-        }
+        // if (PITTime % 1000 < 500) { // FIXME
+        //     for (U32 i = 0; i < 6; ++i) {
+        //         for (U32 j = 0; j < 6; ++j) {
+        //             U32 x = i + (TTYCursor % TTerm.width)*6;
+        //             U32 y = j + (TTYCursor / TTerm.width)*6;
+        //             VRM[x + y * 800] ^= 15;
+        //         }
+        //     }
+        // }
 
         RTCUpdate();
         U32 days = 0;

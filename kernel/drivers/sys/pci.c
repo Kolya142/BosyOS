@@ -3,29 +3,29 @@
 
 PCIDevice *PCIDevices;
 extern String PCIClasses[] = {
-    "Unclassified",
-    "Drive",
-    "Network Adapter",
-    "Display Controller",
-    "Multimedia Controller",
-    "Memory Controller",
-    "Bridge",
-    "Simple Communication Controller",
-    "Base System Peripheral",
-    "Input Device Controller",
-    "Docking Station",
-    "Processor",
-    "Serial Bus Controller",
-    "Wireless",
-    "Intelligent Controller",
-    "Satellite Communication Controller",
-    "Encryption Controller",
-    "Processing Accelator",
-    "Non-Essential Instrumentation",
-    "",
-    "Co-Processor",
-    "",
-    ""
+    "Unclassified",    // 0
+    "Drive",    // 1
+    "Network Adapter",    // 2
+    "Display Controller",    // 3
+    "Multimedia Controller",    // 4
+    "Memory Controller",    // 5
+    "Bridge",    // 6
+    "Simple Communication Controller",    // 7
+    "Base System Peripheral",    // 8
+    "Input Device Controller",    // 9
+    "Docking Station",    // A
+    "Processor",    // B
+    "Serial Bus Controller",    // C
+    "Wireless",    // D
+    "Intelligent Controller",    // E
+    "Satellite Communication Controller",    // D
+    "Encryption Controller",    // F
+    "Processing Accelator",    // 10
+    "Non-Essential Instrumentation",    // 11
+    "",    // 12
+    "Co-Processor",    // 13
+    "",    // 14
+    ""    // 15
 };
 
 U0 PCIInit() {
@@ -56,9 +56,9 @@ U0 PCIDeviceCheck(U8 bus, U8 slot, U8 func, PCIDevice *dev) {
     }
 
     dev->deviceid = PCIConfigReadWord(bus, slot, func, 2);
-    U32 classinfo = PCIConfigReadDWord(bus, slot, func, 8);
-    dev->classcode = (classinfo >> 24) & 0xFF;
-    dev->subclass = (classinfo >> 16) & 0xFF;
+    dev->classcode = PCIConfigReadWord(bus, slot, func, 8);
+    dev->subclass = PCIConfigReadWord(bus, slot, func, 9);
+    dev->prog_if = PCIConfigReadWord(bus, slot, func, 10);
 
     PCIBARsGet(bus, slot, func, dev);
     // PrintF("PCI Device Found: Bus %X, Slot %X, Func %X, Vendor %X, Device ID %X, Class %X, Subclass %X\n",

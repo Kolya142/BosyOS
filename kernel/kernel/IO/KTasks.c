@@ -7,6 +7,7 @@
 
 // fixing bugs from 1741179362s from unix stamp
 // fixed 90% bugs from 1741183725s from unix stamp
+// proccesses start from 1741763233 from unix stamp
 
 static U32 task_count = 0;
 Bool TaskingIs = False;
@@ -39,21 +40,21 @@ U0 TaskInit() {
 }
 U0 TaskNext() {
     if (!TaskTail || !TaskHead) return;
-    for (;;) {
-        TaskTail = (TaskTail->next) ? TaskTail->next : TaskHead;
-        break;
-    }
+    // for (;;) {
+    TaskTail = (TaskTail->next) ? TaskTail->next : TaskHead;
+    //     break;
+    // }
 }
 
 U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is detected
     asmv("cli");
-    U32 *stack = MAlloc(4096 * sizeof(U32));
+    U32 *stack = MAlloc(4096);
     if (!(U32)stack) {
         asmv("sti");
         return 0xFFFFFFFF;
     }
     
-    U32 esp = (U32)(&stack[4094]);
+    U32 esp = (U32)(&stack[1023]);
     PrintF("Process with esp $!B%4x$!F created\n", esp);
 
     Task *task = MCAlloc(sizeof(Task), 1);
@@ -103,6 +104,10 @@ U0 TaskKill(U32 id) {
 
     while (task) {
         if (task->id == id) {
+            if (task == TaskTail) {
+                TaskNext();
+            }
+            
             if (prev) {
                 prev->next = task->next;
             }
@@ -124,4 +129,33 @@ U0 TaskKill(U32 id) {
         task = task->next;
     }
     TaskNext();
+}
+
+U32 TFork() {
+    Task *parent = TaskTail;
+
+    if (!(parent->flags & TASK_WORKING)) {
+        return 0;
+    }
+
+    U32 childi = TaskNew(parent->regs.eip, parent->regs.ds, parent->regs.cs);
+
+    if (childi == 0xFFFFFFFF) {
+        return 0xFFFFFFFF;
+    }
+
+    Task *child = TaskHead;
+    Task *prev = Null;
+
+    while (child) {
+        if (child->id == childi) {
+            break;
+        }
+        child = child->next;
+    }
+    MemCpy(&child->regs, &parent->regs, sizeof(INTRegs));
+    MemCpy((Ptr)child->regs.useresp, (Ptr)parent->regs.useresp, 4096);
+    child->regs.ebp = child->regs.useresp;
+    child->regs.eax = 0;
+    return child->id;
 }

@@ -11,6 +11,11 @@ mov es, bx
 mov bx, 0
 int 0x13
 
+; VESAEnable: ; Bad idea, but it's' simpler
+;     mov ax, 0x4F02
+;     mov bx, 0x0102
+;     int 0x10
+
 cli
 lgdt [gdt_descriptor]
 

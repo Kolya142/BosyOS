@@ -13,6 +13,7 @@
 #include <drivers/video/vga.h>
 #include <drivers/disk/ide.h>
 #include <drivers/time/pit.h>
+#include <drivers/sys/pci.h>
 #include <drivers/input/ps2.h>
 #include <drivers/sys/beep.h>
 
@@ -595,12 +596,7 @@ U0 loop() {
         TTYCursor = c;
     }
 }
-typedef struct {
-    U16 src_port;
-    U16 dst_port;
-    U16 length;
-    U16 checksum;
-} __attribute__((packed)) UDPHeader;
+
 U32 testvar = 0xABAB;
 U0 tasking1() {
     for (U32 i = 0; i < 100; ++i) {
@@ -641,6 +637,26 @@ U0 termrun(const String cmd) {
         while (*data) {
             data += TokenNext(data, &tok);
             PrintF("'%s' ", tok.str);
+        }
+    }
+    else if (!StrCmp(cmd, "dev")) {
+        for (U32 i = 0; i < 256 * 32 * 8; ++i) {
+            PCIDevice *dev = &PCIDevices[i];
+
+            if (dev->vendorid != 0xFFFF && dev->vendorid != 0) {
+                U32 bus = i / (32 * 8);
+                U32 device = (i / 8) % 32;
+                U32 function = i % 8;
+                PrintF("Bus $!B%d$!F, ", bus);
+                PrintF("Dev $!B%d$!F, ", device);
+                PrintF("Func $!B%d$!F, ", function);
+                PrintF("Vendor $!B%d$!F, \n", dev->vendorid);
+                PrintF("DevID $!B%d$!F, ", dev->deviceid);
+                PrintF("Class $!d%s$!F, ", PCIClasses[dev->classcode]);
+                PrintF("Subclass $!B%d$!F, ", dev->subclass);
+                PrintF("\n\n");
+                SleepM(1000);
+            }
         }
     }
     else if (!StrCmp(cmd, "paint")) {
@@ -711,39 +727,7 @@ U0 termrun(const String cmd) {
     //     TaskYeild();
     // }
     else if (!StrCmp(cmd, "testip")) {
-        NetMac mac;
-        DriverCall(0xbb149088, 0xc3442e1e, 2, (U32*)&mac);
-        PrintF("%C:%C:%C:%C:%C:%C", mac.w1 >> 8, mac.w1 & 0xFF, mac.w2 >> 8, mac.w2 & 0xFF, mac.w3 >> 8, mac.w3 & 0xFF);
-
-        NetPackage pck;
-
-        U8 payload[] = "12345678Hello, world!";
-        UDPHeader udp;
-        udp.src_port = HtonW(1234);
-        udp.dst_port = HtonW(129);
-        udp.length = HtonW(sizeof(payload));
-        udp.checksum = 0;
-        MemCpy(payload, &udp, sizeof(UDPHeader));
-
-
-        pck.data = payload;
-        pck.dst = (NetMac){0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-        pck.length = sizeof(payload)-1;
-
-        pck.ip4.verIhl = 0x45;
-        pck.ip4.tos = 0;
-        pck.ip4.len = HtonW(sizeof(NetPackageIP4));
-        pck.ip4.id = HtonW(0x1234);
-        pck.ip4.offset = HtonW(0x4000);
-        pck.ip4.ttl = 64;
-        pck.ip4.protocol = 0x11;
-        pck.ip4.srcip = HtonD(0xC0A80001);  // 192.168.0.1
-        pck.ip4.dstip = HtonD(0xC0A81F79);  // 192.168.31.121   
-
-        pck.ip4.checksum = 0;
-        pck.ip4.checksum = IPChecksum((U16*)&pck.ip4, sizeof(NetPackageIP4));
-
-        DriverCall(0xbb149088, 0xc3442e1e, 0, (U32*)&pck);
+        UDPSend(3945, 53, 0xC0A80102, 0xC32259F1, "Hello", 6);
     }
     else if (StrStartsWith(cmd, "boot") && StrCmp(cmd, "boot")) {
         CBoot(&cmd[4]);

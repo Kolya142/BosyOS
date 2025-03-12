@@ -16,6 +16,7 @@
 #include <drivers/time/pit.h>
 #include <drivers/input/ps2.h>
 #include <drivers/sys/beep.h>
+#include <drivers/sys/pci.h>
 
 // Miscellaneous
 #include <misc/driverreg.h>
@@ -114,6 +115,9 @@ U0 KernelMain() {
     
     // Drivers
     KDogWatchLog("Setuping drivers", False);
+    PCIInit();
+    PCIDevicesCheck();
+    KDogWatchLog("Initialized \"PCI\"", False);
     SerialInit();
     KDogWatchLog("Initialized \x9Bserial\x9C", False);
     // RTL8139Init();

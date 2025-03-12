@@ -1,5 +1,6 @@
 TODO List for $!BBosyOS
 $!A=== Main ===
+$!D- $!BPCI Devices $!F(Done)
 $!D- $!BProcesses $!F(Planned)
 $!D- $!BFix file system $!F(Planned)
 $!D- $!BFix applications loader $!F(Planned)
@@ -12,6 +13,6 @@ $!D- $!BUSB HID $!F(Planned)
 $!D- $!BTCP/IP $!F(Planned)
 $!D- $!BUDP $!F(Planned)
 $!D- $!BReal Sound $!F(Planned)
-$!D- $!BMezex terminal(non-kernel) $!F(Planned)
+$!D- $!BMezex terminal(linux) $!F(Planned)
 $!D- $!BPrograming Language $!F(Planned)
 $!F

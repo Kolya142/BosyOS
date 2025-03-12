@@ -38,7 +38,7 @@ QEMU_DRIVE=-drive format=raw,file=drive
 QEMU_MOUSE=
 QEMU_MEM=-m 64M
 QEMU_SER=-serial stdio
-QEMU_NET=
+QEMU_NET=-device rtl8139,netdev=net0 -netdev user,id=net0
 QEMU_DEBUG=-D ~/bosyos.qemu.log -d int,cpu_reset --no-reboot --no-shutdown
 QEMU_AUDIO_LINUX=-audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
 QEMU_AUDIO_MAC=-audiodev coreaudio,id=snd0 -machine pcspk-audiodev=snd0

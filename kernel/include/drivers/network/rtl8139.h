@@ -49,3 +49,8 @@ typedef struct NetPackageEthernet {
 } __attribute__((packed)) NetPackageEthernet;
 
 U0 RTL8139Init();
+
+Bool RTL8139Read(NetPackage *pck);
+NetMac RTL8139MacGet();
+U0 RTL8139Write(NetPackage *pck);
+U32 RTL8139Status();

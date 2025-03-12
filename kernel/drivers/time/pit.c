@@ -23,19 +23,19 @@ INT_DEF(PITHandler) {
         if (VRMState) {
             VRMFlush();
             Ptr vrm = VRM;
-            // VRM = VRM;
-            // VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
-            // VRM = vrm;
+            VRM = VVRM;
+            VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
+            VRM = vrm;
         }
-        // if (PITTime % 1000 < 500) { // FIXME
-        //     for (U32 i = 0; i < 6; ++i) {
-        //         for (U32 j = 0; j < 6; ++j) {
-        //             U32 x = i + (TTYCursor % TTerm.width)*6;
-        //             U32 y = j + (TTYCursor / TTerm.width)*6;
-        //             VRM[x + y * 800] ^= 15;
-        //         }
-        //     }
-        // }
+        if (PITTime % 1000 < 500) {
+            for (U32 i = 0; i < 6; ++i) {
+                for (U32 j = 0; j < 6; ++j) {
+                    U32 x = i + (TTYCursor % TTerm.width)*6;
+                    U32 y = j + (TTYCursor / TTerm.width)*6;
+                    VVRM[x + y * 320] ^= 15;
+                }
+            }
+        }
 
         RTCUpdate();
         U32 days = 0;
@@ -61,12 +61,6 @@ INT_DEF(PITHandler) {
             MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
             // PrintF("Aft RGS: %x\n", regs->eax+regs->ebx+regs->ecx+regs->edx+regs->esi+regs->edi);
         }
-        TTerm.render();
-        // U32 c = TTYCursor;
-        // TTYCursor = TTerm.width - 8;
-        // PrintF("%d:%d:%d", SystemTime.hour, SystemTime.minute, SystemTime.second);
-        // TTerm.render();
-        // TTYCursor = c;
         if (Debugging) {
             TTerm.render();
             VgaCursorDisable();

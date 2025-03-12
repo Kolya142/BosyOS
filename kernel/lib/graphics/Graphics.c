@@ -1,6 +1,6 @@
 #include <lib/graphics/Graphics.h>
 Bool VRMState = True;
-U8 *VRM = (U8*)0x30000;
+U8 *VRM = (U8*)0x3000;
 U8 GCursor[] = {
     0,0,2,2,2,2,
     0,1,0,2,2,2,

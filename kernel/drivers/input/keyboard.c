@@ -60,6 +60,7 @@ INT_DEF(KBHandler) {
         }
         KBState.keys[KBState.Key] = True;
     }
+    TTYInput();
 }
 static U0 KBDriverHandler(U32 id, U32 *value) {
     switch (id)

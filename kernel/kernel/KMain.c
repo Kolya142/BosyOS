@@ -188,17 +188,21 @@ U0 KernelMain() {
 //     TTYCursor = c;
 // }
 
+extern Bool VRMState;
 
 U0 mainloop() {
     Char buffer[50] = {0};
     KDogWatchPEnd(0);
+    VRMClear(DBlue);
     for (;;) {
-        TTYUPrint("$!A\\$ $!F");
+        TTerm.render();
+        TTYUPrint("$*1$!A\\$ $!F");
         KBRead(buffer, 50);
-        // KDogWatchPPlay(0);
+
         termrun(buffer);
         TTYUPrintC('\n');
         MemSet(buffer, 0, 50);
+        TTerm.render();
     }
 }
 U0 programtest()
@@ -214,7 +218,6 @@ U0 programtest()
 }
 U0 backgroundloop() {
     // for (;;) {
-
     // }
     TaskClose();
 }

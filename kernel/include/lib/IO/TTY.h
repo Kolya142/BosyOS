@@ -1,5 +1,6 @@
 #pragma once
 #include <drivers/serial/serial.h>
+#include <drivers/input/keyboard.h>
 #include <misc/wordgen.h>
 #include <lib/graphics/Graphics.h>
 #include <lib/memory/MemLib.h>
@@ -48,3 +49,5 @@ U0 TTYUPrint(String s);
 U0 TTYUPrintHex(U32 i);
 U0 TTYUPrintDec(U32 a);
 U0 TTYUPrintDecI(I32 a);
+U0 VPrintF(String format, va_list args);
+U0 TTYInput();

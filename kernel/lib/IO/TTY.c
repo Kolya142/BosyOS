@@ -196,9 +196,59 @@ U0 TTYUPrintDecI(I32 a) {
     TTYUPrintDec(a);
 }
 
-U0 PrintF(String format, ...) {
-    va_list args;
-    va_start(args, format);
+U32 KBTimeout = 500;
+U32 KBRate = 200;
+
+static Bool lk[256] = {0};
+static U32 bufferi = 0;
+static U32 time = 0;
+static U32 timea = 0;
+static U8 buf[2048];
+
+U0 TTYInput() {
+    for (U16 key = 0; key < 256; ++key) {
+        if (KBState.keys[key]) {
+            if (!lk[key] || ((PITTime - time >= KBTimeout) && (PITTime - timea >= KBRate))) {
+                if (!lk[key]) {
+                    time = PITTime;
+                }
+                else {
+                    timea = PITTime;
+                }
+                lk[key] = True;
+                if (key == '\b') {
+                    if (bufferi) {
+                        buf[bufferi--] = 0;
+                        TTYUPrintC('\b');
+                        TTerm.render();
+                    }
+                }
+                else if (key == '\x1b') return;
+                else if (key == '\r') {
+                    TTYUPrintC('\n');
+                    TTerm.render();
+                    PTermWrite(&VTerm, 0, buf, bufferi);
+                    bufferi = 0;
+                }
+                else if (key < 0x80 || (key >= 0xB1 && key <= 0xD0)) {
+                    if (KBState.Shift && !(key >= 0xB1 && key <= 0xD0)) {
+                        key = UpperTo(key);
+                    }
+                    if (bufferi < 2048 - 1) {
+                        buf[bufferi++] = key;
+                        TTYUPrintC(key);
+                        TTerm.render();
+                    }
+                }
+            }
+        }
+        else if (!KBState.keys[key] && lk[key]) {
+            lk[key] = False;
+        }
+    }
+}
+
+U0 VPrintF(String format, va_list args) {
     U8 n = 4;
     while (*format) {
         if (*format == '%' && *(format + 1)) {
@@ -274,6 +324,12 @@ U0 PrintF(String format, ...) {
         TTYUPrintC(*format);
         ++format;
     }
+}
+
+U0 PrintF(String format, ...) {
+    va_list args;
+    va_start(args, format);
+    VPrintF(format, args);
     va_end(args);
 }
 

@@ -1,5 +1,39 @@
+#include <drivers/input/mouse.h>
 #include <lib/strings/String.h>
 #include <kws/win.h>
+
+Win windows[64];
+static PielCanvas *print_canv;
+
+static U0 WinPielPrint() {
+
+}
+
+U32 WinSpawn(Win *win) {
+    for (U32 i = 0; i < 64; ++i) {
+        if (!(windows[i].w)) {
+            MemCpy(&windows[i], win, sizeof(Win));
+            return i;
+        }
+    }
+}
+U0 WindowsUpdate() {
+    for (U32 i = 0; i < 64; ++i) {
+        if (windows[i].w) {
+            Win *win = &windows[i];
+            if ((MouseBtn & 1) && win->x <= MouseX && MouseX <= win->x+win->w-7 && win->y <= MouseY && MouseY <= win->y+7 && MouseX > win->w / 2 && MouseY > 3) {
+                win->x = MouseX - win->w / 2;
+                win->y = MouseY - 3;
+            }
+            else if (win->inp.mouse_left && win->x+win->w-7 <= MouseX && MouseX <= win->x+win->w && win->y <= MouseY && MouseY <= win->y+7) {
+                win->w = 0;
+            }
+            KWSUpdate(&win->inp);
+            win->update(win);
+            WinDraw(win);
+        }
+    }
+}
 
 U0 WinPrint(U32 x, U32 y, String text) {
     TTYGSX = x;
@@ -15,6 +49,7 @@ Win WinMake(U32 x, U32 y, U32 w, U32 h, String title) {
     win.y = y;
     win.w = w;
     win.h = h;
+    MemSet(win.title, 0, sizeof(win.title));
     StrCpy(win.title, title);
     
     win.canvas.arr = MAlloc(w * h);
@@ -29,6 +64,7 @@ U0 WinDraw(Win *win) {
     VRMState = False;
     VRMDrawRect(vec2(win->x, win->y), vec2(win->x+win->w, win->y+7), White);
     VRMDrawRect(vec2(win->x, win->y+7), vec2(win->x+win->w, win->y+8), Gray);
+    VRMDrawRect(vec2(win->x+win->w-7, win->y+1), vec2(win->x+win->w-1, win->y+7), Red);
     WinPrint(win->x, win->y+1, win->title);
 
     for (U32 i = 0; i < win->w; ++i) {

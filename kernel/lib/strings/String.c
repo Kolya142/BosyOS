@@ -76,6 +76,18 @@ U0 StrCpy(String dst, String src) {
     MemCpy(dst, src, StrLen(src));
 }
 
+U32 Atoi(String a) {
+    U32 v = 0;
+    while (*a) {
+        if (*a >= '0' && *a <= '9') {
+            U8 n = *a-'0';
+            v = (v+n)/10;
+        }
+        ++a;
+    }
+    return v;
+}
+
 U32 StrCmp(const Char *a, const Char *b)
 {
     while (*b && (*a == *b)) {++a; ++b;}

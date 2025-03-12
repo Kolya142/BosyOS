@@ -1,5 +1,6 @@
 // Kernel
 #include <kernel/KDogWatch.h>
+#include <kernel/KWinDemo.h>
 #include <kernel/KTasks.h>
 #include <kernel/KPanic.h>
 #include <kernel/KMem.h>
@@ -632,7 +633,10 @@ U0 termrun(const String cmd) {
         CJump();
     }
     else if (!StrCmp(cmd, "lex")) {
-        String data = "qwe !1rty1";
+        PrintF("$!B\\$ $!F");
+        Char buf[512];
+        String data = buf;
+        KBRead(buf, 512);
         Token tok;
         while (*data) {
             data += TokenNext(data, &tok);
@@ -675,44 +679,7 @@ U0 termrun(const String cmd) {
         CHelp();
     }
     else if (!StrCmp(cmd, "win")) {
-        Win win = WinMake(20, 20, 90, 90, "Test");
-        KWSInputData inp;
-        Bool dragging = False;
-        for (;!KBState.keys['\x1b'];) {
-            VRMClear(Black);
-            if (!dragging && (MouseBtn & 1) &&
-                MouseX >= win.x && MouseX <= win.x + win.w &&
-                MouseY >= win.y && MouseY <= win.y + 6) {
-                dragging = True;
-            }
-            
-            if (dragging) {
-                win.x = MouseX - win.w / 2;
-                win.y = MouseY - 3;
-            }
-            
-            if (!(MouseBtn & 1)) {
-                dragging = False;
-            }
-            if ((MouseBtn & 1) || (KBState.keys[' '])) {
-                PielBox(&win.canvas, MouseX - win.x - 1, MouseY - win.y - 1-6, 2, 2, White);
-            }
-            if (KBState.keys['w']) {
-                MouseY -= 1;
-            }
-            if (KBState.keys['a']) {
-                MouseX -= 1;
-            }
-            if (KBState.keys['s']) {
-                MouseY += 1;
-            }
-            if (KBState.keys['d']) {
-                MouseX += 1;
-            }
-            WinDraw(&win);
-            KWSUpdate(&inp);
-            SleepM(1000/60);
-        }
+        KWinDemo();
     }
     else if (!StrCmp(cmd, "cls")) {
         CCls();

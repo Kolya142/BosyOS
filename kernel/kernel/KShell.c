@@ -678,6 +678,24 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "help")) {
         CHelp();
     }
+    else if (!StrCmp(cmd, "shader")) {
+        F32 col;
+        for (;!KBState.keys['\x1b'];) {
+            F32 t = (F32)PITTime * 0.0001;
+            for (U32 i = 0; i < 320; ++i) {
+                for (U32 j = 0; j < 200; ++j) {
+                    F32 x = (F32)i / 320. * (320./200.) - (320./200.)*.5;
+                    F32 y = (F32)j / 200. - .5;
+                    {
+                        F32 r = 1./sqrt(x*x+y*y);
+                        F32 p = fmodf(atan2(y, x)/3.141592+r+sin(t), 1.);
+                        col = (fmodf(r + t, 2.) < 1. && fmodf(p, .5) < .25) ? (.9 / r) : 0;
+                    }
+                    VRMPSet(i, j, col*16);
+                }
+            }
+        }
+    }
     else if (!StrCmp(cmd, "win")) {
         KWinDemo();
     }
@@ -740,12 +758,14 @@ U0 termrun(const String cmd) {
         }
     }
     else if (!StrCmp(cmd, "testfpu")) {
-        F32 x = 0;
+        TTYCanonical = False;
         for (;!KBState.keys['\x1b'];) {
-            TTYCursor = sin(x) * 20. + 20;
+            TTerm.render();
+            TTYCursor = sin((F32)PITTime * .01) * 20. + 20;
             TTYPrintC(0x30 + (PITTime % 40));
-            x += 0.0001;
+            TTerm.render();
         }
+        TTYCanonical = True;
         CCls();
     }
     else if (!StrCmp(cmd, "deb")) {
@@ -783,6 +803,8 @@ U0 termrun(const String cmd) {
         }
     }
     else if (!StrCmp(cmd, "rand1")) {
+        Char buf[90];
+        U32 bi = 0;
         CCls();
         Char b1[9] = {0};
         Char b2[9] = {0};
@@ -793,19 +815,21 @@ U0 termrun(const String cmd) {
         WordGenS(b3, 9);
 
         for (;!KBState.keys['\x1b'];) {
-            TTYCursor -= TTYCursor % TTerm.width;
-            PrintF("%s and %s and %s - ", b1, b2, b3);
+            PrintF("%s and %s and %s\n", b1, b2, b3);
             for (U32 i = 0; i < 8; ++i) {
-                BeepSPC(b1[i]+20, RandomU()%30);
-                BeepSPC(b2[i]+30, RandomU()%30);
-                BeepSPC(b3[i]+40, RandomU()%30);
+                BeepSPC(b1[i]-'A'+20, RandomU()%30);
+                BeepSPC(b2[i]-'A'+30, RandomU()%30);
+                BeepSPC(b3[i]-'A'+40, RandomU()%30);
                 PrintF("%c%c%c", b1[i], b2[i], b3[i]);
+                buf[bi] = 'A' + ((b1[i]-'A' + b2[i]-'A' + b3[i]-'A')%('Z'-'A'));
+                bi = (bi + 1) % 90;
             }
             WordGenS(b1, 9);
             WordGenS(b2, 9);
             WordGenS(b3, 9);
             SleepM(100);
         }
+        PrintF("\n\n\n%s\n", buf);
     }
     else if (!StrCmp(cmd, "vrm")) {
         // PrintF("%p %p\n", GCursor, testvar);

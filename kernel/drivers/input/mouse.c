@@ -50,7 +50,7 @@ U0 MouseWait(U8 how) {
 
 __attribute__((naked)) U0 MouseUpdate() {
     U32 esp;
-    asmv("pusha\npushf\nmov %%esp, %0" :: "r"(esp));
+    asmv("pusha\npushf\nmov %%esp, %0" : "=r"(esp));
     while ((PIn(0x64) & 1)) {
         if (!(PIn(0x64) & (1 << 5))) {
             goto end;

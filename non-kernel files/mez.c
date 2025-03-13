@@ -32,26 +32,6 @@ void TTYUPrintC(char c) {
         else if (c == '*') {
             ldv = 2;
         }
-        // else if (c == 'U') {
-        //     TTYPrintC((AsciiP)ASCIIPUp);
-        //     lds = 0;
-        // }
-        // else if (c == 'D') {
-        //     TTYPrintC((AsciiP)ASCIIPDown);
-        //     lds = 0;
-        // }
-        // else if (c == 'L') {
-        //     TTYPrintC((AsciiP)ASCIIPLeft);
-        //     lds = 0;
-        // }
-        // else if (c == 'R') {
-        //     TTYPrintC((AsciiP)ASCIIPRight);
-        //     lds = 0;
-        // }
-        // else if (c == 'H') {
-        //     TTYPrintC((AsciiP)ASCIIPHome);
-        //     lds = 0;
-        // }
         else if (c == 'x') {
             lbp = 1;
         }

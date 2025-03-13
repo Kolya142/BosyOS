@@ -47,3 +47,34 @@ float pow(float x, float y) {
         "fstps %0\n" : "=m"(r) : "m"(x), "m"(y) );
     return r;
 }
+float fmodf(float a, float b) {
+    float x = a / b;
+    float y = ((long)x) * b;
+    return a - y;
+    // float r;
+    // asm volatile (
+    //     "fld %1\n"
+    //     "fld %2\n"
+    //     "1:\n"
+    //     "fprem\n"
+    //     "fstsw %%ax\n"
+    //     "sahf\n"
+    //     "jp 1b\n"
+    //     "fstp %%st(1)\n"
+    //     "fstp %0\n"
+    //     : "=m"(r)
+    //     : "m"(a), "m"(b)
+    //     : "ax" );
+    // return r;
+}
+float atan2(float y, float x) {
+    float r;
+    asm volatile (
+        "fld %1\n"
+        "fld %2\n"
+        "fpatan\n"
+        "fstp %0\n"
+        : "=m"(r)
+        : "m"(y), "m"(x) );
+    return r;
+}

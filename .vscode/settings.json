@@ -10,7 +10,9 @@
         "charconv": "c",
         "format": "c",
         "thread": "c",
-        "*.tcc": "c"
+        "*.tcc": "c",
+        "bit": "c",
+        "cmath": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

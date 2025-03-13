@@ -54,7 +54,7 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
         return 0xFFFFFFFF;
     }
     
-    U32 esp = (U32)(&stack[1023]);
+    U32 esp = (U32)(&stack[1023]) & ~0xF;
     PrintF("Process with esp $!B%4x$!F created\n", esp);
 
     Task *task = MCAlloc(sizeof(Task), 1);

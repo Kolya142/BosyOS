@@ -4,13 +4,8 @@ ifeq ($(shell uname),Darwin)
   SYSTEM=macos
 endif
 
-.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun
+.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun iso
 kernel:
-	cd kernel/boot && nasm boot.asm -o boota.bin && gcc -x c -c -m32 boot._c -o bootc.o -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32
-	cd kernel/boot && ld -m elf_i386 -T link.ld bootc.o -o bootc.oo
-	cd kernel/boot && objcopy -O binary bootc.oo bootc.bin
-	cd kernel/boot && cat boota.bin bootc.bin > boot.bin
-	cd kernel/boot && truncate -s 1536 boot.bin
 	cd kernel && python3 build.py
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
@@ -29,9 +24,14 @@ compile:
 	# elif [ ! -e userdata ]; then \
  	# 	truncate -s 181760 userdata; \
 	# fi
-	dd if=kernel/boot/boot.bin of=drive bs=512 seek=0 count=3 conv=notrunc
+	dd if=bosyboot of=drive bs=512 seek=0 count=13 conv=notrunc
 	dd if=kernel.bin of=drive bs=512 seek=35 count=256 conv=notrunc
-	# dd if=userdata of=drive bs=512 seek=291
+
+iso:
+	touch bosyos.iso
+	sudo losetup /dev/loop1 bosyos.iso
+	sudo dd if=drive of=/dev/loop1p1
+	sudo losetup -d /dev/loop1
 
 QEMU=qemu-system-i386
 QEMU_DRIVE=-drive format=raw,file=drive

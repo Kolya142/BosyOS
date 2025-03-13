@@ -41,5 +41,6 @@ obj_files = " ".join(
     [str(file) for file in build_dir.glob("*.o") if file.name != 'KMain.o']
 )
 
-print("Link") # evil ld bug fixing      VVVVVVVVVVVVV
+print("Link")
+run_command(f"{"ld -m elf_i386" if plat == 1 else "i686-elf-ld"} -T link.elf.ld build/KMain.o {obj_files} -o kernel.elf") # --verbose")
 run_command(f"{"ld -m elf_i386" if plat == 1 else "i686-elf-ld"} -T link.ld build/KMain.o {obj_files} -o kernel.b") # --verbose")

@@ -3,10 +3,40 @@
 #include <kws/win.h>
 
 Win windows[64];
-static PielCanvas *print_canv;
 
-static U0 WinPielPrint() {
+static PielCanvas *canv;
 
+static U0 RenderWG() {
+    U32 cc = 0;
+    U32 y = TTYGSY;
+    for (Char c;PTermRead(VTerm, 1, &c, 1);) {
+        U32 x = cc * 6 + TTYGSX;
+        PielBox(canv, x, y, 6, 6, Black);
+        for (U32 i = 0; i < 5; ++i) {
+            for (U32 j = 0; j < 5; ++j) {
+                Bool bit = (TTYFont[c][i] >> (4-j)) & 1;
+                PielPixel(canv, x+j, y+i, bit ? White : Black);
+            }
+        }
+        ++cc;
+    }
+}
+
+U0 WPrintF(Win *win, U32 x, U32 y, String format, ...) {
+    TTerm.render();
+    TTYGSX = x;
+    TTYGSY = y;
+    canv = &win->canvas;
+    Ptr rend = TTerm.render;
+    TTerm.render = RenderWG;
+
+    va_list args;
+    va_start(args, format);
+    VPrintF(format, args);
+    va_end(args);
+
+    TTerm.render();
+    TTerm.render = rend;
 }
 
 U32 WinSpawn(Win *win) {
@@ -21,12 +51,13 @@ U0 WindowsUpdate() {
     for (U32 i = 0; i < 64; ++i) {
         if (windows[i].w) {
             Win *win = &windows[i];
-            if ((MouseBtn & 1) && win->x <= MouseX && MouseX <= win->x+win->w-7 && win->y <= MouseY && MouseY <= win->y+7 && MouseX > win->w / 2 && MouseY > 3) {
+            if (!(win->flags & WIN_UNMOVEBLE) && (MouseBtn & 1) && win->x <= MouseX && MouseX <= win->x+win->w-7 && win->y <= MouseY && MouseY <= win->y+7 && MouseX > win->w / 2 && MouseY > 3) {
                 win->x = MouseX - win->w / 2;
                 win->y = MouseY - 3;
             }
-            else if (win->inp.mouse_left && win->x+win->w-7 <= MouseX && MouseX <= win->x+win->w && win->y <= MouseY && MouseY <= win->y+7) {
+            else if (!(win->flags & WIN_UNCLOSABLE) && win->inp.mouse_left && win->x+win->w-7 <= MouseX && MouseX <= win->x+win->w && win->y <= MouseY && MouseY <= win->y+7) {
                 win->w = 0;
+                continue;
             }
             KWSUpdate(&win->inp);
             win->update(win);
@@ -43,12 +74,13 @@ U0 WinPrint(U32 x, U32 y, String text) {
     TTYUPrint(text);
     TTerm.render = render;
 }
-Win WinMake(U32 x, U32 y, U32 w, U32 h, String title) {
+Win WinMake(U32 x, U32 y, U32 w, U32 h, String title, U16 flags) {
     Win win;
     win.x = x;
     win.y = y;
     win.w = w;
     win.h = h;
+    win.flags = flags;
     MemSet(win.title, 0, sizeof(win.title));
     StrCpy(win.title, title);
     
@@ -64,7 +96,9 @@ U0 WinDraw(Win *win) {
     VRMState = False;
     VRMDrawRect(vec2(win->x, win->y), vec2(win->x+win->w, win->y+7), White);
     VRMDrawRect(vec2(win->x, win->y+7), vec2(win->x+win->w, win->y+8), Gray);
-    VRMDrawRect(vec2(win->x+win->w-7, win->y+1), vec2(win->x+win->w-1, win->y+7), Red);
+    if (!(win->flags & WIN_UNCLOSABLE)) {
+        VRMDrawRect(vec2(win->x+win->w-7, win->y+1), vec2(win->x+win->w-1, win->y+7), Red);
+    }
     WinPrint(win->x, win->y+1, win->title);
 
     for (U32 i = 0; i < win->w; ++i) {

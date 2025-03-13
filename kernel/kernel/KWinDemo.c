@@ -5,61 +5,23 @@
 #include <kws/win.h>
 #include <stdarg.h>
 
+static Bool active = True;
+
 static U0 SpawnerUpd(Ptr this) {
     Win *win = this;
-    PielPixel(&win->canvas, RandomU() % win->w, RandomU() % win->h, RandomU()%16);
-}
-
-static PielCanvas *canv;
-
-static U0 RenderWG() {
-    U32 cc = 0;
-    U32 y = TTYGSY;
-    for (Char c;PTermRead(&VTerm, 1, &c, 1);) {
-        U32 x = cc * 6 + TTYGSX;
-        PielBox(canv, x, y, 6, 6, Black);
-        for (U32 i = 0; i < 5; ++i) {
-            for (U32 j = 0; j < 5; ++j) {
-                Bool bit = (TTYFont[c][i] >> (4-j)) & 1;
-                PielPixel(canv, x+j, y+i, bit ? White : Black);
-            }
-        }
-        ++cc;
+    WPrintF(win, 0, 0, "Exit");
+    if (win->inp.mouse_left && MouseX >= win->x && MouseY >= win->y + 7 && MouseX <= win->w + 4*6 && MouseY <= win->y + 6 + 7) {
+        active = False;
     }
-}
-
-static U0 WPrintF(Win *win, U32 x, U32 y, String format, ...) {
-    TTerm.render();
-    TTYGSX = x;
-    TTYGSY = y;
-    canv = &win->canvas;
-    Ptr rend = TTerm.render;
-    TTerm.render = RenderWG;
-
-    va_list args;
-    va_start(args, format);
-    VPrintF(format, args);
-    va_end(args);
-
-    TTerm.render();
-    TTerm.render = rend;
-}
-
-static U0 TimeUpd(Ptr this) {
-    Win *win = this;
-    WPrintF(win, 0, 0, "%d:%d:%d", SystemTime.hour, SystemTime.minute, SystemTime.second);
+    PielPixel(&win->canvas, RandomU() % win->w, RandomU() % win->h, RandomU()%16);
 }
 
 U0 KWinDemo() {
     Win spawner;
-    spawner = WinMake(10, 10, 60, 100, "Spawner");
+    spawner = WinMake(10, 10, 60, 100, "Spawner", 0);
     spawner.update = SpawnerUpd;
-    Win time;
-    time = WinMake(200, 10, 8*6, 6, "Time");
-    time.update = TimeUpd;
     WinSpawn(&spawner);
-    WinSpawn(&time);
-    for(;;) {
+    while (active) {
         VRMClear(DBlue);
         WindowsUpdate();
         SleepM(100);

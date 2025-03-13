@@ -1,20 +1,17 @@
 #include <lib/IO/TTY.h>
 
-U32 TTYCursor = 0;
-U32 TTYGSX = 0;
-U32 TTYGSY = 0;
-PTerm VTerm;
-TTY TTerm;
-
 U0 TTYInit() {
-    VTerm = PTermInit(2048);
+    for (U8 i = 0; i < 4; ++i) {
+        VTerms[i] = PTermInit(2048);
+    }
+    VTerm = &VTerms[0];
     TTerm.width = 320 / 6;
     TTerm.height = 200 / 6;
     TTerm.render = TTYRenderG;
 }
 U0 TTYClear() {
     TTYCursor = 0;
-    PTermWrite(&VTerm, 1, (Char[]){ ASCIIPCtrl }, 1);
+    PTermWrite(VTerm, 1, (Char[]){ ASCIIPCtrl }, 1);
     TTerm.render();
 }
 U0 TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
@@ -22,7 +19,7 @@ U0 TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
 }
 
 inline U0 TTYPrintC(Char c) {
-    while (!PTermWrite(&VTerm, 1, &c, 1)) {
+    while (!PTermWrite(VTerm, 1, &c, 1)) {
         TTerm.render();
     }
 }
@@ -196,58 +193,6 @@ U0 TTYUPrintDecI(I32 a) {
     TTYUPrintDec(a);
 }
 
-U32 KBTimeout = 500;
-U32 KBRate = 200;
-
-static Bool lk[256] = {0};
-static U32 bufferi = 0;
-static U32 time = 0;
-static U32 timea = 0;
-static U8 buf[2048];
-
-U0 TTYInput() {
-    for (U16 key = 0; key < 256; ++key) {
-        if (KBState.keys[key]) {
-            if (!lk[key] || ((PITTime - time >= KBTimeout) && (PITTime - timea >= KBRate))) {
-                if (!lk[key]) {
-                    time = PITTime;
-                }
-                else {
-                    timea = PITTime;
-                }
-                lk[key] = True;
-                if (key == '\b') {
-                    if (bufferi) {
-                        buf[bufferi--] = 0;
-                        TTYUPrintC('\b');
-                        TTerm.render();
-                    }
-                }
-                else if (key == '\x1b') return;
-                else if (key == '\r') {
-                    TTYUPrintC('\n');
-                    TTerm.render();
-                    PTermWrite(&VTerm, 0, buf, bufferi);
-                    bufferi = 0;
-                }
-                else if (key < 0x80 || (key >= 0xB1 && key <= 0xD0)) {
-                    if (KBState.Shift && !(key >= 0xB1 && key <= 0xD0)) {
-                        key = UpperTo(key);
-                    }
-                    if (bufferi < 2048 - 1) {
-                        buf[bufferi++] = key;
-                        TTYUPrintC(key);
-                        TTerm.render();
-                    }
-                }
-            }
-        }
-        else if (!KBState.keys[key] && lk[key]) {
-            lk[key] = False;
-        }
-    }
-}
-
 U0 VPrintF(String format, va_list args) {
     U8 n = 4;
     while (*format) {
@@ -331,195 +276,4 @@ U0 PrintF(String format, ...) {
     va_start(args, format);
     VPrintF(format, args);
     va_end(args);
-}
-
-U0 TTYRenderGS() {
-    U32 cc = 0;
-    U32 y = TTYGSY;
-    for (Char c;PTermRead(&VTerm, 1, &c, 1);) {
-        U32 x = cc * 6 + TTYGSX;
-        VRMDrawRect(vec2(x, y), vec2(x+6, y+6), 0);
-        for (U32 i = 0; i < 5; ++i) {
-            for (U32 j = 0; j < 5; ++j) {
-                Bool bit = (TTYFont[c][i] >> (4-j)) & 1;
-                VRMPSet(x+j, y+i, bit ? 15 : 0);
-            }
-        }
-        ++cc;
-    }
-}
-U0 TTYRenderG() {
-    static U32 fg = White;
-    static U32 bg = Black;
-    static Bool raw = False;
-    for (Char c;PTermRead(&VTerm, 1, &c, 1);) {
-        if (TTYCursor >= TTerm.width*TTerm.height) {
-            MemCpy(VRM, VRM+320*6, 64000-320*6);
-            for (U32 i = TTerm.width * TTerm.height - TTerm.width; i < TTerm.width * TTerm.height; ++i) {
-                TTYCursor = i;
-                U32 x = (TTYCursor % TTerm.width) * 6;
-                U32 y = (TTYCursor / TTerm.width) * 6 + 1;
-                VRMDrawRect(vec2(x, y), vec2(x+6, y+6), bg);
-            }
-            TTYCursor = TTerm.width * (TTerm.height - 1);
-        }
-        if (raw) {
-            U32 x = (TTYCursor % TTerm.width) * 6;
-            U32 y = (TTYCursor / TTerm.width) * 6 + 1;
-            VRMDrawRect(vec2(x, y), vec2(x+6, y+6), bg);
-            for (U32 i = 0; i < 5; ++i) {
-                for (U32 j = 0; j < 5; ++j) {
-                    Bool bit = (TTYFont[c][i] >> (4-j)) & 1;
-                    VRMPSet(x+j, y+i, bit ? fg : bg);
-                }
-            }
-            ++TTYCursor;
-            raw = False;
-            continue;
-        }
-        switch (c) {
-            case '\r': {
-                TTYCursor += TTerm.width;
-                break;
-            }
-            case '\b': {
-                TTYCursor -= 1;
-                U32 x = (TTYCursor % TTerm.width) * 6;
-                U32 y = (TTYCursor / TTerm.width) * 6 + 1;
-                VRMDrawRect(vec2(x, y), vec2(x+6, y+6), bg);
-                break;
-            }
-            case '\n': {
-                TTYCursor += TTerm.width - (TTYCursor % TTerm.width);
-                break;
-            }
-            case '\t': {
-                TTYCursor += 4 - (TTYCursor % 4);
-                break;
-            }
-            case 7: {
-                BeepSPC(40, 50);
-                break;
-            }
-            case ASCIIPF1: {
-                PTermRead(&VTerm, 1, &c, 1);
-                fg = c - ASCIIPCBlack;
-                break;
-            }
-            case ASCIIPF2: {
-                PTermRead(&VTerm, 1, &c, 1);
-                bg = c - ASCIIPCBlack;
-                break;
-            }
-            case ASCIIPCtrl: {
-                VRMDrawRect(vec2(0, 0), vec2(TTerm.width * 6, TTerm.height * 6), bg);
-                TTYCursor = 0;
-                break;
-            }
-            case ASCIIPNextRaw: {
-                raw = True;
-                break;
-            }
-            case ASCIIPHome: {
-                TTYCursor = 0;
-                break;
-            }
-            default: {
-                U32 x = (TTYCursor % TTerm.width) * 6;
-                U32 y = (TTYCursor / TTerm.width) * 6 + 1;
-                VRMDrawRect(vec2(x, y), vec2(x+6, y+6), bg);
-                for (U32 i = 0; i < 5; ++i) {
-                    for (U32 j = 0; j < 5; ++j) {
-                        Bool bit = (TTYFont[c][i] >> (4-j)) & 1;
-                        VRMPSet(x+j, y+i, bit ? fg : bg);
-                    }
-                }
-                ++TTYCursor;
-                break;
-            }
-        }
-    }
-}
-U0 TTYRenderT() {
-    static U32 fg = White;
-    static U32 bg = Black;
-    static Bool raw = False;
-    for (Char c;PTermRead(&VTerm, 1, &c, 1);) {
-        if (TTYCursor >= TTerm.width*TTerm.height) {
-            MemCpy(vga, vga+80, 4000-80);
-            for (U32 i = 80 * 25 - 80; i < 80 * 25; ++i) {
-                vga[i] = 0;
-            }
-            TTYCursor = TTerm.width * (TTerm.height - 1);
-        }
-        if (raw) {
-            U32 x = (TTYCursor % TTerm.width);
-            U32 y = (TTYCursor / TTerm.width);
-            VgaPSet(x, y, c, VgaColorGet(fg, bg));
-            ++TTYCursor;
-            raw = False;
-            continue;
-        }
-        switch (c) {
-            case '\r': {
-                TTYCursor += TTerm.width;
-                break;
-            }
-            case '\b': {
-                TTYCursor -= 1;
-                U32 x = (TTYCursor % TTerm.width);
-                U32 y = (TTYCursor / TTerm.width);
-                VgaPSet(x, y, ' ', VgaColorGet(fg, bg));
-                break;
-            }
-            case '\n': {
-                TTYCursor += TTerm.width - (TTYCursor % TTerm.width);
-                break;
-            }
-            case '\t': {
-                TTYCursor += 4 - (TTYCursor % 4);
-                break;
-            }
-            case 7: {
-                BeepSPC(40, 50);
-                break;
-            }
-            case ASCIIPF1: {
-                PTermRead(&VTerm, 1, &c, 1);
-                fg = c - ASCIIPCBlack;
-                break;
-            }
-            case ASCIIPF2: {
-                PTermRead(&VTerm, 1, &c, 1);
-                bg = c - ASCIIPCBlack;
-                break;
-            }
-            case ASCIIPCtrl: {
-                while (TTYCursor < TTerm.width * TTerm.height) {
-                    vga[TTYCursor] = 0;
-                }
-                TTYCursor = 0;
-            }
-            case ASCIIPNextRaw: {
-                raw = True;
-                break;
-            }
-            default: {
-                U32 x = (TTYCursor % TTerm.width);
-                U32 y = (TTYCursor / TTerm.width);
-                VgaPSet(x, y, c, VgaColorGet(fg, bg));
-                ++TTYCursor;
-                break;
-            }
-        }
-    }
-}
-U0 TTYRenderS() {
-    for (Char c;PTermRead(&VTerm, 1, &c, 1);) {
-        if (c == ASCIIPCtrl) {
-            SerialWrite('\x1b');SerialWrite('[');SerialWrite('2');SerialWrite('J');
-            SerialWrite('\x1b');SerialWrite('[');SerialWrite('H');
-        }
-        SerialWrite(c);
-    }
 }

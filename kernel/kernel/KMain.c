@@ -74,6 +74,8 @@ U0 KernelMain() {
     VgaInit();
     TTYClear();
     TTerm.render = TTYRenderS;
+    // TTerm.width = 80;
+    // TTerm.height = 25;
     TTYCursor = 0;
     KDogWatchInit();
     GDTInit();
@@ -118,15 +120,15 @@ U0 KernelMain() {
     
     // Drivers
     KDogWatchLog("Setuping drivers", False);
-    PCIInit();
-    PCIDevicesCheck();
-    KDogWatchLog("Initialized \"PCI\"", False);
-    USBInit();
-    KDogWatchLog("Initialized \"USB\"", False);
-    SerialInit();
-    KDogWatchLog("Initialized \x9Bserial\x9C", False);
-    // RTL8139Init();
-    // KDogWatchLog("Initialized \"rtl8139\"", False);
+    // PCIInit();
+    // PCIDevicesCheck();
+    // KDogWatchLog("Initialized \"PCI\"", False);
+    // USBInit();
+    // KDogWatchLog("Initialized \"USB\"", False);
+    // SerialInit();
+    // KDogWatchLog("Initialized \x9Bserial\x9C", False);
+    // // RTL8139Init();
+    // // KDogWatchLog("Initialized \"rtl8139\"", False);
     PS2Init();
     KDogWatchLog("Initialized \"ps/2\"", False);
     KBInit();
@@ -190,19 +192,34 @@ U0 KernelMain() {
 
 extern Bool VRMState;
 
+static U0 TimeUpd(Ptr this) {
+    Win *win = this;
+    WPrintF(win, 0, 0, "%d:%d:%d    ", SystemTime.hour, SystemTime.minute, SystemTime.second);
+}
+
 U0 mainloop() {
-    Char buffer[50] = {0};
     KDogWatchPEnd(0);
     VRMClear(DBlue);
+    Win time;
+    time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE | WIN_UNCLOSABLE);
+    time.update = TimeUpd;
+    Char buffer[50] = {0};
+    TTYUPrint("$*1$!A\\$ $!F");
+    
+    WinSpawn(&time);
     for (;;) {
         TTerm.render();
-        TTYUPrint("$*1$!A\\$ $!F");
-        KBRead(buffer, 50);
+        if (VTerm->in.count) {
+            KBRead(buffer, 50);
 
-        termrun(buffer);
-        TTYUPrintC('\n');
-        MemSet(buffer, 0, 50);
+            termrun(buffer);
+            TTYUPrintC('\n');
+            MemSet(buffer, 0, 50);
+            TTYUPrint("$*1$!A\\$ $!F");
+        }
         TTerm.render();
+        // WindowsUpdate();
+        SleepM(10);
     }
 }
 U0 programtest()

@@ -73,7 +73,7 @@ U0 KernelMain() {
     // TTYSwitch(TTYC_VGA);
     VgaInit();
     TTYClear();
-    TTerm.render = TTYRenderS;
+    TTYSwitch(3);
     // TTerm.width = 80;
     // TTerm.height = 25;
     TTYCursor = 0;
@@ -82,7 +82,7 @@ U0 KernelMain() {
     IDTInit();
     PICMap();
     PITInit();
-    KDogWatchLog("\x07Switching to 320x200", False);
+    KDogWatchLog("Switching to 320x200", False);
     VgaGraphicsSet();
     // VESAInit();
     TTYCursor = 0;
@@ -164,10 +164,11 @@ U0 KernelMain() {
     // KDogWatchLog("Initialized \"ufs\"", False);
 
     KDogWatchLog("System Initialized", False);
-    TTerm.render = TTYRenderG;
-    KDogWatchLog("Entering shell\x07", False);
+    KDogWatchLog("Entering shell", False);
     // TTYClear();
     // TTYCursor = 0;
+
+    TTYSwitch(0);
 
     SleepM(500);
     U32 tid1 = TaskNew((U32)backgroundloop, 0x10, 8);
@@ -198,13 +199,13 @@ static U0 TimeUpd(Ptr this) {
 }
 
 U0 mainloop() {
-    KDogWatchPEnd(0);
-    VRMClear(DBlue);
+    TTYClear();
+    TTYClear();
     Win time;
     time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE | WIN_UNCLOSABLE);
     time.update = TimeUpd;
     Char buffer[50] = {0};
-    TTYUPrint("$*1$!A\\$ $!F");
+    TTYUPrint("$!A\\$ $!F");
     
     WinSpawn(&time);
     for (;;) {
@@ -215,10 +216,10 @@ U0 mainloop() {
             termrun(buffer);
             TTYUPrintC('\n');
             MemSet(buffer, 0, 50);
-            TTYUPrint("$*1$!A\\$ $!F");
+            TTYUPrint("$!A\\$ $!F");
         }
         TTerm.render();
-        // WindowsUpdate();
+        WindowsUpdate();
         SleepM(10);
     }
 }

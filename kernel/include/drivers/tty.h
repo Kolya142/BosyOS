@@ -8,6 +8,8 @@
 #include <drivers/sys/beep.h>
 #include <lib/IO/PTY.h>
 
+U0 TTYSwitch(U32 id);
+
 U0 TTYRenderGS();
 U0 TTYRenderG();
 U0 TTYRenderT();
@@ -32,7 +34,7 @@ extern U32 TTYCursor;
 extern PTerm *VTerm;
 extern PTerm VTerms[4];
 extern U32 TTermID;
-extern U8 TTYBuffers[4][8192];
+extern U8 *TTYBuffers[4];
 extern U32 TTYBuffersIndex[4];
 extern TTY TTerm;
 extern unsigned char TTYFont[256][5];

@@ -11,7 +11,7 @@ TTY TTerm;
 U32 TTermID = 0;
 Bool TTYCanonical = True;
 
-U8 TTYBuffers[4][8192];
+U8 *TTYBuffers[4];
 U32 TTYBuffersIndex[4];
 
 U32 KBTimeout = 500;
@@ -21,21 +21,25 @@ static Bool lk[256] = {0};
 static U32 bufferi = 0;
 static U32 time = 0;
 static U32 timea = 0;
-static U8 buf[2048];
+static U8 bufs[4][2048] = {0};
 
 U0 TTYSwitch(U32 id) {
-    if (id > sizeof(VTerms)/sizeof(VTerms[0])) {
+    if (id >= sizeof(VTerms)/sizeof(VTerms[0])) {
         return;
     }
-
-    TTYClear();
-    TTYCursor = 0;
-    TTerm.render();
     TTermID = id;
     VTerm = &VTerms[id];
-    PTermWrite(VTerm, 1, TTYBuffers[id], TTYBuffersIndex[id]);
-    MemSet(TTYBuffers[id], 0, 8192);
-    TTYBuffersIndex[id] = 0;
+    
+    TTYCursor = 0;
+    PTermWrite(VTerm, 1, (Char[]){ ASCIIPCtrl }, 1);
+    
+    for (U32 i = 0; i < TTYBuffersIndex[id]; ++i) {
+        PTermWrite(VTerm, 1, &TTYBuffers[id][i], 1);
+    }
+    // TTYCanonical = False;
+    
+    TTerm.render();
+    // TTYCanonical = True;
 }
 
 U0 TTYInput() {
@@ -51,7 +55,7 @@ U0 TTYInput() {
                 lk[key] = True;
                 if (key == '\b') {
                     if (bufferi) {
-                        buf[bufferi--] = 0;
+                        bufs[TTermID][bufferi--] = 0;
                         TTYUPrintC('\b');
                         TTerm.render();
                     }
@@ -64,15 +68,15 @@ U0 TTYInput() {
                 else if (key == '\r') {
                     TTYUPrintC('\n');
                     TTerm.render();
-                    PTermWrite(VTerm, 0, buf, bufferi);
+                    PTermWrite(VTerm, 0, bufs[TTermID], bufferi);
                     bufferi = 0;
                 }
                 else if (key < 0x80 || (key >= 0xB1 && key <= 0xD0)) {
                     if (KBState.Shift && !(key >= 0xB1 && key <= 0xD0)) {
                         key = UpperTo(key);
                     }
-                    if (bufferi < sizeof(buf) - 1) {
-                        buf[bufferi++] = key;
+                    if (bufferi < sizeof(bufs[TTermID]) - 1) {
+                        bufs[TTermID][bufferi++] = key;
                         TTYUPrintC(key);
                         TTerm.render();
                     }

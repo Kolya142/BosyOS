@@ -3,6 +3,7 @@
 U0 TTYInit() {
     for (U8 i = 0; i < 4; ++i) {
         VTerms[i] = PTermInit(2048);
+        TTYBuffers[i] = MAlloc(2048);
     }
     VTerm = &VTerms[0];
     TTerm.width = 320 / 6;
@@ -10,15 +11,24 @@ U0 TTYInit() {
     TTerm.render = TTYRenderG;
 }
 U0 TTYClear() {
+    TTerm.render();
+
     TTYCursor = 0;
     PTermWrite(VTerm, 1, (Char[]){ ASCIIPCtrl }, 1);
     TTerm.render();
+
+    MemSet(TTYBuffers[TTermID], 0, sizeof(TTYBuffers[TTermID]));
+    TTYBuffersIndex[TTermID] = 0;
 }
 U0 TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
     TTYPrintC(c);
 }
 
 inline U0 TTYPrintC(Char c) {
+    if (TTerm.render == TTYRenderG) { // TODO: make it more abstract
+        TTYBuffers[TTermID][TTYBuffersIndex[TTermID]] = c;
+        TTYBuffersIndex[TTermID] = (TTYBuffersIndex[TTermID] + 1) % 2048;
+    }
     while (!PTermWrite(VTerm, 1, &c, 1)) {
         TTerm.render();
     }
@@ -30,6 +40,10 @@ U0 TTYUPrintC(Char c) {
     static U8   ldv = 0    ;
     static U8   lbd = 0    ;
     static U8   lbp = 0    ;
+    if (!TTYCanonical) {
+        TTYPrintC(c);
+        return;
+    }
     if (lbs) {
         if (c == '\\') 
             TTYPrintC('\\');
@@ -137,7 +151,10 @@ U0 SerialPrintF(String format, ...) {
     TTerm.render();
     Ptr rend = TTerm.render;
     TTerm.render = TTYRenderS;
-    PrintF(format);
+    va_list args;
+    va_start(args, format);
+    VPrintF(format, args);
+    va_end(args);
     TTYUPrintC('\n');
     TTerm.render();
     TTerm.render = rend;

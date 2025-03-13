@@ -37,11 +37,11 @@ U0 KDogWatchInit() {
 }
 
 U0 KDogWatchLog(const String str, Bool panic) {
-    TTYUPrint("$!A[DogWatch]$!F:$!E");
-    TTYUPrint(str);
-    TTYUPrint("$!C at $!B");
-    TTYUPrintHex(KDogWatchTicks);
-    TTYUPrint("$!F\n");
+    U8 t = TTermID;
+    TTYSwitch(3);
+    PrintF("$!A[DogWatch]$!F:$!E%s$!C at $!B%X$!F\n", str, PITTime);
+    TTYSwitch(t);
+    SerialPrintF("[DogWatch]:%s at %X", str, PITTime);
     if (panic) {
         KPanic("KDogWatchLog panic", True);
     }

@@ -74,8 +74,8 @@ U0 CHelp() {
         "$!5Features$!F:\n"
         "Use '$!7&$!F' at beginning of line to run in new process\n"
         "All Commands: esc-exit\n"
-        "$!Asound$!F - $!Balt$!F-play, $!Blshift$!F-save, $!Brshift$!F-load\n"
-        "$!Awsave$!F/$!Awget$!F uses disk"
+        "notes:\n"
+        "change tty with keys $!BF1$!F-$!BF4$!F"
     );
 }
 U0 CCls() {

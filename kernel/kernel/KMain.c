@@ -117,8 +117,8 @@ U0 KernelMain() {
 
     KDogWatchLog("Initialized \x9Bpaging\x9C", False);
 
-    // KDogWatchLog("Setuping fpu", False); // FIXME
-    // FPUBox();
+    KDogWatchLog("Setuping fpu", False);
+    FPUBox();
     
     // Drivers
     KDogWatchLog("Setuping drivers", False);
@@ -206,7 +206,7 @@ U0 cmdloop() {
 U0 mainloop() {
     TTYClear();
     Win time;
-    time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE | WIN_UNCLOSABLE);
+    time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE);
     time.update = TimeUpd;
     // TaskNew((U32)cmdloop, 0x10, 0x08);
     

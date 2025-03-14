@@ -18,7 +18,7 @@ static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30,
 
 INT_DEF(PITHandler) {
     PITTime++;
-    if (PITTime % 16 == 0) {
+    if (!(PITTime % 16)) {
         KDogWatchTick();
 
         if (TaskTail && TaskHead) {
@@ -33,7 +33,7 @@ INT_DEF(PITHandler) {
                 // asmV("fxrstor (%0)" :: "r"(TaskTail->fpu));
                 MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
             }
-            SerialPrintF("EIP: %x, Task: %d", regs->eip, TaskTail->id);
+            // SerialPrintF("EIP: %x, Task: %d", regs->eip, TaskTail->id);
         }
         WindowsUpdate();
 

@@ -56,7 +56,7 @@ U0 TTYInput() {
                 if (key == '\b') {
                     if (bufferi) {
                         bufs[TTermID][bufferi--] = 0;
-                        TTYUPrintC('\b');
+                        TTYPrintC('\b');
                         TTerm.render();
                     }
                 }
@@ -66,7 +66,7 @@ U0 TTYInput() {
                 else if (key == ASCIIPF4) TTYSwitch(3);
                 else if (key == '\x1b') return;
                 else if (key == '\r') {
-                    TTYUPrintC('\n');
+                    TTYPrintC('\n');
                     TTerm.render();
                     PTermWrite(VTerm, 0, bufs[TTermID], bufferi);
                     bufferi = 0;
@@ -77,7 +77,7 @@ U0 TTYInput() {
                     }
                     if (bufferi < sizeof(bufs[TTermID]) - 1) {
                         bufs[TTermID][bufferi++] = key;
-                        TTYUPrintC(key);
+                        TTYPrintC(key);
                         TTerm.render();
                     }
                 }

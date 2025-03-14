@@ -23,7 +23,6 @@ U0 KWinDemo() {
     WinSpawn(&spawner);
     while (active) {
         VRMClear(DBlue);
-        WindowsUpdate();
         SleepM(100);
     }
 }

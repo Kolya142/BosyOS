@@ -9,6 +9,12 @@
 #include <arch/x86/sys/sys.h>
 #include <lib/IO/TTY.h>
 
+struct stackframe {
+    struct stackframe* ebp;
+    U32 eip;
+};
+  
+
 U0 KPanic(const String msg, Bool reboot)
 {
     for (U8 i = 0; i < 255; ++i) {
@@ -63,6 +69,13 @@ U0 KPanic(const String msg, Bool reboot)
         TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
         TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
         TTYUPrint("\n");
+    }
+    PrintF("Stack trace:\n");
+    struct stackframe *stk;
+    asmv("movl %%ebp, %0" : "=r"(stk));
+    for (U32 frame = 0; stk && stk->eip && frame < 10; ++frame) {
+        PrintF("<- %p\n", stk->eip);
+        stk = stk->ebp;
     }
     while (PITTime - start < 15000) {
         {

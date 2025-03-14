@@ -96,6 +96,9 @@ U0 WinDraw(Win *win) {
     VRMState = False;
     VRMDrawRect(vec2(win->x, win->y), vec2(win->x+win->w, win->y+7), White);
     VRMDrawRect(vec2(win->x, win->y+7), vec2(win->x+win->w, win->y+8), Gray);
+    VRMDrawRect(vec2(win->x - 1, win->y), vec2(win->x, win->y + win->h + 1 + 7), White);
+    VRMDrawRect(vec2(win->x + win->w, win->y), vec2(win->x + win->w + 1, win->y + win->h + 1 + 7), Gray);
+    VRMDrawRect(vec2(win->x - 1, win->y + win->h + 1 + 7), vec2(win->x + win->w + 1, win->y + win->h + 1 + 1 + 7), Gray);
     if (!(win->flags & WIN_UNCLOSABLE)) {
         VRMDrawRect(vec2(win->x+win->w-7, win->y+1), vec2(win->x+win->w-1, win->y+7), Red);
     }

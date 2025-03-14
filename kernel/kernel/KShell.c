@@ -123,32 +123,30 @@ U0 CTime() {
 }
 U0 CRand() {
     Bool lk = False;
-    I16 note = 60;
+    F32 tone = (RandomU()%50)+20;
+    F32 base = 440;
     KDogWatchPEnd(0);
     U32 c = TTYCursor;
-    U32 v = 50542;
+    U32 v = RandomU();
     for (U32 i = 0; !KBState.keys['\x1b']; ++i) {
-        note += ((I32)RandomU() % 6) - 3;
-        if (note < 20) note = 20;
-        if (note > 150) note = 150;
-        U16 dur = RandomU() % 150 + 50;
-        BeepSPC(note, dur);
-        v = calculate_shash(v * 50239 + note ^ dur);
-        if (RandomU() % 5 <= 2) SleepM(RandomU() % 200 + 100);
-        else if (RandomU() % 4 <= 1) {
-            BeepSPC(note + 4, dur);
-            BeepSPC(note + 7, dur);
+        if (v % 7 > 1) {
+            BeepSPC(tone, base + 50);
         }
-        else if (RandomU() % 5 == 1) {
-            BeepSPC(note + 4, dur);
-            BeepSPC(note + 7, dur);
-            BeepSPC(note + 11, dur);
-            BeepSPC(note + 13, dur);
+        tone = tone * 0.9 + base * 0.1;
+        tone += (F32)(RandomU() % 40) - 20.;
+        tone = tone * 0.6 + (F32)(RandomU()%50+20) * 0.4;
+        base = base * 0.4 + (F32)(RandomU()%50+20) * 0.6;
+        if (!(i % 6)) {
+            tone += 20;
         }
-        WordGen();
-        if (!(i % 5))
-            TTYCursor = c;
-        SleepM(1000/120); // 120gh
+        if (lk) {
+            BeepSPC(tone-10, base + 50);
+        }
+        if (base < 40) {
+            lk = !lk;
+        }
+        v = RandomU();
+        SleepM(1000/120); // 120hz
     }
 }
 U0 CGen() {
@@ -231,100 +229,96 @@ U0 CSound() {
         SleepM(3);
     }
 }
-// U0 CSnake() {
-//     KDogWatchPEnd(0);
-//     U32 tail[5] = {0};
-//     tail[0] = TTerm.width * 10 + 39;
-//     tail[1] = TTerm.width * 10 + 38;
-//     tail[2] = TTerm.width * 10 + 37;
-//     tail[3] = TTerm.width * 10 + 36;
-//     tail[4] = TTerm.width * 10 + 35;
-//     U32 snake = TTerm.width * 10 + 40;
-//     U32 apple = RandomU() % 1300 + 500;
-//     U32 score = 0;
-//     U8 dir = 4;
-//     TTYCursor = 0;
-//     TTYlbg = White;
-//     for (U32 i = 0; i < TTerm.width * TTerm.height; i++) {
-//         TTYPuter(' ');
-//         ++TTYCursor;
-//     }
-//     Bool game = True;
-//     while (game) {
-//         if (KBState.keys['w']) {
-//             if (dir != 1)
-//                 BeepSPC(54, 30);
-//             dir = 1;
-//         }
-//         else if (KBState.keys['a']) {
-//             if (dir != 2)
-//                 BeepSPC(54, 30);
-//             dir = 2;
-//         }
-//         else if (KBState.keys['s']) {
-//             if (dir != 3)
-//                 BeepSPC(54, 30);
-//             dir = 3;
-//         }
-//         else if (KBState.keys['d']) {
-//             if (dir != 4)
-//                 BeepSPC(54, 30);
-//             dir = 4;
-//         }
+U0 CSnake() {
+    KDogWatchPEnd(0);
+    U32 tail[5] = {0};
+    tail[0] = TTerm.width * 10 + 39;
+    tail[1] = TTerm.width * 10 + 38;
+    tail[2] = TTerm.width * 10 + 37;
+    tail[3] = TTerm.width * 10 + 36;
+    tail[4] = TTerm.width * 10 + 35;
+    U32 snake = TTerm.width * 10 + 40;
+    U32 apple = RandomU() % 1300 + 500;
+    U32 score = 0;
+    U8 dir = 4;
+    TTYCursor = 0;
+    TTYClear();
+    Bool game = True;
+    while (game) {
+        if (KBState.keys['w']) {
+            if (dir != 1)
+                BeepSPC(54, 30);
+            dir = 1;
+        }
+        else if (KBState.keys['a']) {
+            if (dir != 2)
+                BeepSPC(54, 30);
+            dir = 2;
+        }
+        else if (KBState.keys['s']) {
+            if (dir != 3)
+                BeepSPC(54, 30);
+            dir = 3;
+        }
+        else if (KBState.keys['d']) {
+            if (dir != 4)
+                BeepSPC(54, 30);
+            dir = 4;
+        }
 
-//         for (U8 i = 4; i >= 1; --i) {
-//             TTYCursor = tail[i];
-//             TTYRawPrint(' ', White, White);
-//             tail[i] = tail[i-1];
-//         }
-//         tail[0] = snake;
+        for (U8 i = 4; i >= 1; --i) {
+            TTYCursor = tail[i];
+            TTYRawPrint(' ', White, White);
+            tail[i] = tail[i-1];
+        }
+        tail[0] = snake;
 
-//         if (snake == apple) {
-//             score++;
-//             vga[apple] = 0xF02E;
-//             apple = RandomU() % 1300 + 500;
-//             BeepSPC(50, 70);
-//             BeepSPC(30, 40);
-//             BeepSPC(50, 70);
-//         }
+        if (snake == apple) {
+            score++;
+            vga[apple] = 0xF02E;
+            apple = RandomU() % 1300 + 500;
+            BeepSPC(50, 70);
+            BeepSPC(30, 40);
+            BeepSPC(50, 70);
+        }
 
-//         if (dir == 1      && ((snake - TTerm.width) < 0xFFFFFFF)) {
-//             snake -= TTerm.width;
-//         }
-//         else if (dir == 2 && (snake - 1) % TTerm.width != TTerm.width - 1) {
-//             snake -= 1;
-//         }
-//         else if (dir == 3 && ((snake + TTerm.width) < TTerm.width * TTerm.height) )  {
-//             snake += TTerm.width;
-//         }
-//         else if (dir == 4 && ((snake + 1) % TTerm.width != 0)) {
-//             snake += 1;
-//         }
+        if (dir == 1      && ((snake - TTerm.width) < 0xFFFFFFF)) {
+            snake -= TTerm.width;
+        }
+        else if (dir == 2 && (snake - 1) % TTerm.width != TTerm.width - 1) {
+            snake -= 1;
+        }
+        else if (dir == 3 && ((snake + TTerm.width) < TTerm.width * TTerm.height) )  {
+            snake += TTerm.width;
+        }
+        else if (dir == 4 && ((snake + 1) % TTerm.width != 0)) {
+            snake += 1;
+        }
 
-//         for (U8 i = 0; i < 5; ++i) {
-//             TTYCursor = tail[i];
-//             TTYRawPrint('#', Black, White);
-//             // if (tail[i] == snake) {
-//             //     for (U32 i = 0; i < 2000; ++i) {
-//             //         vga[i] ^= 0xFF00;
-//             //     }
-//             //     TTYCursor = 0;
-//             //     TTYUPrint("Game over!\n");
-//             //     game = False;
-//             //     break;
-//             // }
-//         }
-//         if (KBState.keys['\x1b']) {
-//             game = False;
-//         }
-//         TTYCursor = apple;
-//         TTYRawPrint(' ', Red, Red);
-//         TTYCursor = 80 / 2 - 4 / 2;
-//         TTYUPrintHex(score);
-//         SleepM(100);
-//     }
-//     TTYUPrint("$!F$*0");
-// }
+        for (U8 i = 0; i < 5; ++i) {
+            TTYCursor = tail[i];
+            TTYRawPrint('#', Black, White);
+            // if (tail[i] == snake) {
+            //     for (U32 i = 0; i < 2000; ++i) {
+            //         vga[i] ^= 0xFF00;
+            //     }
+            //     TTYCursor = 0;
+            //     TTYUPrint("Game over!\n");
+            //     game = False;
+            //     break;
+            // }
+        }
+        if (KBState.keys['\x1b']) {
+            game = False;
+        }
+        TTYCursor = apple;
+        TTYRawPrint(' ', Red, Red);
+        TTYCursor = 80 / 2 - 4 / 2;
+        TTYUPrintHex(score);
+        SleepM(100);
+    }
+    TTYUPrint("$!F$*0");
+}
 U0 CPong() {
     KDogWatchPEnd(0);
     I32 p1 = 10;
@@ -771,11 +765,11 @@ U0 termrun(const String cmd) {
     else if (!StrCmp(cmd, "stat")) {
         Char cpu[49];
         CpuNameGet(cpu);
-        PrintF("Main file: $!A%s$!F\nBuild time: $!B%s$!F\nBuilder: $!C%s$!F\n---------------\n", __FILE__, __DATE__ " $!d-$!B " __TIME__, __BUILD_OS__);
+        PrintF("Current file: $!A%s$!F\nBuild time: $!B%s$!F\nBuilder: $!C%s$!F\n---------------\n", __FILE__, __DATE__ " $!d-$!B " __TIME__, __BUILD_OS__);
         PrintF("Width: %d, Height: %d\n", TTerm.width, TTerm.height);
         PrintF("CPU: %s\n", cpu);
-        U16 mem = MemorySize();
-        PrintF("RAM: 0x%2xKB", mem);
+        U16 mem = MemorySize() / 1024;
+        PrintF("RAM: %dKB", mem);
     }
     else if (!StrCmp(cmd, "pass")) {
         PrintF("Enter password: $!A\\$$!0");
@@ -989,7 +983,7 @@ U0 termrun(const String cmd) {
         CSound();
     }
     else if (!StrCmp(cmd, "snake")) {
-        // CSnake();
+        CSnake();
     }
     else if (!StrCmp(cmd, "pong")) {
         CPong();

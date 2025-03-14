@@ -7,19 +7,36 @@
 #include <lib/memory/MemLib.h>
 #include <lib/time/Time.h>
 #include <lib/IO/TTY.h>
+#include <kws/win.h>
 
 volatile U32 PITTime = 0;
 volatile U32 BosyTime = 0;
-static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 extern Bool VRMState;
 
+static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
 INT_DEF(PITHandler) {
-    static volatile U8 timer = 0;
     PITTime++;
-    timer++;
-    if (timer % 10 == 0) {
+    if (PITTime % 16 == 0) {
         KDogWatchTick();
+
+        if (TaskTail && TaskHead) {
+            if (!(TaskTail->flags & TASK_WORKING)) {
+                TaskTail->flags |= TASK_WORKING;
+                MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
+            }
+            else {
+                MemCpy(&TaskTail->regs, regs, sizeof(INTRegs));
+                // asmv("fxsave (%0)" :: "r"(TaskTail->fpu)); // TODO: save fpu
+                TaskNext();
+                // asmV("fxrstor (%0)" :: "r"(TaskTail->fpu));
+                MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
+            }
+            SerialPrintF("EIP: %x, Task: %d", regs->eip, TaskTail->id);
+        }
+        WindowsUpdate();
+
         if (VRMState) {
             VRMFlush();
             Ptr vrm = VRM;
@@ -51,37 +68,7 @@ INT_DEF(PITHandler) {
         }
         days += SystemTime.day - 1;
         BosyTime = (((days * 24 + SystemTime.hour) * 60) + SystemTime.minute) * 60 + SystemTime.second;
-        if (TaskTail && TaskHead) {
-            // PrintF("Bef RGS: %x\n", regs->eax+regs->ebx+regs->ecx+regs->edx+regs->esi+regs->edi);
-            if (TaskTail->flags & TASK_WORKING)
-                MemCpy(&TaskTail->regs, regs, sizeof(INTRegs));
-            else
-                TaskTail->flags |= TASK_WORKING;
-            TaskNext();
-            MemCpy(regs, &TaskTail->regs, sizeof(INTRegs));
-            // PrintF("Aft RGS: %x\n", regs->eax+regs->ebx+regs->ecx+regs->edx+regs->esi+regs->edi);
-        }
-        if (Debugging) {
-            TTerm.render();
-            VgaCursorDisable();
-            U32 c = TTYCursor;
-            TTYCursor = TTerm.width*2-13;
-            PrintF("EIP: %x", regs->eip);
-            TTYCursor = TTerm.width*3-13;
-            PrintF("ESP: %x", regs->useresp);
-            TTYCursor = TTerm.width*4-13;
-            PrintF("Tim: %x", BosyTime);
-            TTYCursor = TTerm.width*5-13;
-            PrintF("Tsk: %x", TaskTail->id);
-            TTYCursor = TTerm.width*6-13;
-            PrintF("CS: %x", regs->cs);
-            TTYCursor = TTerm.width*7-13;
-            PrintF("DS: %x", regs->ds);
-            TTYCursor = TTerm.width*8-13;
-            PrintF("MS: %x", PITTime);
-            TTerm.render();
-            TTYCursor = c;
-        }   
+        
     }
 }
 

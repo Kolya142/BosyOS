@@ -66,7 +66,7 @@ U0 CHelp() {
         "$!Btime echo wsave rand testfpu$!F\n"
         "$!Creboot poweroff apple testdrv$!F\n"
         "$!Esnake text sound wget genpass$!F\n"
-        "$!Awords triangle bf hz jump$!F\n"
+        "$!Awords triangle bf hz jump touchr$!F\n"
         "$!Bmus pong testufs testheap$!F\n"
         "$!Ctestbfs ls cat fwrite testip$!F\n"
         "$!Etouch fclean collects mouse$!F\n"
@@ -600,11 +600,11 @@ U0 loop() {
 
 U32 testvar = 0xABAB;
 U0 tasking1() {
-    for (U32 i = 0; i < 100; ++i) {
+    for (U32 i = 0;; ++i) {
         TTYCursor -= TTYCursor % 80;
-        PrintF("tasking %1x\n", i);
+        PrintF("tasking %d\nfunction call %d\n", i, LazyCalc(i));
+        SleepM(50);
     }
-    PrintF("processes end.\nuse task to create new process");
     TaskClose();
 }
 Char acmd[50];
@@ -614,14 +614,11 @@ U0 termasync() {
     termrun(acmd);
     TaskClose();
 }
-U0 listcallback(U32 inode_i, EIFINode *inode) {
-    U32 c = 0;
-    for (U32 i = 0; i < 8; ++i) {
-        if (inode->blocks[i]) {
-            ++c;
-        }
-    }
-    PrintF("$!A%s$!F: blocks $!B%1x$!F, time $!B%x$!F, mode $!B%2x$!F\n", inode->name, c, inode->time, inode->mode);
+U0 listcallback(String name, VFSStat *stat) {
+    PrintF("File: %s", name);
+    U32 x = 20;
+    TTYCursor = x + (TTYCursor / TTerm.width) * TTerm.width;
+    PrintF(" | %d | %d | %x\n", stat->size, stat->time, stat->mode);
 }
 U0 termrun(const String cmd) {
     if (cmd[0] == '&') {
@@ -704,7 +701,7 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "task")) {
         U32 tid2 = TaskNew((U32)tasking1, 0x10, 8);
-        PrintF("processes setuped.\nuse tasky to yeild process");
+        PrintF("processes setuped.");
     }
     else if (!StrCmp(cmd, "exit")) {
         TaskClose();
@@ -912,33 +909,24 @@ U0 termrun(const String cmd) {
         LazyListDestroy(&lazy);
     }
     else if (!StrCmp(cmd, "ls")) {
-        EIFReadDir(listcallback);
+        VFSReadDir(listcallback);
+    }
+    else if (StrStartsWith(cmd, "touchr")) {
+        RFSAdd(cmd + 7, 1024);
     }
     else if (StrStartsWith(cmd, "touch")) {
         EIFCreate(cmd + 6, 0xEE00);
     }
     else if (StrStartsWith(cmd, "fwrite")) {
-        U32 file = EIFFind(cmd + 7);
-        if (file == EIF_ERRFD) {
-            PrintF("Error: $!CFile \"%s\" not found$!F\n", cmd + 7);
-        }
-        else {
-            Char buf[512];
-            PrintF("Enter your content: $!A\\$$!F");
-            KBRead(buf, 512);
-            EIFWrite(cmd + 7, buf, 0, StrLen(buf));
-        }
+        Char buf[512] = {0};
+        PrintF("Enter your content: $!A\\$$!F");
+        KBRead(buf, 512);
+        VFSWrite(cmd + 7, buf, StrLen(buf));
     }
     else if (StrStartsWith(cmd, "cat")) {
-        U32 file = EIFFind(cmd + 4);
-        if (file == EIF_ERRFD) {
-            PrintF("Error: $!CFile \"%s\" not found$!F\n", cmd + 4);
-        }
-        else {
-            Char buf[512];
-            EIFRead(cmd + 4, buf, 0, 512);
-            PrintF("File content:\n%s", buf);
-        }
+        Char buf[512] = {0};
+        VFSRead(cmd + 4, buf, 512);
+        PrintF("File content:\n%s", buf);
     }
     else if (!StrCmp(cmd, "words")) {
         CWords();

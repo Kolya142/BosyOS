@@ -6,6 +6,17 @@ EIFSuperBlock EFSB;
 
 static U32 SS;
 
+U0 EIFVReBuild() {
+    for (U32 i = 0; i < 16 * EIF_BLOCK / sizeof(EIFINode); ++i) {
+        EIFINode node;
+        EIFIGet(i, &node);
+        if (!node.mode) {
+            continue;
+        }
+        VFSMount(node.name, EIFReadV, EIFWriteV, EIFStatV);
+    }
+}
+
 U32 EIFIAlloc() {
     U8 buf[8 * EIF_BLOCK];
     ATARead(buf, SS + 0, 8);
@@ -80,6 +91,8 @@ U0 EIFCreate(const String name, U16 mode) {
     MemCpy(inode.name, name, min(10, s));
 
     EIFISet(inode_num, &inode);
+
+    EIFVReBuild();
 }
 
 U32 EIFFind(const String name) {
@@ -207,6 +220,7 @@ U0 EIFInit() {
     // U8 buff[14];
     // EIFRead("test.mez", buff, 0, 14);
     // PrintF("file data: %s\n", buff);
+    EIFVReBuild();
 }
 U32 EIFReadV(String name, Ptr buf, U32 count) {
     VFSRead(name, buf, count);
@@ -214,5 +228,19 @@ U32 EIFReadV(String name, Ptr buf, U32 count) {
 U32 EIFWriteV(String name, Ptr buf, U32 count) {
     VFSWrite(name, buf, count);
 }
-U32 EIFReadDirV(String, U0(*reader)(String, VFSStat*)) {
+U0 EIFStatV(String name, VFSStat *stat) {
+    U32 inodei = EIFFind(name);
+    EIFINode inode;
+    EIFIGet(inodei, &inode);
+
+    stat->ino = inodei;
+    stat->mode = VFS_REG;
+    stat->time = inode.time;
+    U32 C = 0;
+    for (U32 i = 0; i < 8; ++i) {
+        if (inode.blocks[i]) {
+            ++C;
+        }
+    }
+    stat->size = C * 512;
 }

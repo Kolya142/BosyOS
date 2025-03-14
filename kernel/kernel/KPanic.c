@@ -17,13 +17,19 @@ U0 KPanic(const String msg, Bool reboot)
     U32 start = PITTime;
     static U16 tones[] = {400, 300, 100, 400, 200, 400, 250};
     static U8 tind = 0;
-    U32 ecode = *(int*)msg;
+    U32 ecode = *(U32*)msg;
+    {
+        for (U32 i = 0; i < 64000; ++i) {
+            VVRM[i] ^= 15;
+        }
+    }
     {
         U32 l = StrLen(msg) - StrLen(msg)%4;
         for (U32 i = 0; i < l; ++i) {
-            ecode ^= *(int*)&msg[i];
+            ecode ^= *(U32*)&msg[i];
         }
     }
+    VRM = VVRM;
     
     TTYUPrint("$!A$*CKernelPanic: ");
 

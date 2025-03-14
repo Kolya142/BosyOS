@@ -6,6 +6,7 @@
 #include <lib/IO/TTY.h>
 #include <arch/x86/cpu/io.h>
 #include <arch/x86/sys/idt.h>
+#include <stdarg.h>
 
 typedef struct {
     Char name[32];
@@ -45,6 +46,40 @@ U0 KDogWatchLog(const String str, Bool panic) {
     if (panic) {
         KPanic("KDogWatchLog panic", True);
     }
+}
+U0 KDogWatchLogF(const String format, ...) {
+    U8 t = TTermID;
+    TTYSwitch(3);
+
+    PrintF("$!A[DogWatch]$!F:$!E");
+    
+    va_list args;
+    va_list args2;
+    
+    va_start(args, format);
+    va_copy(args2, args);
+    
+    VPrintF(format, args);
+
+    va_end(args);
+    
+    PrintF("$!C at $!B%X$!F\n", PITTime);
+
+    TTYSwitch(t);
+
+    TTerm.render();
+    Ptr rend = TTerm.render;
+    TTerm.render = TTYRenderS;
+
+    PrintF("$!A[DogWatch]$!F:$!E");
+
+    VPrintF(format, args2);
+    va_end(args2);
+
+    PrintF("$!C at $!B%X$!F\n", PITTime);
+
+    TTerm.render();
+    TTerm.render = rend;
 }
 
 U0 KDogWatchTick() {

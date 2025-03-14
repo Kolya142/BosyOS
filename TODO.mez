@@ -15,4 +15,12 @@ $!D- $!BUDP $!F(Planned)
 $!D- $!BReal Sound $!F(Planned)
 $!D- $!BMezex terminal(linux) $!F(Planned)
 $!D- $!BPrograming Language $!F(Planned)
+
+$!A=== Priority ===
+$!BFS & Applications$!F - $!CM0$!F
+$!BProcesses        $!F - $!EM1$!F
+$!BInterrupts       $!F - $!EM1$!F
+$!BUSB              $!F - $!AM2$!F
+$!BNet              $!F - $!AM2$!F
+$!BOther            $!F - $!AM2$!F
 $!F

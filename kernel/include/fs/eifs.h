@@ -60,6 +60,6 @@ U32 EIFRead(const String name, Ptr buf, U32 offset, U32 count);
 
 U32 EIFReadV(String name, Ptr buf, U32 count);
 U32 EIFWriteV(String name, Ptr buf, U32 count);
-U32 EIFReadDirV(String, U0(*reader)(String, VFSStat*));
+U0 EIFStatV(String name, VFSStat *stat);
 
 U0 EIFInit();

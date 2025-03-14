@@ -29,4 +29,4 @@ U32 RFSRead(U32 fd, Ptr buf, U32 count);
 U0 RFSClose(U32 fd);
 U32 RFSReadV(String name, Ptr buf, U32 count);
 U32 RFSWriteV(String name, Ptr buf, U32 count);
-U32 RFSReadDirV(String, U0(*reader)(String, VFSStat*));
+U32 RFSReadDirV(String, VFSStat*);

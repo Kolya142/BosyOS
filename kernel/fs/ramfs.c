@@ -71,7 +71,8 @@ U32 RFSWriteV(String name, Ptr buf, U32 count) {
     RFSWrite(fd, buf, count);
     RFSClose(fd);
 }
-U32 RFSReadDirV(String, U0(*reader)(String, VFSStat*)) {
+U32 RFSReadDirV(String, VFSStat*) {
+    
 }
 U0 RFSClose(U32 fd) {
     RFSFileDescriptor *r = (RFSFileDescriptor*)fd;

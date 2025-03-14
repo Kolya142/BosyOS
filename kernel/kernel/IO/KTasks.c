@@ -10,7 +10,6 @@
 // proccesses start from 1741763233 from unix stamp
 
 static U32 task_count = 0;
-Bool TaskingIs = False;
 Task *TaskHead = Null;
 Task *TaskTail = Null;
 Task *TaskLast = Null;
@@ -22,6 +21,7 @@ U0 TaskClose() {
     TaskNext();
     TaskKill(id);
     TaskTail->flags &= ~TASK_WORKING;
+    TaskTail->flags &= ~TASK_CREATED;
     asmv("sti");
     if (TaskHead) {
         for(;;);
@@ -37,6 +37,10 @@ U0 TaskClose() {
     //        "r"(TaskTail->regs.eip));
 }
 U0 TaskInit() {
+    task_count = 0;
+    TaskHead = Null;
+    TaskTail = Null;
+    TaskLast = Null;
 }
 U0 TaskNext() {
     if (!TaskTail || !TaskHead) return;
@@ -55,7 +59,7 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
     }
     
     U32 esp = (U32)(&stack[1023]) & ~0xF;
-    PrintF("Process with esp $!B%4x$!F created\n", esp);
+    KDogWatchLogF("Process with esp %X and eip %x created\n", esp, eip);
 
     Task *task = MCAlloc(sizeof(Task), 1);
     if (!task) {

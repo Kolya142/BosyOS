@@ -60,11 +60,9 @@
 #include <arch/x86/sys/sys.h>
 #include <arch/x86/cpu/pic.h>
 
-
-U0 programtest();
-U0 backgroundloop();
 // extern U0 KernelDebug();
 U0 mainloop();
+U0 cmdloop();
 U0 loop();
 
 U0 KernelMain() {
@@ -82,6 +80,7 @@ U0 KernelMain() {
     IDTInit();
     PICMap();
     PITInit();
+    TaskInit();
     KDogWatchLog("Switching to 320x200", False);
     VgaGraphicsSet();
     // VESAInit();
@@ -93,6 +92,9 @@ U0 KernelMain() {
     if (mem < 64000) {
         KDogWatchLog("$!CWarning: Memory size < $!B64MB$!F", False);
     }
+
+    VFSInit();
+    KDogWatchLog("Initialized \"vfs\"", False);
 
     VgaBlinkingSet(False);
     VgaCursorDisable();
@@ -115,8 +117,8 @@ U0 KernelMain() {
 
     KDogWatchLog("Initialized \x9Bpaging\x9C", False);
 
-    KDogWatchLog("Setuping fpu", False);
-    FPUBox();
+    // KDogWatchLog("Setuping fpu", False); // FIXME
+    // FPUBox();
     
     // Drivers
     KDogWatchLog("Setuping drivers", False);
@@ -145,8 +147,6 @@ U0 KernelMain() {
     
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
-    VFSInit();
-    KDogWatchLog("Initialized \"vfs\"", False);
 
     RFSInit();
     // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, (Ptr)RFSReadDirV);
@@ -171,8 +171,7 @@ U0 KernelMain() {
     TTYSwitch(0);
 
     SleepM(500);
-    U32 tid1 = TaskNew((U32)backgroundloop, 0x10, 8);
-    U32 tid2 = TaskNew((U32)mainloop, 0x10, 8);
+    TaskNew((U32)mainloop, 0x10, 0x08);
     // mainloop();
     // TaskNew((U32)mainloop);
     // TaskNew((U32)loop);
@@ -198,44 +197,53 @@ static U0 TimeUpd(Ptr this) {
     WPrintF(win, 0, 0, "%d:%d:%d    ", SystemTime.hour, SystemTime.minute, SystemTime.second);
 }
 
+U0 cmdloop() {
+    for (;;) {
+        SleepM(1000/60);
+    }
+}
+
 U0 mainloop() {
-    TTYClear();
     TTYClear();
     Win time;
     time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE | WIN_UNCLOSABLE);
     time.update = TimeUpd;
-    Char buffer[50] = {0};
-    TTYUPrint("$!A\\$ $!F");
+    // TaskNew((U32)cmdloop, 0x10, 0x08);
     
+    Char buffer[50] = {0};
     WinSpawn(&time);
+    TTYUPrint("$!A\\$ $!F");
+    TTYSwitch(3);
+    TTYUPrint("$!7(BosyOS) $!F");
+    TTYSwitch(0);
     for (;;) {
         TTerm.render();
         if (VTerm->in.count) {
             KBRead(buffer, 50);
-
-            termrun(buffer);
-            TTYUPrintC('\n');
+            if (TTermID == 3) {
+                if (!StrCmp(buffer, "panic")) {
+                    KPanic("Test panic", True);
+                }
+                else if (!StrCmp(buffer, "drivers")) {
+                    for (U32 i = 0; i < 50; ++i) {
+                        if (Drivers[i].name) {
+                            PrintF("$!Adriver$!F: $!7%s$!F | ", Drivers[i].name);
+                            U32 x = (TTerm.width - 32);
+                            TTYCursor = x + (TTYCursor / TTerm.width) * TTerm.width;
+                            PrintF("$!B%X$!F-$!B%X$!F\n", Drivers[i].d1, Drivers[i].d2);
+                        }
+                    }
+                }
+                TTYUPrint("\n$!7(BosyOS) $!F");
+            }
+            else {
+                termrun(buffer);
+                TTYUPrint("\n$!A\\$ $!F");
+            }
             MemSet(buffer, 0, 50);
-            TTYUPrint("$!A\\$ $!F");
         }
         TTerm.render();
-        WindowsUpdate();
-        SleepM(10);
+
+        SleepM(1000/60);
     }
-}
-U0 programtest()
-{
-    // BsfApp bapp = BsfFromBytes((Ptr)0x8400);
-    // UserSegment = (Segment) {
-    //     .addr = bapp.data,
-    //     .length = bapp.header.CodeS,
-    // };
-    // BsfExec(&bapp);
-    // BsfApp bapp = BsfFromBytes("BOSY&\0\0\0\xf4\xb8\xfa\xfa\xbf\xde\xb0\x01\xbe\x11\0\0\0\xcd\x80\xeb\xfe$!AHello, world!$!F\n\0");
-    // BsfExec(&bapp);
-}
-U0 backgroundloop() {
-    // for (;;) {
-    // }
-    TaskClose();
 }

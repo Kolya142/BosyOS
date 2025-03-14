@@ -23,6 +23,6 @@ U0 KWinDemo() {
     WinSpawn(&spawner);
     while (active) {
         VRMClear(DBlue);
-        SleepM(100);
+        Sleep(100);
     }
 }

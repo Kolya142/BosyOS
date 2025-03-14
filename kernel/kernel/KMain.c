@@ -48,7 +48,6 @@
 // FileSystem
 #include <fs/minix.h>
 #include <fs/ramfs.h>
-#include <fs/eifs.h>
 #include <fs/vfs.h>
 
 // Arch/Cpu Functions
@@ -151,8 +150,6 @@ U0 KernelMain() {
     RFSInit();
     // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, (Ptr)RFSReadDirV);
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
-    EIFInit();
-    KDogWatchLog("Initialized \x9Beifs\x9C", False);
 
     // MXInit();
     // KDogWatchLog("Initialized \"minix fs\"", False);
@@ -170,7 +167,7 @@ U0 KernelMain() {
 
     TTYSwitch(0);
 
-    SleepM(500);
+    Sleep(500);
     TaskNew((U32)mainloop, 0x10, 0x08);
     // mainloop();
     // TaskNew((U32)mainloop);
@@ -199,23 +196,25 @@ static U0 TimeUpd(Ptr this) {
 
 U0 cmdloop() {
     for (;;) {
-        SleepM(1000/60);
+        Sleep(1000/60);
     }
 }
 
 U0 mainloop() {
     TTYClear();
+    PrintF("First time in bosyos?\n$!BUse$!F command \"$!7tut$!F\" to learn basic things\n");
     Win time;
     time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE);
     time.update = TimeUpd;
+    Char buffer[50] = {0};
     // TaskNew((U32)cmdloop, 0x10, 0x08);
     
-    Char buffer[50] = {0};
     WinSpawn(&time);
-    TTYUPrint("$!A\\$ $!F");
     TTYSwitch(3);
     TTYUPrint("$!7(BosyOS) $!F");
     TTYSwitch(0);
+    // TaskNew((U32)cmdloop, 0x10, 0x08);
+    TTYUPrint("$!A\\$ $!F");
     for (;;) {
         TTerm.render();
         if (VTerm->in.count) {
@@ -243,7 +242,6 @@ U0 mainloop() {
             MemSet(buffer, 0, 50);
         }
         TTerm.render();
-
-        SleepM(1000/60);
+        Sleep(16);
     }
 }

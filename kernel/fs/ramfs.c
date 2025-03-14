@@ -12,6 +12,9 @@ U0 RFSAdd(String name, U32 size) {
             RFS[i].size = size;
             StrCpy(RFS[i].name, name);
             RFS[i].data = MAlloc(size);
+            String nname = MAlloc(StrLen(name));
+            StrCpy(nname, name);
+            VFSMount(nname, RFSReadV, RFSWriteV, RFSStatV);
             break;
         }
         else if (!StrCmp(RFS[i].name, name)) {
@@ -61,18 +64,30 @@ U32 RFSRead(U32 fd, Ptr buf, U32 count) {
     }
     return c;
 }
-U32 RFSReadV(String name, Ptr buf, U32 count) {
+U32 RFSReadV(String name, Ptr buf, U32 offset, U32 count) {
     U32 fd = RFSOpen(name);
+    RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
+    r->head = offset;
     RFSRead(fd, buf, count);
     RFSClose(fd);
 }
-U32 RFSWriteV(String name, Ptr buf, U32 count) {
+U32 RFSWriteV(String name, Ptr buf, U32 offset, U32 count) {
     U32 fd = RFSOpen(name);
+    RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
+    r->head = offset;
     RFSWrite(fd, buf, count);
     RFSClose(fd);
 }
-U32 RFSReadDirV(String, VFSStat*) {
-    
+U0 RFSStatV(String name, VFSStat *stat) {
+    for (U32 i = 0; i < RFS_SIZE; ++i) {
+        if (RFS[i].exists && !StrCmp(RFS[i].name, name)) {
+            stat->ino = i;
+            stat->mode = VFS_REG;
+            stat->size = RFS[i].size;
+            stat->time = 0;
+            break;
+        }
+    }
 }
 U0 RFSClose(U32 fd) {
     RFSFileDescriptor *r = (RFSFileDescriptor*)fd;

@@ -9,7 +9,7 @@ U0 PS2Wait(U8 how) {
         while (--timeout) {
             if ((PIn(0x64) & 1) == 1)
                 return;
-            SleepM(1);
+            Sleep(1);
         }
         return;
     }
@@ -17,7 +17,7 @@ U0 PS2Wait(U8 how) {
         while (--timeout) {
             if ((PIn(0x64) & 2) == 0)
                 return;
-            SleepM(1);
+            Sleep(1);
         }
         return;
     }

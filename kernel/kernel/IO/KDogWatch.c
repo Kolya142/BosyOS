@@ -98,6 +98,19 @@ U0 KDogWatchTick() {
         }
     }
 }
+U0 KDogWatchStackTrace() {
+    struct stackframe {
+        struct stackframe* ebp;
+        U32 eip;
+    };
+    PrintF("Stack trace\n");
+    struct stackframe *stk;
+    asmv("movl %%ebp, %0" : "=r"(stk));
+    for (U32 frame = 0; stk && stk->eip && frame < 10; ++frame) {
+        PrintF("<- %p\n", stk->eip);
+        stk = stk->ebp;
+    }
+}
 U0 KDogWatchPStart(U8 id, const String name) {
     Profiles[id] = (KDogWatchProfile) {
         .active = True,

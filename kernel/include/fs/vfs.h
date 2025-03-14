@@ -6,6 +6,12 @@
 
 #define VFS_DEV 0x40000000
 #define VFS_REG 0x20000000
+#define VFS_UREAD 0x10000000
+#define VFS_UWRIT 0x08000000
+#define VFS_UEXEC 0x04000000
+#define VFS_OREAD 0x02000000
+#define VFS_OWRIT 0x01000000
+#define VFS_OEXEC 0x00800000
 
 typedef struct VFSStat {
     U32 time;
@@ -16,15 +22,15 @@ typedef struct VFSStat {
 
 typedef struct VFSNode {
     String name;
-    U32(*read)(String, Ptr, U32);
-    U32(*write)(String, Ptr, U32);
+    U32(*read)(String, Ptr, U32, U32);
+    U32(*write)(String, Ptr, U32, U32);
     U0(*stat)(String, VFSStat*);
 } VFSNode;
 
 extern List VFS;
 
 U0 VFSInit();
-U32 VFSRead(String name, Ptr buf, U32 count);
-U32 VFSWrite(String name, Ptr buf, U32 count);
+U32 VFSRead(String name, Ptr buf, U32 offset, U32 count);
+U32 VFSWrite(String name, Ptr buf, U32 offset, U32 count);
 U0 VFSReadDir(U0(*reader)(String, VFSStat*));
-U0 VFSMount(String name, U32(*read)(String, Ptr, U32), U32(*write)(String, Ptr, U32), U0(*stat)(String, VFSStat*));
+U0 VFSMount(String name, U32(*read)(String, Ptr, U32, U32), U32(*write)(String, Ptr, U32, U32), U0(*stat)(String, VFSStat*));

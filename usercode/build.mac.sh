@@ -1,4 +1,4 @@
-mkdir -p build
+
 rm build/* -r
 set -e
 cd code

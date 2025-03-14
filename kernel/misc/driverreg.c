@@ -2,7 +2,7 @@
 
 Driver Drivers[50];
 
-static U32 DriverVRead(String name, Ptr buf, U32 count) {
+static U32 DriverVRead(String name, Ptr buf, U32 offset, U32 count) {
     for (U32 i = 0; i < 50; ++i) {
         if (!StrCmp(Drivers[i].name, name)) {
             U0(*func)(U32, U32*);
@@ -13,8 +13,8 @@ static U32 DriverVRead(String name, Ptr buf, U32 count) {
     }
     return count;
 }
-static U32 DriverVWrite(String name, Ptr buf, U32 count) {
-    return DriverVRead(name, buf, count);
+static U32 DriverVWrite(String name, Ptr buf, U32 offset, U32 count) {
+    return DriverVRead(name, buf, 0, count);
 }
 
 static U0 DriverVStat(String name, VFSStat *stat) {

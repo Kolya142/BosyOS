@@ -12,7 +12,7 @@ U0 ATARead(Ptr buf, U32 start, U8 count) {
     POut(0x01F5, (start >> 16) & 0xff);
     POut(0x01F7, 0x20);
 
-    SleepM(1);
+    Sleep(1);
     while (PIn(0x01F7) & 0x80);    // Wait BUSY
 
     if (PIn(0x01F7) & 1) {
@@ -43,7 +43,7 @@ U0 ATAWrite(Ptr buf, U32 start, U8 count) {
     POut(0x01F4, (start >> 8) & 0xFF);
     POut(0x01F5, (start >> 16) & 0xFF);
     
-    SleepM(1);
+    Sleep(1);
     while (PIn(0x01F7) & 0x80);    // Wait BUSY
 
     POut(0x01F7, 0x30);

@@ -13,7 +13,6 @@ struct stackframe {
     struct stackframe* ebp;
     U32 eip;
 };
-  
 
 U0 KPanic(const String msg, Bool reboot)
 {

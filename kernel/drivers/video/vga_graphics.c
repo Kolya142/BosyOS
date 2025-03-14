@@ -39,7 +39,7 @@ U0 VgaGraphicsSet() {
         POut(CRTC_DATA, crtc[i]);
     }
 
-	SleepM(30);
+	Sleep(30);
 	
 	POut(GRAPHICS_INDEX, 0x00); POut(GRAPHICS_DATA, 0x00);
     POut(GRAPHICS_INDEX, 0x01); POut(GRAPHICS_DATA, 0x00);
@@ -50,7 +50,7 @@ U0 VgaGraphicsSet() {
     POut(GRAPHICS_INDEX, 0x06); POut(GRAPHICS_DATA, 0x05);
     POut(GRAPHICS_INDEX, 0x07); POut(GRAPHICS_DATA, 0x0F);
 	
-	SleepM(30);
+	Sleep(30);
 	
 	POut(SEQ_INDEX, 0x02); POut(SEQ_DATA, 0x0F);
 	POut(SEQ_INDEX, 0x04); POut(SEQ_DATA, 0x0E);

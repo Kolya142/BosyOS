@@ -46,7 +46,6 @@
 // FileSystem
 #include <fs/minix.h>
 #include <fs/ramfs.h>
-#include <fs/eifs.h>
 #include <fs/vfs.h>
 
 // Arch/Cpu Functions
@@ -62,6 +61,7 @@
 U0 CHelp() {
     TTYUPrint(
         "$!5Commands$!F:\n"
+        "$!dtut$!F\n"
         "$!Ahelp cls hlt gen testcom$!F\n"
         "$!Btime echo wsave rand testfpu$!F\n"
         "$!Creboot poweroff apple testdrv$!F\n"
@@ -146,7 +146,7 @@ U0 CRand() {
             lk = !lk;
         }
         v = RandomU();
-        SleepM(1000/120); // 120hz
+        Sleep(1000/120); // 120hz
     }
 }
 U0 CGen() {
@@ -158,7 +158,7 @@ U0 CGen() {
             }
         }
         KDogWatchPTick(0);
-        SleepM(1000/30);
+        Sleep(1000/30);
     }
 }
 U0 CMus() {
@@ -202,7 +202,7 @@ U0 CSound() {
                 if (Record[j])
                     BeepSPC(Record[j], 3);
                 KDogWatchPTick(0);
-                SleepM(5);
+                Sleep(5);
             }
         }
         else if (!(KBState.SC & 0x80)) {
@@ -226,7 +226,7 @@ U0 CSound() {
         }
         TTYCursor -= TTYCursor % 80;
         KDogWatchPTick(0);
-        SleepM(3);
+        Sleep(3);
     }
 }
 U0 CSnake() {
@@ -315,7 +315,7 @@ U0 CSnake() {
         TTYRawPrint(' ', Red, Red);
         TTYCursor = 80 / 2 - 4 / 2;
         TTYUPrintHex(score);
-        SleepM(100);
+        Sleep(100);
     }
     TTYUPrint("$!F$*0");
 }
@@ -371,7 +371,7 @@ U0 CPong() {
         if (KBState.keys['\x1b']) {
             game = False;
         }
-        SleepM(100);
+        Sleep(100);
     }
 }
 U0 CJump() {
@@ -419,7 +419,7 @@ U0 CJump() {
                 VRMPSet(x, y, Blue);
             }
         }
-        SleepM(100);
+        Sleep(100);
     }
 }
 U0 BFInterpret(const String code) {
@@ -571,14 +571,15 @@ U0 CRay() {
         }
         MouseX = 320/2;
         MouseY = 200/2;
-        SleepM(100);
+        Sleep(100);
     }
 }
 U0 CBoot(String name) {
-    static U8 block[] = "\x7fELF\x01\x01\x01\0\0\0\0\0\0\0\0\0\x01\0\x03\0\x01\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\04\0\0\0\0\0(\0\x07\0\x03\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x01\0\0\0\x01\0\0\0\x06\0\0\0\0\0\0\0`\x01\0\0\x1a\0\0\0\0\0\0\0\0\0\0\0\x10\0\0\0\0\0\0\0\x07\0\0\0\x01\0\0\0\x02\0\0\0\0\0\0\0\x80\x01\0\0\x0f\0\0\0\0\0\0\0\0\0\0\0\x04\0\0\0\0\0\0\0\x0f\0\0\0\x03\0\0\0\0\0\0\0\0\0\0\0\x90\x01\0\03\0\0\0\0\0\0\0\0\0\0\0\x01\0\0\0\0\0\0\0\x19\0\0\0\x02\0\0\0\0\0\0\0\0\0\0\0\xd0\x01\0\0`\0\0\0\x05\0\0\0\x05\0\0\0\x04\0\0\0\x10\0\0\0!\0\0\0\x03\0\0\0\0\0\0\0\0\0\0\00\x02\0\0\x13\0\0\0\0\0\0\0\0\0\0\0\x01\0\0\0\0\0\0\0)\0\0\0\t\0\0\0\0\0\0\0\0\0\0\0P\x02\0\0\b\0\0\0\x04\0\0\0\x01\0\0\0\x04\0\0\0\b\0\0\0\0\0\0\0\0\0\0\0\xb8\x01\0\0\0\xbe\0\0\0\0\xcd\x80\xb8\x15\0\0\0\xbe\x02\0\0\01\xdb\xcd\x80\0\0\0\0\0\0Hello, world!\n\0\0.text\0.rodata\0.shstrtab\0.symtab\0.strtab\0.rel.text\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x01\0\0\0\0\0\0\0\0\0\0\0\x04\0\xf1\xff\0\0\0\0\0\0\0\0\0\0\0\0\x03\0\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\x03\0\x02\0\x0f\0\0\0\0\0\0\0\0\0\0\0\0\0\x02\0\b\0\0\0\0\0\0\0\0\0\0\0\x10\0\x01\0\0main.s\0_start\0msg\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x06\0\0\0\x01\x03\0\0\0\0\0\0\0\0\0\0";
-    I32 code = ELFLoad(block);
-    PrintF("code: %s", block);
-    PrintF("exit code: %i", code);
+    static U8 block[] = "BOSY+\0\0\0\x0c\0\0\0\xb8\x01\0\0\0\xbe\x1c\0\0\x02\xcd\x80\xb8\x15\0\0\0\xbe\x02\0\0\01\xdb\xcd\x80\0\0Hello, world!\n\0\0\0\0\x01\0\0\0\x8d\x03\0\x0";
+    BsfApp app = BsfFromBytes(block);
+    I32 code = BsfExec(&app, 0, 1) - 2;
+    PrintF("code: %s\n", block);
+    PrintF("exit code: %i\n", code);
 }
 U32 LazyCalc(U32 x) {
     return !(x & 1) ? (x / 2) : (x * 3 + 1);
@@ -597,7 +598,7 @@ U0 tasking1() {
     for (U32 i = 0;; ++i) {
         TTYCursor -= TTYCursor % 80;
         PrintF("tasking %d\nfunction call %d\n", i, LazyCalc(i));
-        SleepM(50);
+        Sleep(50);
     }
     TaskClose();
 }
@@ -651,7 +652,7 @@ U0 termrun(const String cmd) {
                 PrintF("Class $!d%d$!F, ", dev->classcode);
                 PrintF("Subclass $!B%d$!F, ", dev->subclass);
                 PrintF("\n\n");
-                SleepM(1000);
+                Sleep(1000);
             }
         }
     }
@@ -692,6 +693,83 @@ U0 termrun(const String cmd) {
     }
     else if (!StrCmp(cmd, "cls")) {
         CCls();
+    }
+    else if (!StrCmp(cmd, "tut")) {
+        PrintF("Welcome to $!BBosyOS$!F\n");
+        PrintF("Learning steps:\n");
+        PrintF("1. $!EMezex$!F, $!EMezex$!F terminal\n");
+        PrintF("2. $!7Utils$!F\n");
+        PrintF("3. $!6Development for $!BBosyOS$!F\n");
+        Char c;
+        KWSInputData inp;
+        KWSUpdate(&inp);
+        {
+            PrintF("Press $!dSPACE$!F to start\n");
+            while (!inp.key_pressed[' ']) KWSUpdate(&inp);
+            KWSUpdate(&inp);
+            while (PTermRead(VTerm, 0, &c, 1));
+
+            PrintF("1. Mezex\n");
+            PrintF("$!EMezex$!F uses $!EVga$!F color codes\n");
+            PrintF("$!EMezex$!F avaliable in $!BBosyOS$!F, $!EHTML$!F, Linux util \"$!7mez$!F\"\n");
+            PrintF("Vga colors:\n");
+            PrintF("0 - $!0$*FBlack$!F$*0\n");
+            PrintF("1 - $!1DBlue$!F\n");
+            PrintF("2 - $!2DGreen$!F\n");
+            PrintF("3 - $!3DCyan$!F\n");
+            PrintF("4 - $!4DRed$!F\n");
+            PrintF("5 - $!5DPurple$!F\n");
+            PrintF("6 - $!6DBrown$!F\n");
+
+            PrintF("7 - $!7Gray$!F\n");
+            PrintF("8 - $!8DGray$!F\n");
+
+            PrintF("9 - $!9Blue$!F\n");
+            PrintF("A - $!AGreen$!F\n");
+            PrintF("B - $!BCyan$!F\n");
+            PrintF("C - $!CRed$!F\n");
+            PrintF("d - $!dPurple$!F\n");
+            PrintF("E - $!EBrown$!F\n");
+            PrintF("F - White\n");
+
+            PrintF("\nCodes:\n");
+            PrintF("\\$!V - set foreground color to V\n");
+            PrintF("\\$*V - set background color to V\n");
+            PrintF("\\$H \\$D - SetHome, MoveDown\n");
+            PrintF("\\$U \\$L \\$R - MoveUp, MoveLeft, MoveRight\n");
+        }
+
+        {
+            PrintF("Press $!dSPACE$!F to continue\n");
+            while (!inp.key_pressed[' ']) KWSUpdate(&inp);
+            KWSUpdate(&inp);
+            while (PTermRead(VTerm, 0, &c, 1));
+
+            PrintF("2. Utils\n");
+
+            PrintF("$!BBosyOS$!F supports 4 tty buffers\n");
+
+            PrintF("Press $!dF4$!F to open debug menu\n");
+            while (!KBState.keys[ASCIIPF4]);
+
+            PrintF("\nYou see some KDogWatch logs\n");
+
+            PrintF("Press $!dF1$!F to return\n");
+            while (!KBState.keys[ASCIIPF1]);
+        }
+
+        {
+            PrintF("Press $!dSPACE$!F to continue\n");
+            while (!inp.key_pressed[' ']) KWSUpdate(&inp);
+            KWSUpdate(&inp);
+            while (PTermRead(VTerm, 0, &c, 1));
+
+            PrintF("3. Development for $!BBosyOS$!F\n");
+
+            PrintF("Currently $!BBosyOS$!F doen't support development\n");
+        }
+
+        while (PTermRead(VTerm, 0, &c, 1));
     }
     else if (!StrCmp(cmd, "task")) {
         U32 tid2 = TaskNew((U32)tasking1, 0x10, 8);
@@ -790,7 +868,7 @@ U0 termrun(const String cmd) {
                 t ^= RandomU();
                 t ^= 642 * KBState.Key;
             }
-            SleepM(500);
+            Sleep(500);
         }
     }
     else if (!StrCmp(cmd, "rand1")) {
@@ -818,7 +896,7 @@ U0 termrun(const String cmd) {
             WordGenS(b1, 9);
             WordGenS(b2, 9);
             WordGenS(b3, 9);
-            SleepM(100);
+            Sleep(100);
         }
         PrintF("\n\n\n%s\n", buf);
     }
@@ -872,7 +950,7 @@ U0 termrun(const String cmd) {
             BeepSPC(count + 30, 30);
             BeepSPC(count + 50, 10);
             BeepSPC(count + 70, 5);            
-            SleepM(20);
+            Sleep(20);
             KDogWatchPTick(0);
         }
     }
@@ -909,17 +987,17 @@ U0 termrun(const String cmd) {
         RFSAdd(cmd + 7, 1024);
     }
     else if (StrStartsWith(cmd, "touch")) {
-        EIFCreate(cmd + 6, 0xEE00);
+        // EIFCreate(cmd + 6, 0xEE00);
     }
     else if (StrStartsWith(cmd, "fwrite")) {
         Char buf[512] = {0};
         PrintF("Enter your content: $!A\\$$!F");
         KBRead(buf, 512);
-        VFSWrite(cmd + 7, buf, StrLen(buf));
+        VFSWrite(cmd + 7, buf, 0, StrLen(buf));
     }
     else if (StrStartsWith(cmd, "cat")) {
         Char buf[512] = {0};
-        VFSRead(cmd + 4, buf, 512);
+        VFSRead(cmd + 4, buf, 0, 512);
         PrintF("File content:\n%s", buf);
     }
     else if (!StrCmp(cmd, "words")) {
@@ -995,10 +1073,10 @@ U0 termrun(const String cmd) {
         for (U32 i = 0; i < sizeof(tones) / 2; ++i) {
             for (U8 v = 0; v < 2; v++) {
                 BeepSPC(tones[i], durations[i] / 2);
-                SleepM(10);
+                Sleep(10);
             }
             if (i % 4 == 0) BeepSPC(tones[i] - 12, durations[i] / 2);
-            SleepM(1000/70);
+            Sleep(1000/70);
             KDogWatchPTick(0);
             if (KBState.keys['\x1b']) {
                 break;

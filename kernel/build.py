@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import multiprocessing
 from pathlib import Path
@@ -44,3 +45,15 @@ obj_files = " ".join(
 print("Link")
 run_command(f"{"ld -m elf_i386" if plat == 1 else "i686-elf-ld"} -T link.elf.ld build/KMain.o {obj_files} -o kernel.elf") # --verbose")
 run_command(f"{"ld -m elf_i386" if plat == 1 else "i686-elf-ld"} -T link.ld build/KMain.o {obj_files} -o kernel.b") # --verbose")
+
+
+dump_result = subprocess.run(["objdump" if plat == 1 else "i686-elf-objdump", "-t", "kernel.elf"], stdout=subprocess.PIPE)
+functions = []
+
+for line in dump_result.stdout.decode().split("\n"):
+    if " F " in line:
+        sp = line.split()
+        functions.append(f'F {sp[-1]} - 0x{sp[0]}')
+
+with open("func-dump.txt", 'w') as f:
+    f.write('\n'.join(functions))

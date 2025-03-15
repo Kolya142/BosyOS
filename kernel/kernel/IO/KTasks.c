@@ -5,9 +5,10 @@
 #include <arch/x86/cpu/cpu.h>
 #include <lib/IO/TTY.h>
 
-// fixing bugs from 1741179362s from unix stamp
-// fixed 90% bugs from 1741183725s from unix stamp
-// proccesses start from 1741763233 from unix stamp
+// fixing bugs at 1741179362s from unix stamp
+// fixed 90% bugs at 1741183725s from unix stamp
+// proccesses start at 1741763233 from unix stamp
+// problem "i need ring3" found at 1742038534 from unix stamp
 
 static U32 task_count = 0;
 Task *TaskHead = Null;
@@ -52,13 +53,13 @@ U0 TaskNext() {
 
 U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is detected
     asmv("cli");
-    U32 *stack = MAlloc(4096);
+    U32 *stack = MAlloc(8192);
     if (!(U32)stack) {
         asmv("sti");
         return 0xFFFFFFFF;
     }
     
-    U32 esp = (U32)(&stack[1023]) & ~0xF;
+    U32 esp = (U32)(&stack[2047]) & ~0xF;
     KDogWatchLogF("Process with esp %X and eip %x created\n", esp, eip);
 
     Task *task = MCAlloc(sizeof(Task), 1);
@@ -70,7 +71,7 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
     task->regs.eflagsp = 0x202; // initial cpu flags
     task->regs.eflags  = 0x202; // initial cpu flags
     
-    task->regs.useresp = esp; // initial stack
+    task->regs.esp = esp; // initial stack
     task->regs.ebp = esp;
 
     task->regs.eip = eip; // InstructionPointer
@@ -79,6 +80,7 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
     task->regs.es = ds;
     task->regs.fs = ds;
     task->regs.gs = ds;
+    task->regs.ss = ds;
 
     task->regs.cs = cs; // code segment
     

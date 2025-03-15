@@ -23,7 +23,7 @@ typedef struct INTRegs {
     U32 ds, es, gs, fs;
     U32 eip, cs, eflags;
 } __attribute__((packed)) INTRegs;
-typedef struct INTRegs3 { // Same with ss/esp
+typedef struct INTRegs3 { // Same but with ss/esp
     U32 edi, esi, ebp, useresp, ebx, edx, ecx, eax;
     U32 eflagsp;
     U32 ds, es, gs, fs;
@@ -38,7 +38,7 @@ typedef struct INTRegs3 { // Same with ss/esp
             "push %es\n" \
             "push %ds\n" \
             "pushf\n" \
-            "pusha\n" \
+            "pushal\n" \
                        \
             "mov $0x10, %ax\n" \
             "mov %ax, %ds\n" \
@@ -57,7 +57,7 @@ typedef struct INTRegs3 { // Same with ss/esp
             "movb $0x20, %al;\n" \
             "outb %al, $0xA0\n" \
             \
-            "popa\n" \
+            "popal\n" \
             "popf\n" \
             "pop %ds\n" \
             "pop %es\n" \
@@ -65,7 +65,7 @@ typedef struct INTRegs3 { // Same with ss/esp
             "pop %fs\n" \
             "iret\n"); \
     } \
-    U0 fn##_impl(INTRegs *regs)
+    U0 fn##_impl(INTRegs3 *regs)
 
 #define INT_START  asm("")
 #define INT_RETURN asm("")

@@ -18,10 +18,10 @@ U0 PagingInit() {
     MemSet(PageT, 0, 1024 * PAGE_SIZE);
     Sleep(1000);
     for (U32 i = 0; i < 1024*1024; ++i) {
-        PageT[i] = (i * PAGE_SIZE) | PAGE_RW | PAGE_PRESENT;
+        PageT[i] = (i * PAGE_SIZE) | PAGE_RW | PAGE_PRESENT | PAGE_USER;
     }
     for (U32 i = 0; i < 1024; ++i) {
-       Pages[i] = ((U32)&PageT[i * 1024]) | PAGE_RW | PAGE_PRESENT;
+       Pages[i] = ((U32)&PageT[i * 1024]) | PAGE_RW | PAGE_PRESENT | PAGE_USER;
     }
     PagingEnable();
 }
@@ -30,7 +30,7 @@ U0 PMap(U32 vaddr, U32 raddr, U32 flags) {
     U32 pdid = vaddr >> 22;
     U32 ptid = (vaddr >> 12) & 0x3FF;
     U32* pt = (U32*)(Pages[pdid] & ~0xFFF);
-    pt[ptid] = raddr | flags | PAGE_PRESENT;
+    pt[ptid] = raddr | flags | PAGE_PRESENT | PAGE_USER;
     Paginginvlpg(vaddr);
 }
 U32 PGet(U32 vaddr) {
@@ -59,7 +59,7 @@ Ptr PFree(Ptr ptr) {
 Ptr PallocMap(U32 vaddr, U32 flags) {
     Ptr paddr = PAlloc();
     if (paddr) {
-        PMap(vaddr, (U32)paddr, flags | PAGE_PRESENT);
+        PMap(vaddr, (U32)paddr, flags);
     }
     return paddr;
 }

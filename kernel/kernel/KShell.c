@@ -3,6 +3,7 @@
 #include <kernel/KWinDemo.h>
 #include <kernel/KTasks.h>
 #include <kernel/KPanic.h>
+#include <kernel/KSys.h>
 #include <kernel/KMem.h>
 
 // Drivers
@@ -596,7 +597,6 @@ U0 loop() {
 U32 testvar = 0xABAB;
 U0 tasking1() {
     for (U32 i = 0;; ++i) {
-        TTYCursor -= TTYCursor % 80;
         PrintF("tasking %d\nfunction call %d\n", i, LazyCalc(i));
         Sleep(50);
     }
@@ -847,7 +847,9 @@ U0 termrun(const String cmd) {
         PrintF("Width: %d, Height: %d\n", TTerm.width, TTerm.height);
         PrintF("CPU: %s\n", cpu);
         U16 mem = MemorySize() / 1024;
-        PrintF("RAM: %dKB", mem);
+        PrintF("RAM: %dKB\n", mem);
+
+        PrintF("User: %s", UserCurr.username);
     }
     else if (!StrCmp(cmd, "pass")) {
         PrintF("Enter password: $!A\\$$!0");

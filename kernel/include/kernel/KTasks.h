@@ -11,7 +11,7 @@ typedef struct Task Task;
 typedef struct Task {
     U32 id;
     U16 flags;
-    INTRegs regs;
+    INTRegs3 regs;
     Task *next;
     U32 esp;
     U8 fpu[512];

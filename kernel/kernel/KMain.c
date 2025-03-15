@@ -3,6 +3,7 @@
 #include <kernel/KTasks.h>
 #include <kernel/KPanic.h>
 #include <kernel/KShell.h>
+#include <kernel/KSys.h>
 #include <kernel/KMem.h>
 
 // Drivers
@@ -168,7 +169,8 @@ U0 KernelMain() {
     TTYSwitch(0);
 
     Sleep(500);
-    TaskNew((U32)mainloop, 0x10, 0x08);
+    // TaskNew((U32)mainloop, 0x10, 0x08);
+    mainloop();
     // mainloop();
     // TaskNew((U32)mainloop);
     // TaskNew((U32)loop);
@@ -195,33 +197,19 @@ static U0 TimeUpd(Ptr this) {
 }
 
 U0 cmdloop() {
-    for (;;) {
-        Sleep(1000/60);
-    }
-}
-
-U0 mainloop() {
-    TTYClear();
-    PrintF("First time in bosyos?\n$!BUse$!F command \"$!7tut$!F\" to learn basic things\n");
-    Win time;
-    time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE);
-    time.update = TimeUpd;
     Char buffer[50] = {0};
-    // TaskNew((U32)cmdloop, 0x10, 0x08);
-    
-    WinSpawn(&time);
-    TTYSwitch(3);
-    TTYUPrint("$!7(BosyOS) $!F");
-    TTYSwitch(0);
-    // TaskNew((U32)cmdloop, 0x10, 0x08);
-    TTYUPrint("$!A\\$ $!F");
     for (;;) {
         TTerm.render();
         if (VTerm->in.count) {
             KBRead(buffer, 50);
-            if (TTermID == 3) {
+            if (TTermID == 3 && (UserCurr.type == KUserDev)) {
                 if (!StrCmp(buffer, "panic")) {
                     KPanic("Test panic", True);
+                }
+                else if (!StrCmp(buffer, "stack")) {
+                    U32 esp;
+                    asmv("movl %%esp, %0" :: "r"(esp));
+                    PrintF("ESP: %p", esp);
                 }
                 else if (!StrCmp(buffer, "drivers")) {
                     for (U32 i = 0; i < 50; ++i) {
@@ -242,6 +230,33 @@ U0 mainloop() {
             MemSet(buffer, 0, 50);
         }
         TTerm.render();
-        Sleep(16);
     }
+}
+
+U0 ring3() {
+    SerialPrintF("Hello, from ring3!\n");
+    for(;;);
+}
+
+U0 mainloop() {
+    TTYClear();
+    UserCurr.username = "dev";
+    UserCurr.type = KUserDev;
+    PrintF("First time in bosyos?\n$!BUse$!F command \"$!7tut$!F\" to learn basic things\n");
+    Win time;
+    time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE);
+    time.update = TimeUpd;
+
+    WinSpawn(&time);
+    TTYSwitch(3);
+    TTYUPrint("$!7(BosyOS) $!F");
+    TTYSwitch(0);
+    
+    SerialPrintF("Before TaskNew");
+    // TaskNew((U32)cmdloop, 0x10, 0x08);
+    SerialPrintF("After TaskNew");
+    
+    TTYUPrint("$!A\\$ $!F");
+
+    cmdloop();
 }

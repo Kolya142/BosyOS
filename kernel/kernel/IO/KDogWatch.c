@@ -6,6 +6,7 @@
 #include <lib/IO/TTY.h>
 #include <arch/x86/cpu/io.h>
 #include <arch/x86/sys/idt.h>
+#include <kernel/KTasks.h>
 #include <stdarg.h>
 
 typedef struct {
@@ -97,6 +98,12 @@ U0 KDogWatchTick() {
             Profiles[i].update = KDogWatchTicks;
         }
     }
+    if (TaskTail && TaskHead && TaskTail->esp - TaskTail->regs.useresp > 8192) {
+        // KDogWatchLogF("Task %d used too many stack memory", TaskTail->id);
+        // KDogWatchStackTrace();
+        // TaskKill(TaskTail->id);
+        // TaskNext();
+    }
 }
 U0 KDogWatchStackTrace() {
     struct stackframe {
@@ -104,8 +111,7 @@ U0 KDogWatchStackTrace() {
         U32 eip;
     };
     PrintF("Stack trace\n");
-    struct stackframe *stk;
-    asmv("movl %%ebp, %0" : "=r"(stk));
+    struct stackframe *stk = (struct stackframe*)__builtin_frame_address(0);
     for (U32 frame = 0; stk && stk->eip && frame < 10; ++frame) {
         PrintF("<- %p\n", stk->eip);
         stk = stk->ebp;

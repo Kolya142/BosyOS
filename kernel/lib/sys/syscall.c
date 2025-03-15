@@ -24,7 +24,7 @@ INT_DEF(SysCallInt) {
         PrintF("Syscall %p %p %p\n", regs->eax, regs->esi, regs->edi);
         goto end;
     }
-    U0 (*sys)(INTRegs *regs) = SysCallT[call];
+    U0 (*sys)(INTRegs3 *regs) = SysCallT[call];
     sys(regs);
     end:
     INT_RETURN;

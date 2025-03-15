@@ -17,7 +17,7 @@ U0 GDTInit() {
     GDTEntrySet(3, 0, 0xFFFFFFFF,          0xFA, 0xCF);      // User Code    (0x18) r-x
     GDTEntrySet(4, 0, 0xFFFFFFFF,          0xF2, 0xCF);      // User Data    (0x20) rw-
     GDTEntrySet(5, (U32)&TSS, sizeof(TSS), 0x89, 0x40);      // TSS          (0x28) --x
-    TSS.esp0 = 0x500000;
+    TSS.esp0 = 0x600000;
     TSS.ss0  = 0x10;
     GDTLoad();
     asmV(

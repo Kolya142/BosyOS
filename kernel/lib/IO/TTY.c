@@ -60,6 +60,9 @@ U0 TTYUPrintC(Char c) {
         else if (c == '*') {
             ldv = 2;
         }
+        else if (c == '@') {
+            ldv = 3;
+        }
         else if (c == 'U') {
             TTYPrintC((AsciiP)ASCIIPUp);
             lds = 0;
@@ -124,6 +127,10 @@ U0 TTYUPrintC(Char c) {
                     break;
                     case 2:
                         TTYPrintC((AsciiP)ASCIIPF2);
+                        TTYPrintC(d+(AsciiP)ASCIIPCBlack);
+                    break;
+                    case 3:
+                        TTYPrintC((AsciiP)ASCIIPF3);
                         TTYPrintC(d+(AsciiP)ASCIIPCBlack);
                     break;
                 }

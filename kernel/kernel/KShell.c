@@ -1,37 +1,3 @@
-// Kernel
-#include <kernel/KDogWatch.h>
-#include <kernel/KWinDemo.h>
-#include <kernel/KTasks.h>
-#include <kernel/KPanic.h>
-#include <kernel/KSys.h>
-#include <kernel/KMem.h>
-
-// Drivers
-#include <drivers/input/keyboard.h>
-#include <drivers/network/rtl8139.h>
-#include <drivers/serial/serial.h>
-#include <drivers/input/mouse.h>
-#include <drivers/misc/random.h>
-#include <drivers/video/vga.h>
-#include <drivers/disk/ide.h>
-#include <drivers/time/pit.h>
-#include <drivers/sys/pci.h>
-#include <drivers/input/ps2.h>
-#include <drivers/sys/beep.h>
-
-// Miscellaneous
-#include <misc/driverreg.h>
-#include <misc/vdrivers.h>
-#include <lib/sys/syscall.h>
-#include <misc/wordgen.h>
-
-// Lang
-#include <lang/Tokenizer.h>
-
-// KWS
-#include <kws/win.h>
-
-// Libraries
 #include <lib/IO/KeyboardLib.h>
 #include <lib/graphics/Graphics.h>
 #include <lib/memory/Collects.h>
@@ -43,25 +9,124 @@
 #include <lib/formats/bsfexe.h>
 #include <lib/IO/TTY.h>
 #include <lib/net/IP.h>
-
-// FileSystem
-#include <fs/minix.h>
-#include <fs/ramfs.h>
 #include <fs/vfs.h>
-
-// Arch/Cpu Functions
-#include <arch/x86/sys/paging.h>
-#include <arch/x86/sys/ring3.h>
-#include <arch/x86/cpu/cpu.h>
-#include <arch/x86/sys/gdt.h>
-#include <arch/x86/cpu/fpu.h>
-#include <arch/x86/sys/sys.h>
-#include <arch/x86/cpu/pic.h>
 
 U32 syscall(U32 id, U32 a, U32 b, U32 c, U32 d);
 U0 print(String text);
 U32 read(String buf, U32 count) {
     return syscall(3, 0, (U32)buf, count, 0);
+}
+U0 print_dec(U32 a) {
+    if (!a) {
+        print("0");
+        return;
+    }
+    Char buf[11] = {0};
+    U32 p = 10;
+    buf[p] = 0;
+
+    while (a) {
+        buf[--p] = '0' + (a % 10);
+        a /= 10;
+    }
+
+    for (U32 i = 0; i < 11; ++i) {
+        if (buf[i]) {
+            syscall(4, 1, (U32)&buf[i], 1, 0);
+        }
+    }
+}
+U0 print_deci(I32 a) {
+    if (a < 0) {
+        print("-");
+        a = -a;
+    }
+    print_dec(a);
+}
+U0 printf(String fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    U32 n = 4;
+    while (*fmt) {
+        if (*fmt == '%' && *(fmt + 1)) {
+            ++fmt;
+            if (*fmt >= '0' && *fmt <= '4') {
+                n = *fmt - '0';
+                ++fmt;
+            }
+            switch (*fmt) {
+                case 'c': {
+                    Char c = va_arg(args, U32);
+                    syscall(4, 1, (U32)&c, 1, 0);
+                } break;
+                case 'C': {
+                    Char c = UpperTo(va_arg(args, U32));
+                    syscall(4, 1, (U32)&c, 1, 0);
+                } break;
+                case 's': {
+                    String s = va_arg(args, String);
+                    if (!s) s = "(null)";
+                    print(s);
+                } break;
+                case 'B': {
+                    Bool s = va_arg(args, U32);
+                    if (s) {
+                        print("True");
+                    }
+                    else {
+                        print("False");
+                    }
+                } break;
+                case 'b': {
+                    U16 s = va_arg(args, U32);
+                    for (I8 i = n * 8 - 1; i >= 0; --i) {
+                        Char c = (s & (1 << i)) ? '1' : '0';
+                        syscall(4, 1, (U32)c, 1, 0);
+                    }
+                } break;                
+                case 'd': {
+                    U32 s = va_arg(args, U32);
+                    print_dec(s);
+                } break;
+                case 'i': {
+                    I32 s = va_arg(args, I32);
+                    print_deci(s);
+                } break;
+                case 'p': {
+                    U32 s = va_arg(args, U32);
+                    print("0x");
+                } break;
+                case 'z': {
+                    U32 s = va_arg(args, U32);
+                } break;
+                case 'x': {
+                    U32 s = va_arg(args, U32);
+                    for (U8 i = n * 2; i > 0; --i) {
+                        Char c = "0123456789abcdef"[(s >> ((i - 1) * 4)) & 0xF];
+                        syscall(4, 1, (U32)&c, 1, 0);
+                    }
+                } break;
+                case 'X': {
+                    U32 s = va_arg(args, U32);
+                    for (U8 i = n * 2; i > 0; --i) {
+                        Char c = "0123456789ABCDEF"[(s >> ((i - 1) * 4)) & 0xF];
+                        syscall(4, 1, (U32)&c, 1, 0);
+                    }
+                } break;
+                case '%': {
+                    print("%");
+                } break;
+                default:
+                    print("%");
+                    syscall(4, 1, (U32)fmt, 1, 0);
+            }
+            n = 4;
+            ++fmt;
+            continue;
+        }
+        syscall(4, 1, (U32)fmt, 1, 0);
+        ++fmt;
+    }
 }
 
 U0 CHelp() {
@@ -88,10 +153,14 @@ static String c;
 
 U0 termrun(const String cmd);
 
+U0 lsfunc(String name, VFSStat *stat) {
+    printf("File: %s\n", name);
+}
+
 U0 termrun(const String cmd) {
     if (cmd[0] == '&') {
         c = cmd+1;
-        PrintF("currently not supported\n");
+        PrintF("not supported\n");
     }
     else if (!StrCmp(cmd, "tut")) {
         // print("Welcome to $!BBosyOS$!F\n");
@@ -171,14 +240,29 @@ U0 termrun(const String cmd) {
         // while (syscall(3, 0, (U32)&c, 1, 0));
     }
     else if (!StrCmp(cmd, "time")) {
-        print("// TODO: make printf\n");
+        printf("Time: %d\n", BosyTime);
     }
     else if (!StrCmp(cmd, "help")) {
         print("tut - tutorial\n");
         print("time - current time\n");
         print("cls - clear screen\n");
+        print("ls - list files\n");
         print("help - show this\n");
         print("&CMD - run CMD in new task\n");
+        print("!FILE - run bsfexe file FILE\n");
+    }
+    else if (!StrCmp(cmd, "ls")) {
+        VFSReadDir(lsfunc);
+    }
+    else if (StrStartsWith(cmd, "cat")) {
+        U8 buf[50] = {0};
+        printf("readed: %dB\nfile content:\n%s\n", VFSRead(cmd + 4, buf, 0, 50), buf);
+    }
+    else if (StrStartsWith(cmd, "!")) {
+        U8 buf[2048] = {0};
+        VFSRead(cmd+1, buf, 0, 2048);
+        BsfApp app = BsfFromBytes(buf);
+        BsfExec(&app, 0, 1);
     }
     else if (!StrCmp(cmd, "cls")) {
         U32 width;
@@ -187,7 +271,7 @@ U0 termrun(const String cmd) {
         for (U32 i = 0; i < width*height; ++i) {
             print(" ");
         }
-        print((U8[]) {ASCIIPHome});
+        print((U8[]) {ASCIIPHome, 0});
     }
     else {
         print("Unk ");

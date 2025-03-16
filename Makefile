@@ -26,6 +26,8 @@ compile:
 	# fi
 	dd if=bosyboot of=drive bs=512 seek=0 count=13 conv=notrunc
 	dd if=kernel.bin of=drive bs=512 seek=35 count=256 conv=notrunc
+	python3 non-kernel\ files/mkbosyrom.py initrom userdir
+	dd if=initrom of=drive bs=512 seek=291 conv=notrunc
 
 iso:
 	touch bosyos.iso

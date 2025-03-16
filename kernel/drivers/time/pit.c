@@ -43,21 +43,15 @@ INT_DEF(PITHandler) {
     PITTime += 1000/60 + 1;
 
     if (TaskTail && TaskHead) {
-        SerialPrintF("bef EIP: %p, Task: %d, ESP: %p, Time: %d", regs->eip, TaskTail->id, TaskTail->regs.useresp, PITTime);
         if (!(TaskTail->flags & TASK_WORKING)) {
             TaskTail->flags |= TASK_WORKING;
             regs_copy(regs, &TaskTail->regs);
         }
         else {
-            SerialPrintF("ESP1: %p", TaskTail->regs.useresp);
             regs_copy(&TaskTail->regs, regs);
-            SerialPrintF("ESP2: %p", TaskTail->regs.useresp);
             TaskNext();
-            SerialPrintF("ESP3: %p", TaskTail->regs.useresp);
             regs_copy(regs, &TaskTail->regs);
-            SerialPrintF("ESP4: %p", regs->useresp);
         }
-        SerialPrintF("EIP: %p, Task: %d, ESP: %p, Time: %d", regs->eip, TaskTail->id, TaskTail->regs.useresp, PITTime);
         // TTYCurrent = TaskTail->ttyid;
     }
     if (!(PITTicks % 2)) {

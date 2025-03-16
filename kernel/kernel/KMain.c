@@ -22,6 +22,7 @@
 #include <drivers/sys/pci.h>
 
 // Miscellaneous
+#include <misc/vfiles.h>
 #include <misc/driverreg.h>
 #include <misc/vdrivers.h>
 #include <lib/sys/syscall.h>
@@ -49,6 +50,7 @@
 // FileSystem
 #include <fs/minix.h>
 #include <fs/ramfs.h>
+#include <fs/romfs.h>
 #include <fs/vfs.h>
 
 // Arch/Cpu Functions
@@ -105,6 +107,7 @@ U0 KernelMain() {
     }
 
     VFSInit();
+    VFilesInit();
     KDogWatchLog("Initialized \"vfs\"", False);
 
     VgaBlinkingSet(False);
@@ -162,6 +165,11 @@ U0 KernelMain() {
     RFSInit();
     // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, (Ptr)RFSReadDirV);
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
+
+    ATARead((Ptr)0x200000, 291, 64);
+    PrintF("%s", 0x200000);
+    ROFSInit((Ptr)0x200000);
+    KDogWatchLog("Initialized \x9Bromfs\x9C", False);
 
     // MXInit();
     // KDogWatchLog("Initialized \"minix fs\"", False);
@@ -280,9 +288,9 @@ U0 mainloop() {
         PrintF("Terminal %d\n", t);
     }
     TTYSwitch(0);
-    Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
-    win.update = TimeUpd;
-    WinSpawn(&win);
+    // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
+    // win.update = TimeUpd;
+    // WinSpawn(&win);
 
     TTYCurrent = 4;
     PrintF("$!7(BosyOS) $!F");

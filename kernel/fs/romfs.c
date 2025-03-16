@@ -1,21 +1,27 @@
+#include <lib/IO/TTY.h>
 #include <fs/romfs.h>
 
-static ROFSSB *ROFS;
+ROFSSB *ROFS;
 
 static U32 ROFSReadV(String name, Ptr buf, U32 offset, U32 count) {
-    ROFSNode *node = (ROFSNode*)(ROFS+sizeof(ROFSSB*));
+    ROFSNode *node = (ROFSNode*)((U8*)ROFS+sizeof(ROFSSB));
     for (U32 i = 0; i < ROFS->count; ++i) {
+        PrintF("File name: %s, File size: %d\n", node->name, node->size);
         if (!StrCmp(node->name, name)) {
+            if (offset >= node->size) return 0;
+            count = min(count, node->size - offset);
             MemCpy(buf, (Byte*)node + sizeof(ROFSNode) + offset, count);
-            break;
+            return count;
         }
         node += sizeof(ROFSNode) + node->size;
     }
     return 0;
 }
-static U32 ROFSWriteV(String name, Ptr buf, U32 offset, U32 count) {}
+static U32 ROFSWriteV(String name, Ptr buf, U32 offset, U32 count) {
+    return 0;
+}
 static U0 ROFSStatV(String name, VFSStat *stat) {
-    ROFSNode *node = (ROFSNode*)(ROFS+sizeof(ROFSSB*));
+    ROFSNode *node = (ROFSNode*)((U8*)ROFS+sizeof(ROFSSB));
     for (U32 i = 0; i < ROFS->count; ++i) {
         if (!StrCmp(node->name, name)) {
             stat->ino = i;
@@ -29,12 +35,16 @@ static U0 ROFSStatV(String name, VFSStat *stat) {
 }
 
 U0 ROFSInit(Byte *buf) {
+    PrintF("loading romfs\n");
     ROFS = (ROFSSB*)buf;
-    if (StrCmp(ROFS->magic, "-romfs-")) {
+    PrintF("magic: %s", ROFS->magic);
+    if (!StrStartsWith(ROFS->magic, "-romfs-")) {
         return;
     }
-    ROFSNode *node = (ROFSNode*)(buf+sizeof(ROFSSB*));
+    PrintF("loading romfs\n");
+    ROFSNode *node = (ROFSNode*)(buf+sizeof(ROFSSB));
     for (U32 i = 0; i < ROFS->count; ++i) {
+        PrintF("File: %s\n", node->name);
         VFSMount(node->name, ROFSReadV, ROFSWriteV, ROFSStatV);
         node += sizeof(ROFSNode) + node->size;
     }

@@ -68,13 +68,24 @@ U0 loop();
 U0 KernelMain() {
     HeapInit();
     TTYInit();
+    U32 ptys = PTYNew(2048, 1, 1);
+    U32 ptyg1 = PTYNew(2048, 320/6, 200/6);
+    U32 ptyg2 = PTYNew(2048, 320/6, 200/6);
+    U32 ptyg3 = PTYNew(2048, 320/6, 200/6);
+    U32 ptyg4 = PTYNew(2048, 320/6, 200/6);
+    TTYNew(TTYRenderS, ptys);
+    TTYNew(TTYRenderG, ptyg1);
+    TTYNew(TTYRenderG, ptyg2);
+    TTYNew(TTYRenderG, ptyg3);
+    TTYNew(TTYRenderG, ptyg4);
+    TTYCurrent = 4;
     // TTYSwitch(TTYC_VGA);
     VgaInit();
-    TTYClear();
     TTYSwitch(3);
-    // TTerm.width = 80;
-    // TTerm.height = 25;
-    TTYCursor = 0;
+    // TTYClear(); // FIXME
+    // ((TTY*)TTYs.arr)[TTYCurrent].pty->width = 80;
+    // ((TTY*)TTYs.arr)[TTYCurrent].pty->height = 25;
+    ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
     KDogWatchInit();
     GDTInit();
     IDTInit();
@@ -84,7 +95,7 @@ U0 KernelMain() {
     KDogWatchLog("Switching to 320x200", False);
     VgaGraphicsSet();
     // VESAInit();
-    TTYCursor = 0;
+    ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
     KDogWatchLog("System initializing start", False);
 
     U16 mem = MemorySize();
@@ -163,13 +174,14 @@ U0 KernelMain() {
 
     KDogWatchLog("System Initialized", False);
     KDogWatchLog("Entering shell", False);
-    // TTYClear();
-    // TTYCursor = 0;
+    // // TTYClear(); // FIXME
+    // ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
 
     TTYSwitch(0);
 
     Sleep(500);
     // TaskNew((U32)mainloop, 0x10, 0x08);
+    TTYSwitch(1);
     mainloop();
     // mainloop();
     // TaskNew((U32)mainloop);
@@ -180,13 +192,13 @@ U0 KernelMain() {
 
 }
 // INT_DEF(KernelDebug) {
-//     U32 c = TTYCursor;
+//     U32 c = ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor;
 //     // TTYSwitch(TTYC_SER);
-//     TTYCursor = 0;
+//     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
 //     PrintF("EIP: %08x ESP: %08x EBP: %08x\n", regs->eip, regs->useresp, regs->ebp);
 //     PrintF("EAX: %08x EBX: %08x ECX: %08x EDX: %08x\n", regs->eax, regs->ebx, regs->ecx, regs->edx);
 //     // TTYSwitch(TTYC_RES);
-//     TTYCursor = c;
+//     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = c;
 // }
 
 extern Bool VRMState;
@@ -196,67 +208,85 @@ static U0 TimeUpd(Ptr this) {
     WPrintF(win, 0, 0, "%d:%d:%d    ", SystemTime.hour, SystemTime.minute, SystemTime.second);
 }
 
-U0 cmdloop() {
+U32 syscall(U32 id, U32 a, U32 b, U32 c, U32 d) {
+    U32 ret;
+    asmV (
+        "int $0x80"
+        : "=a"(ret)
+        : "a"(id), "S"(a), "D"(b), "b"(c), "d"(d)
+    );
+    return ret;
+}
+U0 print(String text) {
+    syscall(4, 1, (U32)text, StrLen(text), 0);
+}
+
+static U0 loop1() {
     Char buffer[50] = {0};
     for (;;) {
-        TTerm.render();
-        if (VTerm->in.count) {
-            KBRead(buffer, 50);
-            if (TTermID == 3 && (UserCurr.type == KUserDev)) {
-                if (!StrCmp(buffer, "panic")) {
-                    KPanic("Test panic", True);
-                }
-                else if (!StrCmp(buffer, "stack")) {
-                    U32 esp;
-                    asmv("movl %%esp, %0" :: "r"(esp));
-                    PrintF("ESP: %p", esp);
-                }
-                else if (!StrCmp(buffer, "drivers")) {
-                    for (U32 i = 0; i < 50; ++i) {
-                        if (Drivers[i].name) {
-                            PrintF("$!Adriver$!F: $!7%s$!F | ", Drivers[i].name);
-                            U32 x = (TTerm.width - 32);
-                            TTYCursor = x + (TTYCursor / TTerm.width) * TTerm.width;
-                            PrintF("$!B%X$!F-$!B%X$!F\n", Drivers[i].d1, Drivers[i].d2);
-                        }
-                    }
-                }
-                TTYUPrint("\n$!7(BosyOS) $!F");
+        MemSet(buffer, 0, 50);
+        if (syscall(3, 0, (U32)buffer, 50, 0)) {
+            if (!StrCmp(buffer, "panic")) {
+                KPanic("panic command", True);
             }
-            else {
-                termrun(buffer);
-                TTYUPrint("\n$!A\\$ $!F");
+            else if (!StrCmp(buffer, "help")) {
+                syscall(4, 1, (U32)"commands:\npanic\nhelp\n", 21, 0);
             }
-            MemSet(buffer, 0, 50);
         }
-        TTerm.render();
+        Sleep(10);
+    }
+}
+
+static U0 loop2() {
+    Char buffer[50] = {0};
+    print("$ ");
+    for (;;) {
+        MemSet(buffer, 0, 50);
+        if (syscall(3, 0, (U32)buffer, 50, 0)) {
+            termrun(buffer);
+            print("$ ");
+        }
+        Sleep(10);
     }
 }
 
 U0 ring3() {
-    SerialPrintF("Hello, from ring3!\n");
+    TTYCurrent = 4;
+    asmV(
+        "int $0x80"
+        :: "a"(11), "S"(loop1)
+    );
+    TTYCurrent = 1;
+    asmV(
+        "int $0x80"
+        :: "a"(11), "S"(loop2)
+    );
+    TTYCurrent = 2;
+    asmV(
+        "int $0x80"
+        :: "a"(11), "S"(loop2)
+    );
+    TTYCurrent = 3;
+    asmV(
+        "int $0x80"
+        :: "a"(11), "S"(loop2)
+    );
     for(;;);
 }
 
 U0 mainloop() {
-    TTYClear();
-    UserCurr.username = "dev";
-    UserCurr.type = KUserDev;
-    PrintF("First time in bosyos?\n$!BUse$!F command \"$!7tut$!F\" to learn basic things\n");
-    Win time;
-    time = WinMake(320 - 10 - 8*6, 10, 8*6, 6, "Time", WIN_UNMOVEBLE);
-    time.update = TimeUpd;
-
-    WinSpawn(&time);
-    TTYSwitch(3);
-    TTYUPrint("$!7(BosyOS) $!F");
+    for (U32 t = 0; t < TTYs.count; ++t) {
+        TTYCurrent = t;
+        PrintF("Terminal %d\n", t);
+    }
     TTYSwitch(0);
-    
-    SerialPrintF("Before TaskNew");
-    // TaskNew((U32)cmdloop, 0x10, 0x08);
-    SerialPrintF("After TaskNew");
-    
-    TTYUPrint("$!A\\$ $!F");
+    Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
+    win.update = TimeUpd;
+    WinSpawn(&win);
 
-    cmdloop();
+    TTYCurrent = 4;
+    PrintF("$!7(BosyOS) $!F");
+    TTYCurrent = 1;
+
+    RingSwitch(ring3, (Ptr)0x300000);
 }

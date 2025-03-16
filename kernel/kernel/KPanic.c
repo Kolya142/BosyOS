@@ -36,39 +36,7 @@ U0 KPanic(const String msg, Bool reboot)
     }
     VRM = VVRM;
     
-    TTYUPrint("$!A$*CKernelPanic: ");
-
-    TTYUPrint(msg);
-    TTYUPrint("\n");
-
-    TTYUPrint("$!0$*FSystem: BosyOS, Time at panic: ");
-    TTYUPrint("\n");
-    {
-        U32i *t = (U32i*)&start;
-        const String hex = "0123456789ABCDEF";
-        TTYRawPrint(hex[t->u8[3] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[3] & 15], Blue, White);
-        TTYRawPrint(hex[t->u8[2] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[2] & 15], Blue, White);
-        TTYRawPrint(hex[t->u8[1] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[1] & 15], Blue, White);
-        TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
-        TTYUPrint("\n");
-    }
-    {
-        U32i *t = (U32i*)&ecode;
-        const String hex = "0123456789ABCDEF";
-        TTYRawPrint(hex[t->u8[3] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[3] & 15], Blue, White);
-        TTYRawPrint(hex[t->u8[2] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[2] & 15], Blue, White);
-        TTYRawPrint(hex[t->u8[1] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[1] & 15], Blue, White);
-        TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
-        TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
-        TTYUPrint("\n");
-    }
+    PrintF("$!A$*CKernelPanic: %s\n$!0$*F\nTime at panic: %d\nMessage Hash: %x", msg, start, ecode);
     PrintF("Stack trace:\n");
     struct stackframe *stk;
     asmv("movl %%ebp, %0" : "=r"(stk));
@@ -79,18 +47,8 @@ U0 KPanic(const String msg, Bool reboot)
     while (PITTime - start < 15000) {
         {
             U32 d = (15000 - PITTime - start);
-            U32i *t = (U32i*)&d;
-            const String hex = "0123456789ABCDEF";
-            TTYRawPrint(hex[t->u8[3] >> 4], Blue, White);
-            TTYRawPrint(hex[t->u8[3] & 15], Blue, White);
-            TTYRawPrint(hex[t->u8[2] >> 4], Blue, White);
-            TTYRawPrint(hex[t->u8[2] & 15], Blue, White);
-            TTYRawPrint(hex[t->u8[1] >> 4], Blue, White);
-            TTYRawPrint(hex[t->u8[1] & 15], Blue, White);
-            TTYRawPrint(hex[t->u8[0] >> 4], Blue, White);
-            TTYRawPrint(hex[t->u8[0] & 15], Blue, White);
-            TTYUPrint("\n");
-            TTYCursor -= TTerm.width;
+            PrintF("%d", d);
+            ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor -= ((TTY*)TTYs.arr)[TTYCurrent].pty->width;
         }
         Beep(tones[tind]);
         tind = (tind + 1) % (sizeof(tones) / sizeof(U16));

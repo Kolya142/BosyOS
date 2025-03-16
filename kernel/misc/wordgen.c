@@ -1,4 +1,5 @@
 #include <misc/wordgen.h>
+#include <drivers/video/vga.h>
 #include <drivers/misc/random.h>
 #include <lib/time/Time.h>
 
@@ -56,22 +57,21 @@ U0 WordGen()
     for (int i = 0; i < 6+(v&6); i++) {
         switch (state) {
             case 0: {
-                TTYRawPrint(vowels[v%6], Green, Black);
+                TTYUPrintC(TTYCurrent, vowels[v%6]);
                 state = 1;
             } break;
             case 1: {
-                TTYRawPrint(consonts[v%22], Green, Black);
+                TTYUPrintC(TTYCurrent, consonts[v%22]);
                 state = (PITTime^v>>2)&1 ? 2 : 0;
             } break;
             case 2: {
-                TTYRawPrint(consonts[v%22], Green, Black);
+                TTYUPrintC(TTYCurrent, consonts[v%22]);
                 state = 0;
             } break;
         }
         v = RandomU();
     }
     if (VowelEnd) {
-        TTYRawPrint(vowels[v%6], Green, Black);
+        TTYUPrintC(TTYCurrent, vowels[v%6]);
     }
-    TTYRawPrint(' ', Black, Black);
 }

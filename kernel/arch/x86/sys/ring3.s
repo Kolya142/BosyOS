@@ -1,6 +1,8 @@
 [bits 32]
 section .text
 global RingSwitch
+extern TSS
+extern SerialPrintF
 
 RingSwitch:
     cli
@@ -12,9 +14,12 @@ RingSwitch:
 
     mov eax, dword [esp + 4]
     mov ebx, dword [esp + 8]
-    push 0x23
+
+    mov dword [TSS + 4], ebx
+
+    push dword 0x23
     push ebx
-    pushf
-    push 0x1B
+    push dword 0x202
+    push dword 0x1B
     push eax
     iret

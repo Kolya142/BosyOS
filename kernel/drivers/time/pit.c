@@ -44,64 +44,62 @@ INT_DEF(PITHandler) {
 
     if (TaskTail && TaskHead) {
         SerialPrintF("bef EIP: %p, Task: %d, ESP: %p, Time: %d", regs->eip, TaskTail->id, TaskTail->regs.useresp, PITTime);
-        for (;;) {
-            if (!(TaskTail->flags & TASK_WORKING)) {
-                TaskTail->flags |= TASK_WORKING;
-                regs_copy(regs, &TaskTail->regs);
-                TaskNext();
-            }
-            else {
-                SerialPrintF("ESP1: %p", TaskTail->regs.useresp);
-                regs_copy(&TaskTail->regs, regs);
-                SerialPrintF("ESP2: %p", TaskTail->regs.useresp);
-                TaskNext();
-                SerialPrintF("ESP3: %p", TaskTail->regs.useresp);
-                regs_copy(regs, &TaskTail->regs);
-                SerialPrintF("ESP4: %p", regs->useresp);
-                break;
-            }
+        if (!(TaskTail->flags & TASK_WORKING)) {
+            TaskTail->flags |= TASK_WORKING;
+            regs_copy(regs, &TaskTail->regs);
+        }
+        else {
+            SerialPrintF("ESP1: %p", TaskTail->regs.useresp);
+            regs_copy(&TaskTail->regs, regs);
+            SerialPrintF("ESP2: %p", TaskTail->regs.useresp);
+            TaskNext();
+            SerialPrintF("ESP3: %p", TaskTail->regs.useresp);
+            regs_copy(regs, &TaskTail->regs);
+            SerialPrintF("ESP4: %p", regs->useresp);
         }
         SerialPrintF("EIP: %p, Task: %d, ESP: %p, Time: %d", regs->eip, TaskTail->id, TaskTail->regs.useresp, PITTime);
+        // TTYCurrent = TaskTail->ttyid;
     }
     if (!(PITTicks % 2)) {
         KDogWatchTick();
     }
-
-    WindowsUpdate();
-
-    if (VRMState) {
-        VRMFlush();
-        Ptr vrm = VRM;
-        VRM = VVRM;
-        VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
-        VRM = vrm;
-    }
-    if (PITTime % 1000 < 500) {
-        for (U32 i = 0; i < 6; ++i) {
-            for (U32 j = 0; j < 6; ++j) {
-                U32 x = i + (TTYCursor % TTerm.width)*6;
-                U32 y = j + (TTYCursor / TTerm.width)*6;
-                VVRM[x + y * 320] ^= 15;
+    
+    {
+        WindowsUpdate();
+        
+        if (VRMState) {
+            VRMFlush();
+            Ptr vrm = VRM;
+            VRM = VVRM;
+            VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
+            VRM = vrm;
+        }
+        if (PITTime % 1000 < 500) {
+            for (U32 i = 0; i < 6; ++i) {
+                for (U32 j = 0; j < 6; ++j) {
+                    U32 x = i + (((TTY*)TTYs.arr)[TTYCurrent].pty->cursor % ((TTY*)TTYs.arr)[TTYCurrent].pty->width)*6;
+                    U32 y = j + (((TTY*)TTYs.arr)[TTYCurrent].pty->cursor / ((TTY*)TTYs.arr)[TTYCurrent].pty->width)*6;
+                    VVRM[x + y * 320] ^= 15;
+                }
             }
         }
-    }
 
-    RTCUpdate();
-    U32 days = 0;
+        RTCUpdate();
+        U32 days = 0;
 
-    for (U32 y = 2025; y < SystemTime.year; y++) {
-        days += (y % 4 == 0) ? 366 : 365;
-    }
-    for (U32 m = 1; m < SystemTime.month; m++) {
-        days += days_in_months[m - 1];
-        if (m == 2 && (SystemTime.year % 4 == 0)) {
-            days++;
+        for (U32 y = 2025; y < SystemTime.year; y++) {
+            days += (y % 4 == 0) ? 366 : 365;
         }
+        for (U32 m = 1; m < SystemTime.month; m++) {
+            days += days_in_months[m - 1];
+            if (m == 2 && (SystemTime.year % 4 == 0)) {
+                days++;
+            }
+        }
+        days += SystemTime.day - 1;
+        BosyTime = (((days * 24 + SystemTime.hour) * 60) + SystemTime.minute) * 60 + SystemTime.second;
+        // SerialPrintF("ESP: %p", regs->useresp);
     }
-    days += SystemTime.day - 1;
-    BosyTime = (((days * 24 + SystemTime.hour) * 60) + SystemTime.minute) * 60 + SystemTime.second;
-    
-    // SerialPrintF("ESP: %p", regs->useresp);
 }
 
 static U0 PITDriverHandler(U32 id, U32 *value) {

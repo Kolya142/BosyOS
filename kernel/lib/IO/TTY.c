@@ -1,56 +1,23 @@
+#include <lib/strings/String.h>
 #include <lib/IO/TTY.h>
 
-U0 TTYInit() {
-    for (U8 i = 0; i < 4; ++i) {
-        VTerms[i] = PTermInit(2048);
-        TTYBuffers[i] = MAlloc(2048);
-    }
-    VTerm = &VTerms[0];
-    TTerm.width = 320 / 6;
-    TTerm.height = 200 / 6;
-    TTerm.render = TTYRenderG;
-}
-U0 TTYClear() {
-    TTerm.render();
-
-    TTYCursor = 0;
-    PTermWrite(VTerm, 1, (Char[]){ ASCIIPCtrl }, 1);
-    TTerm.render();
-
-    MemSet(TTYBuffers[TTermID], 0, sizeof(TTYBuffers[TTermID]));
-    TTYBuffersIndex[TTermID] = 0;
-}
-U0 TTYRawPrint(Char c, VgaColor fg, VgaColor bg) {
-    TTYPrintC(c);
+U0 TTYPrintC(U32 tty, Char c) {
+    TTYWrite(tty, 1, &c, 1);
 }
 
-inline U0 TTYPrintC(Char c) {
-    if (TTerm.render == TTYRenderG) { // TODO: make it more abstract
-        TTYBuffers[TTermID][TTYBuffersIndex[TTermID]] = c;
-        TTYBuffersIndex[TTermID] = (TTYBuffersIndex[TTermID] + 1) % 2048;
-    }
-    while (!PTermWrite(VTerm, 1, &c, 1)) {
-        TTerm.render();
-    }
-}
-
-U0 TTYUPrintC(Char c) {
+U0 TTYUPrintC(U32 tty, Char c) {
     static Bool lbs = False;
     static Bool lds = False; // $
     static U8   ldv = 0    ;
     static U8   lbd = 0    ;
     static U8   lbp = 0    ;
-    if (!TTYCanonical) {
-        TTYPrintC(c);
-        return;
-    }
     if (lbs) {
         if (c == '\\') 
-            TTYPrintC('\\');
+            TTYPrintC(tty, '\\');
         if (c == 'n')
-            TTYPrintC('\n');
+            TTYPrintC(tty, '\n');
         if (c == '$') 
-            TTYPrintC('$'); 
+            TTYPrintC(tty, '$'); 
         lbs = False;
     }
     else if (lds) {
@@ -64,23 +31,23 @@ U0 TTYUPrintC(Char c) {
             ldv = 3;
         }
         else if (c == 'U') {
-            TTYPrintC((AsciiP)ASCIIPUp);
+            TTYPrintC(tty, (AsciiP)ASCIIPUp);
             lds = 0;
         }
         else if (c == 'D') {
-            TTYPrintC((AsciiP)ASCIIPDown);
+            TTYPrintC(tty, (AsciiP)ASCIIPDown);
             lds = 0;
         }
         else if (c == 'L') {
-            TTYPrintC((AsciiP)ASCIIPLeft);
+            TTYPrintC(tty, (AsciiP)ASCIIPLeft);
             lds = 0;
         }
         else if (c == 'R') {
-            TTYPrintC((AsciiP)ASCIIPRight);
+            TTYPrintC(tty, (AsciiP)ASCIIPRight);
             lds = 0;
         }
         else if (c == 'H') {
-            TTYPrintC((AsciiP)ASCIIPHome);
+            TTYPrintC(tty, (AsciiP)ASCIIPHome);
             lds = 0;
         }
         else if (c == 'x') {
@@ -101,8 +68,8 @@ U0 TTYUPrintC(Char c) {
             lbd |= d;
             lbp ++;
             if (lbp == 3) {
-                TTYPrintC((AsciiP)ASCIIPNextRaw);
-                TTYPrintC(lbd);
+                TTYPrintC(tty, (AsciiP)ASCIIPNextRaw);
+                TTYPrintC(tty, lbd);
                 lbd = 0;
                 lds = False;
                 lbp = 0;
@@ -122,16 +89,16 @@ U0 TTYUPrintC(Char c) {
             if (d - 255) {
                 switch (ldv) {
                     case 1:
-                        TTYPrintC((AsciiP)ASCIIPF1);
-                        TTYPrintC(d+(AsciiP)ASCIIPCBlack);
+                        TTYPrintC(tty, (AsciiP)ASCIIPF1);
+                        TTYPrintC(tty, d+(AsciiP)ASCIIPCBlack);
                     break;
                     case 2:
-                        TTYPrintC((AsciiP)ASCIIPF2);
-                        TTYPrintC(d+(AsciiP)ASCIIPCBlack);
+                        TTYPrintC(tty, (AsciiP)ASCIIPF2);
+                        TTYPrintC(tty, d+(AsciiP)ASCIIPCBlack);
                     break;
                     case 3:
-                        TTYPrintC((AsciiP)ASCIIPF3);
-                        TTYPrintC(d+(AsciiP)ASCIIPCBlack);
+                        TTYPrintC(tty, (AsciiP)ASCIIPF3);
+                        TTYPrintC(tty, d+(AsciiP)ASCIIPCBlack);
                     break;
                 }
             }
@@ -140,8 +107,8 @@ U0 TTYUPrintC(Char c) {
         }
     }
     else if (c & 0x80) {
-        TTYPrintC((AsciiP)ASCIIPNextRaw);
-        TTYPrintC(c);
+        TTYPrintC(tty, (AsciiP)ASCIIPNextRaw);
+        TTYPrintC(tty, c);
     }
     else if (c == '\\') {lbs = True;}
     else {
@@ -149,49 +116,14 @@ U0 TTYUPrintC(Char c) {
             lds = True;
         } 
         else {
-            TTYPrintC(c);
+            TTYPrintC(tty, c);
         }
     }
 }
 
-U0 SerialPrintF(String format, ...) {
-    TTerm.render();
-    Ptr rend = TTerm.render;
-    TTerm.render = TTYRenderS;
-    va_list args;
-    va_start(args, format);
-    VPrintF(format, args);
-    va_end(args);
-    TTYUPrintC('\n');
-    TTerm.render();
-    TTerm.render = rend;
-}
-U0 TTYUPrint(String s) {
-    while (*s) {
-        TTYUPrintC(*s);
-        ++s;
-    }
-    TTerm.render();
-}
-
-U0 TTYUPrintHex(U32 i) {
-    U32i t = (U32i)i;
-
-    TTYUPrintC("0123456789ABCDEF"[t.u8[3] >> 4]);
-    TTYUPrintC("0123456789ABCDEF"[t.u8[3] & 15]);
-    
-    TTYUPrintC("0123456789ABCDEF"[t.u8[2] >> 4]);
-    TTYUPrintC("0123456789ABCDEF"[t.u8[2] & 15]);
-    
-    TTYUPrintC("0123456789ABCDEF"[t.u8[1] >> 4]);
-    TTYUPrintC("0123456789ABCDEF"[t.u8[1] & 15]);
-
-    TTYUPrintC("0123456789ABCDEF"[t.u8[0] >> 4]);
-    TTYUPrintC("0123456789ABCDEF"[t.u8[0] & 15]);
-}
-U0 TTYUPrintDec(U32 a) {
+U0 TTYUPrintDec(U32 tty, U32 a) {
     if (!a) {
-        TTYUPrintC('0');
+        TTYUPrintC(tty, '0');
         return;
     }
     Char buf[11] = {0};
@@ -205,20 +137,20 @@ U0 TTYUPrintDec(U32 a) {
 
     for (U32 i = 0; i < 11; ++i) {
         if (buf[i]) {
-            TTYUPrintC(buf[i]);
+            TTYUPrintC(tty, buf[i]);
         }
     }
 }
-U0 TTYUPrintDecI(I32 a) {
+U0 TTYUPrintDecI(U32 tty, I32 a) {
     if (a < 0) {
-        TTYUPrintC('-');
+        TTYUPrintC(tty, '-');
         a = -a;
     }
-    TTYUPrintDec(a);
+    TTYUPrintDec(tty, a);
 }
 
-U0 VPrintF(String format, va_list args) {
-    U8 n = 4;
+U0 VPrintF(U32 tty, String format, va_list args) {
+    U32 n = 4;
     while (*format) {
         if (*format == '%' && *(format + 1)) {
             ++format;
@@ -229,42 +161,55 @@ U0 VPrintF(String format, va_list args) {
             switch (*format) {
                 case 'c': {
                     Char c = va_arg(args, U32);
-                    TTYUPrintC(c);
+                    TTYUPrintC(tty, c);
                 } break;
                 case 'C': {
                     Char c = UpperTo(va_arg(args, U32));
-                    TTYUPrintC(c);
-                } break;
-                case 'w': {
-                    WordGen();
+                    TTYUPrintC(tty, c);
                 } break;
                 case 's': {
                     String s = va_arg(args, String);
                     if (!s) s = "(null)";
-                    TTYUPrint(s);
+                    for (U32 i = 0; s[i]; ++i) {
+                        TTYUPrintC(tty, s[i]);
+                    }
                 } break;
                 case 'B': {
                     Bool s = va_arg(args, U32);
-                    TTYUPrint(s ? "True" : "False");
+                    if (s) {
+                        TTYUPrintC(tty, 'T');
+                        TTYUPrintC(tty, 'r');
+                        TTYUPrintC(tty, 'u');
+                        TTYUPrintC(tty, 'e');
+                    }
+                    else {
+                        TTYUPrintC(tty, 'F');
+                        TTYUPrintC(tty, 'a');
+                        TTYUPrintC(tty, 'l');
+                        TTYUPrintC(tty, 's');
+                        TTYUPrintC(tty, 'e');
+                    }
                 } break;
                 case 'b': {
                     U16 s = va_arg(args, U32);
                     for (I8 i = n * 8 - 1; i >= 0; --i) {
-                        TTYUPrintC((s & (1 << i)) ? '1' : '0');
+                        TTYUPrintC(tty, (s & (1 << i)) ? '1' : '0');
                     }
                 } break;                
                 case 'd': {
                     U32 s = va_arg(args, U32);
-                    TTYUPrintDec(s);
+                    TTYUPrintDec(tty, s);
                 } break;
                 case 'i': {
                     I32 s = va_arg(args, I32);
-                    TTYUPrintDecI(s);
+                    TTYUPrintDecI(tty, s);
                 } break;
                 case 'p': {
                     U32 s = va_arg(args, U32);
-                    TTYUPrint("0x");
-                    TTYUPrintHex(s);
+                    TTYUPrintC(tty, '0');
+                    TTYUPrintC(tty, 'x');
+                    for (U8 i = 8; i > 0; --i)
+                        TTYUPrintC(tty, "0123456789ABCDEF"[(s >> ((i - 1) * 4)) & 0xF]);
                 } break;
                 case 'z': {
                     U32 s = va_arg(args, U32);
@@ -272,32 +217,39 @@ U0 VPrintF(String format, va_list args) {
                 case 'x': {
                     U32 s = va_arg(args, U32);
                     for (U8 i = n * 2; i > 0; --i)
-                        TTYUPrintC("0123456789abcdef"[(s >> ((i - 1) * 4)) & 0xF]);
+                        TTYUPrintC(tty, "0123456789abcdef"[(s >> ((i - 1) * 4)) & 0xF]);
                 } break;
                 case 'X': {
                     U32 s = va_arg(args, U32);
                     for (U8 i = n * 2; i > 0; --i)
-                        TTYUPrintC("0123456789ABCDEF"[(s >> ((i - 1) * 4)) & 0xF]);
+                        TTYUPrintC(tty, "0123456789ABCDEF"[(s >> ((i - 1) * 4)) & 0xF]);
                 } break;
                 case '%': {
-                    TTYUPrintC('%');
+                    TTYUPrintC(tty, '%');
                 } break;
                 default:
-                    TTYUPrintC('%');
-                    TTYUPrintC(*format);
+                    TTYUPrintC(tty, '%');
+                    TTYUPrintC(tty, *format);
             }
             n = 4;
             ++format;
             continue;
         }
-        TTYUPrintC(*format);
+        TTYUPrintC(tty, *format);
         ++format;
     }
+    TTYFlush(tty);
 }
-
 U0 PrintF(String format, ...) {
     va_list args;
     va_start(args, format);
-    VPrintF(format, args);
+    VPrintF(TTYCurrent, format, args);
+    va_end(args);
+}
+U0 SerialPrintF(String format, ...) {
+    va_list args;
+    va_start(args, format);
+    VPrintF(0, format, args);
+    TTYUPrintC(0, '\n');
     va_end(args);
 }

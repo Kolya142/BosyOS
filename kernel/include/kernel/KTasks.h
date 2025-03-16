@@ -14,6 +14,7 @@ typedef struct Task {
     INTRegs3 regs;
     Task *next;
     U32 esp;
+    U32 ttyid;
     U8 fpu[512];
 } __attribute__((packed)) Task;
 extern Bool TaskingIs;

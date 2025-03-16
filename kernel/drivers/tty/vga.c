@@ -1,44 +1,52 @@
+#include <drivers/video/vga.h>
+#include <drivers/sys/beep.h>
 #include <drivers/tty.h>
 
+static U0 TPutC(Char chr, U32 cur, U8 col) {
+    vga[cur] = (col << 8) | chr;
+}
 
-U0 TTYRenderT() {
-    static U32 fg = White;
-    static U32 bg = Black;
-    static Bool raw = False;
-    for (Char c;PTermRead(VTerm, 1, &c, 1);) {
-        if (TTYCursor >= TTerm.width*TTerm.height) {
+U0 TTYRenderT(TTY *this) {
+    U32 *fg = &((U32*)this->data)[0];
+    U32 *bg = &((U32*)this->data)[1];
+    if (*fg >= 16) {
+        *fg = White;
+    }
+    if (*bg >= 16) {
+        *bg = Black;
+    }
+    Bool raw = False;
+    Char c;
+    while (PTYRead(this->pty, 1, &c, 1)) {
+        if (this->pty->cursor >= 80*25) {
             MemCpy(vga, vga+80, 4000-80);
             for (U32 i = 80 * 25 - 80; i < 80 * 25; ++i) {
                 vga[i] = 0;
             }
-            TTYCursor = TTerm.width * (TTerm.height - 1);
+            this->pty->cursor = 80 * 24;
         }
-        if (raw || !TTYCanonical) {
-            U32 x = (TTYCursor % TTerm.width);
-            U32 y = (TTYCursor / TTerm.width);
-            VgaPSet(x, y, c, VgaColorGet(fg, bg));
-            ++TTYCursor;
-            raw = False;
-            continue;
+        if (raw) {
+            TPutC(c, this->pty->cursor, VgaColorGet(*fg, *bg));
+            ++this->pty->cursor;
         }
         switch (c) {
             case '\r': {
-                TTYCursor += TTerm.width;
+                this->pty->cursor += 80;
                 break;
             }
             case '\b': {
-                TTYCursor -= 1;
-                U32 x = (TTYCursor % TTerm.width);
-                U32 y = (TTYCursor / TTerm.width);
-                VgaPSet(x, y, ' ', VgaColorGet(fg, bg));
+                this->pty->cursor -= 1;
+                U32 x = (this->pty->cursor % 80);
+                U32 y = (this->pty->cursor / 80);
+                VgaPSet(x, y, ' ', VgaColorGet(*fg, *bg));
                 break;
             }
             case '\n': {
-                TTYCursor += TTerm.width - (TTYCursor % TTerm.width);
+                this->pty->cursor += 80 - (this->pty->cursor % 80);
                 break;
             }
             case '\t': {
-                TTYCursor += 4 - (TTYCursor % 4);
+                this->pty->cursor += 4 - (this->pty->cursor % 4);
                 break;
             }
             case 7: {
@@ -46,30 +54,28 @@ U0 TTYRenderT() {
                 break;
             }
             case ASCIIPF1: {
-                PTermRead(VTerm, 1, &c, 1);
-                fg = c - ASCIIPCBlack;
+                PTYRead(this->pty, 1, &c, 1);
+                *fg = c - ASCIIPCBlack;
                 break;
             }
             case ASCIIPF2: {
-                PTermRead(VTerm, 1, &c, 1);
-                bg = c - ASCIIPCBlack;
+                PTYRead(this->pty, 1, &c, 1);
+                *bg = c - ASCIIPCBlack;
                 break;
             }
             case ASCIIPCtrl: {
-                while (TTYCursor < TTerm.width * TTerm.height) {
-                    vga[TTYCursor] = 0;
+                for (U32 i = 0; i < 80*25; ++i) {
+                    vga[i] = 0;
                 }
-                TTYCursor = 0;
+                this->pty->cursor = 0;
             }
             case ASCIIPNextRaw: {
                 raw = True;
                 break;
             }
             default: {
-                U32 x = (TTYCursor % TTerm.width);
-                U32 y = (TTYCursor / TTerm.width);
-                VgaPSet(x, y, c, VgaColorGet(fg, bg));
-                ++TTYCursor;
+                TPutC(c, this->pty->cursor, VgaColorGet(*fg, *bg));
+                ++this->pty->cursor;
                 break;
             }
         }

@@ -20,6 +20,11 @@ typedef struct VFSStat {
     U32 mode;
 } VFSStat;
 
+typedef struct VFSFD {
+    U32 pos;
+    U32 head;
+} VFSFD;
+
 typedef struct VFSNode {
     String name;
     U32(*read)(String, Ptr, U32, U32);
@@ -32,5 +37,10 @@ extern List VFS;
 U0 VFSInit();
 U32 VFSRead(String name, Ptr buf, U32 offset, U32 count);
 U32 VFSWrite(String name, Ptr buf, U32 offset, U32 count);
+U32 VFSOpen(String filename);
+U0 VFSClose(U32 fd);
+U32 VFSWriteV(U32 fd, Ptr buf, U32 count);
+U32 VFSReadV(U32 fd, Ptr buf, U32 count);
+U32 VFSLStat(String filename, VFSStat *stat);
 U0 VFSReadDir(U0(*reader)(String, VFSStat*));
 U0 VFSMount(String name, U32(*read)(String, Ptr, U32, U32), U32(*write)(String, Ptr, U32, U32), U0(*stat)(String, VFSStat*));

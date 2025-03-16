@@ -5,6 +5,8 @@
 #include <arch/x86/cpu/cpu.h>
 #include <lib/IO/TTY.h>
 #include <arch/x86/cpu/io.h>
+#include <fs/ramfs.h>
+#include <drivers/time/pit.h>
 #include <arch/x86/sys/idt.h>
 #include <kernel/KTasks.h>
 #include <stdarg.h>
@@ -39,48 +41,17 @@ U0 KDogWatchInit() {
 }
 
 U0 KDogWatchLog(const String str, Bool panic) {
-    U8 t = TTermID;
-    TTYSwitch(3);
+    U32 t = TTYCurrent;
+    TTYCurrent = 4;
     PrintF("$!A[DogWatch]$!F:$!E%s$!C at $!B%X$!F\n", str, PITTime);
-    TTYSwitch(t);
+    TTYCurrent = t;
     SerialPrintF("[DogWatch]:%s at %X", str, PITTime);
     if (panic) {
         KPanic("KDogWatchLog panic", True);
     }
 }
 U0 KDogWatchLogF(const String format, ...) {
-    U8 t = TTermID;
-    TTYSwitch(3);
-
-    PrintF("$!A[DogWatch]$!F:$!E");
-    
-    va_list args;
-    va_list args2;
-    
-    va_start(args, format);
-    va_copy(args2, args);
-    
-    VPrintF(format, args);
-
-    va_end(args);
-    
-    PrintF("$!C at $!B%X$!F\n", PITTime);
-
-    TTYSwitch(t);
-
-    TTerm.render();
-    Ptr rend = TTerm.render;
-    TTerm.render = TTYRenderS;
-
-    PrintF("$!A[DogWatch]$!F:$!E");
-
-    VPrintF(format, args2);
-    va_end(args2);
-
-    PrintF("$!C at $!B%X$!F\n", PITTime);
-
-    TTerm.render();
-    TTerm.render = rend;
+    KDogWatchLog(format, False); // FIXME
 }
 
 U0 KDogWatchTick() {
@@ -89,12 +60,12 @@ U0 KDogWatchTick() {
         if (!Profiles[i].active)
             continue;
         if (KDogWatchTicks >= Profiles[i].update + 8000) {
-            TTYUPrint("$!A[DogWatch]$!F:$!E");
-            TTYUPrint("Slowly ");
-            TTYUPrint(Profiles[i].name);
-            TTYUPrint("$!C at $!B");
-            TTYUPrintHex(KDogWatchTicks);
-            TTYUPrint("$!F\n");
+            // TTYUPrint("$!A[DogWatch]$!F:$!E");
+            // TTYUPrint("Slowly ");
+            // TTYUPrint(Profiles[i].name);
+            // TTYUPrint("$!C at $!B");
+            // TTYUPrintHex(KDogWatchTicks);
+            // TTYUPrint("$!F\n");
             Profiles[i].update = KDogWatchTicks;
         }
     }
@@ -124,12 +95,12 @@ U0 KDogWatchPStart(U8 id, const String name) {
     };
     U32 l = StrLen(name);
     MemCpy(Profiles[id].name, name, l > 32 ? 32 : l);
-    TTYUPrint("$!A[DogWatch]$!F:$!E");
-    TTYUPrint("Init ");
-    TTYUPrint(Profiles[id].name);
-    TTYUPrint("$!C at $!B");
-    TTYUPrintHex(KDogWatchTicks);
-    TTYUPrint("$!F\n");
+    // TTYUPrint("$!A[DogWatch]$!F:$!E");
+    // TTYUPrint("Init ");
+    // TTYUPrint(Profiles[id].name);
+    // TTYUPrint("$!C at $!B");
+    // TTYUPrintHex(KDogWatchTicks);
+    // TTYUPrint("$!F\n");
 }
 U0 KDogWatchPTick(U8 id) {
     Profiles[id].update = KDogWatchTicks;

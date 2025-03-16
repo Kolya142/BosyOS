@@ -9,6 +9,7 @@
 // fixed 90% bugs at 1741183725s from unix stamp
 // proccesses start at 1741763233 from unix stamp
 // problem "i need ring3" found at 1742038534 from unix stamp
+// FIXED BUGS at 1742113941 from unix stamp
 
 static U32 task_count = 0;
 Task *TaskHead = Null;
@@ -16,14 +17,12 @@ Task *TaskTail = Null;
 Task *TaskLast = Null;
 
 U0 TaskClose() {
-    asmv("cli");
-    PrintF("exiting task\n");
+    KDogWatchLog("exiting task\n", False);
     U32 id = TaskTail->id;
     TaskNext();
     TaskKill(id);
     TaskTail->flags &= ~TASK_WORKING;
     TaskTail->flags &= ~TASK_CREATED;
-    asmv("sti");
     if (TaskHead) {
         for(;;);
     }
@@ -85,10 +84,12 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
     task->regs.cs = cs; // code segment
     
     task->flags = TASK_CREATED; // initial flags
+
+    task->ttyid = (!TaskTail || !(TaskTail->flags & TASK_WORKING)) ? TTYCurrent : TaskTail->ttyid;
     
     task->esp = esp; // initial esp
 
-    task->id = (TaskLast) ? TaskLast->id + 1 : 0; // set tid
+    task->id = (TaskLast) ? TaskLast->id + 1 : 1; // set tid
     task->next = Null;
 
     if (!TaskHead) { // if first task
@@ -151,7 +152,6 @@ U32 TFork() {
     }
 
     Task *child = TaskHead;
-    Task *prev = Null;
 
     while (child) {
         if (child->id == childi) {
@@ -160,8 +160,15 @@ U32 TFork() {
         child = child->next;
     }
     MemCpy(&child->regs, &parent->regs, sizeof(INTRegs));
-    MemCpy((Ptr)child->regs.useresp, (Ptr)parent->regs.useresp, 4096);
-    child->regs.ebp = child->regs.useresp;
+
+    U32 used = parent->regs.ebp - parent->regs.esp;
+
+    child->regs.esp = child->esp - used;
+
+    MemCpy((Ptr)child->regs.esp, (Ptr)parent->regs.esp, used);
+
+    child->regs.ebp = child->regs.esp + used;
+
     child->regs.eax = 0;
     return child->id;
 }

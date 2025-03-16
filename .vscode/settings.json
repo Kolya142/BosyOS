@@ -12,7 +12,9 @@
         "thread": "c",
         "*.tcc": "c",
         "bit": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "text_encoding": "c"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+    "C_Cpp.errorSquiggles": "enabled"
 }

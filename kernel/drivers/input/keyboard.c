@@ -3,6 +3,8 @@
 #include <lib/IO/TTY.h>
 
 volatile KBStateS KBState;
+U32 KBTimeout = 500;
+U32 KBRate = 200;
 static U8 layout;
 extern U8 MouseCycle;
 

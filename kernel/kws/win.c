@@ -7,36 +7,36 @@ Win windows[64];
 static PielCanvas *canv;
 
 static U0 RenderWG() {
-    U32 cc = 0;
-    U32 y = TTYGSY;
-    for (Char c;PTermRead(VTerm, 1, &c, 1);) {
-        U32 x = cc * 6 + TTYGSX;
-        PielBox(canv, x, y, 6, 6, Black);
-        for (U32 i = 0; i < 5; ++i) {
-            for (U32 j = 0; j < 5; ++j) {
-                Bool bit = (TTYFont[c][i] >> (4-j)) & 1;
-                PielPixel(canv, x+j, y+i, bit ? White : Black);
-            }
-        }
-        ++cc;
-    }
+    // U32 cc = 0; // FIXME
+    // U32 y = TTYGSY;
+    // for (Char c;PTermRead(VTerm, 1, &c, 1);) {
+    //     U32 x = cc * 6 + TTYGSX;
+    //     PielBox(canv, x, y, 6, 6, Black);
+    //     for (U32 i = 0; i < 5; ++i) {
+    //         for (U32 j = 0; j < 5; ++j) {
+    //             Bool bit = (TTYFont[c][i] >> (4-j)) & 1;
+    //             PielPixel(canv, x+j, y+i, bit ? White : Black);
+    //         }
+    //     }
+    //     ++cc;
+    // }
 }
 
 U0 WPrintF(Win *win, U32 x, U32 y, String format, ...) {
-    TTerm.render();
-    TTYGSX = x;
-    TTYGSY = y;
-    canv = &win->canvas;
-    Ptr rend = TTerm.render;
-    TTerm.render = RenderWG;
+    // TTerm.render(); // FIXME
+    // TTYGSX = x;
+    // TTYGSY = y;
+    // canv = &win->canvas;
+    // Ptr rend = TTerm.render;
+    // TTerm.render = RenderWG;
 
-    va_list args;
-    va_start(args, format);
-    VPrintF(format, args);
-    va_end(args);
+    // va_list args;
+    // va_start(args, format);
+    // VPrintF(format, args);
+    // va_end(args);
 
-    TTerm.render();
-    TTerm.render = rend;
+    // TTerm.render();
+    // TTerm.render = rend;
 }
 
 U32 WinSpawn(Win *win) {
@@ -67,12 +67,12 @@ U0 WindowsUpdate() {
 }
 
 U0 WinPrint(U32 x, U32 y, String text) {
-    TTYGSX = x;
-    TTYGSY = y;
-    Ptr render = TTerm.render;
-    TTerm.render = TTYRenderGS;
-    TTYUPrint(text);
-    TTerm.render = render;
+    // TTYGSX = x; // FIXME
+    // TTYGSY = y;
+    // Ptr render = TTerm.render;
+    // TTerm.render = TTYRenderGS;
+    // TTYUPrint(text);
+    // TTerm.render = render;
 }
 Win WinMake(U32 x, U32 y, U32 w, U32 h, String title, U16 flags) {
     Win win;

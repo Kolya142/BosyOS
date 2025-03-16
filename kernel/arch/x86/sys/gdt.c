@@ -25,10 +25,6 @@ U0 GDTInit() {
         "ltr %%ax\n"
         ::: "eax"
     );
-    TTYUPrintHex(GDTPtr.addr);
-    TTYUPrintC('\n');
-    TTYUPrintHex(GDTPtr.size);
-    TTYUPrintC('\n');
 }
 
 U0 GDTLoad() {

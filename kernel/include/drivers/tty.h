@@ -1,43 +1,30 @@
 #pragma once
+#include <lib/memory/MemLib.h>
+#include <drivers/pty.h>
 #include <lib/ASCIIP.h>
 #include <lib/Types.h>
-#include <drivers/video/vga.h>
-#include <drivers/serial/serial.h>
-#include <lib/graphics/Graphics.h>
-#include <drivers/input/keyboard.h>
-#include <drivers/sys/beep.h>
-#include <lib/IO/PTY.h>
 
-U0 TTYSwitch(U32 id);
-
-U0 TTYRenderGS();
-U0 TTYRenderG();
-U0 TTYRenderT();
-U0 TTYRenderS();
-U0 TTYInput();
-
-typedef enum {
-    TTYC_VGA,
-    TTYC_320,
-    TTYC_SER,
-    TTYC_RES
-} TTYContext;
-
-typedef struct TTY
-{
-    U0(*render)();
-    U32 width;
-    U32 height;
+typedef struct TTY {
+    PTY *pty;
+    U0(*flush)(struct TTY *this);
+    U8 last[2048];
+    U32 last_index;
+    U8 data[20];
 } TTY;
 
-extern U32 TTYCursor;
-extern PTerm *VTerm;
-extern PTerm VTerms[4];
-extern U32 TTermID;
-extern U8 *TTYBuffers[4];
-extern U32 TTYBuffersIndex[4];
-extern TTY TTerm;
-extern unsigned char TTYFont[256][5];
-extern U32 TTYGSX;
-extern U32 TTYGSY;
-extern Bool TTYCanonical;
+extern List PTYs;
+extern List TTYs;
+extern U32 TTYCurrent;
+
+U0 TTYInit();
+U32 PTYNew(U32 size, U32 width, U32 height);
+U32 TTYNew(U0(*flush)(TTY *this), U32 pty);
+U32 TTYWrite(U32 tty, U32 pd, String content, U32 count);
+U32 TTYRead(U32 tty, U32 pd, String content, U32 count);
+U0 TTYFlush(U32 tty);
+U0 TTYSwitch(U32 id);
+U0 TTYInput();
+
+U0 TTYRenderT(TTY *this);
+U0 TTYRenderS(TTY *this);
+U0 TTYRenderG(TTY *this);

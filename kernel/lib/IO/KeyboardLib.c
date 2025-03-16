@@ -5,5 +5,5 @@
 #include <lib/IO/TTY.h>
 
 U0 KBRead(String buf, U32 count) {
-    while (!PTermRead(VTerm, 0, buf, count));
+    while (!TTYRead(TTYCurrent, 0, buf, count));
 }

@@ -20,8 +20,8 @@ INT_DEF(SysCallInt) {
     // DriverCall(0xa3f13d05, 0x2eb0f0f, 0, (U32*)"\n");
     // TTYSwitch(TTYC_RES);
     if (!SysCallT[call]) {
-        KDogWatchLog("Invalid SysCall", False);
         PrintF("Syscall %p %p %p\n", regs->eax, regs->esi, regs->edi);
+        KDogWatchLog("Invalid SysCall", False);
         goto end;
     }
     U0 (*sys)(INTRegs3 *regs) = SysCallT[call];

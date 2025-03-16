@@ -13,6 +13,9 @@ typedef struct KBStateS {
 } __attribute__((packed)) KBStateS;
 
 extern volatile KBStateS KBState;
+extern U32 KBTimeout;
+extern U32 KBRate;
+
 
 U0 KBInit();
 

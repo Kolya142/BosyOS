@@ -1,48 +1,31 @@
+#include <drivers/input/keyboard.h>
+#include <drivers/time/pit.h>
 #include <lib/strings/String.h>
-#include <lib/IO/TTY.h>
 #include <drivers/tty.h>
 
-U32 TTYCursor = 0;
-U32 TTYGSX = 0;
-U32 TTYGSY = 0;
-PTerm *VTerm;
-PTerm VTerms[4];
-TTY TTerm;
-U32 TTermID = 0;
-Bool TTYCanonical = True;
-
-U8 *TTYBuffers[4];
-U32 TTYBuffersIndex[4];
-
-U32 KBTimeout = 500;
-U32 KBRate = 200;
-
-static Bool lk[256] = {0};
-static U32 bufferi = 0;
-static U32 time = 0;
-static U32 timea = 0;
-static U8 bufs[4][2048] = {0};
+List PTYs;
+List TTYs;
+U32 TTYCurrent;
 
 U0 TTYSwitch(U32 id) {
-    if (id >= sizeof(VTerms)/sizeof(VTerms[0])) {
+    ++id;
+    if (id >= TTYs.count) {
         return;
     }
-    TTermID = id;
-    VTerm = &VTerms[id];
-    
-    TTYCursor = 0;
-    PTermWrite(VTerm, 1, (Char[]){ ASCIIPCtrl }, 1);
-    
-    for (U32 i = 0; i < TTYBuffersIndex[id]; ++i) {
-        PTermWrite(VTerm, 1, &TTYBuffers[id][i], 1);
-    }
-    // TTYCanonical = False;
-    
-    TTerm.render();
-    // TTYCanonical = True;
+    TTYCurrent = id;
+    TTY *t = &((TTY*)TTYs.arr)[id];
+    PTYWrite(((TTY*)TTYs.arr)[TTYCurrent].pty, 1, (U8[]) {ASCIIPCtrl}, 1);
+    TTYFlush(TTYCurrent);
+    PTYWrite(((TTY*)TTYs.arr)[TTYCurrent].pty, 1, t->last, t->last_index);
+    TTYFlush(TTYCurrent);
 }
-
 U0 TTYInput() {
+    static Bool lk[256] = {0};
+    static U32 bufferi = 0;
+    static U32 time = 0;
+    static U32 timea = 0;
+    static U8 buf[2048] = {0};
+
     for (U16 key = 0; key < 256; ++key) {
         if (KBState.keys[key]) {
             if (!lk[key] || ((PITTime - time >= KBTimeout) && (PITTime - timea >= KBRate))) {
@@ -55,9 +38,9 @@ U0 TTYInput() {
                 lk[key] = True;
                 if (key == '\b') {
                     if (bufferi) {
-                        bufs[TTermID][bufferi--] = 0;
-                        TTYPrintC('\b');
-                        TTerm.render();
+                        buf[bufferi--] = 0;
+                        TTYWrite(TTYCurrent, 1, "\b", 1);
+                        TTYFlush(TTYCurrent);
                     }
                 }
                 else if (key == ASCIIPF1) TTYSwitch(0);
@@ -66,19 +49,20 @@ U0 TTYInput() {
                 else if (key == ASCIIPF4) TTYSwitch(3);
                 else if (key == '\x1b') return;
                 else if (key == '\r') {
-                    TTYPrintC('\n');
-                    TTerm.render();
-                    PTermWrite(VTerm, 0, bufs[TTermID], bufferi);
+                    TTYWrite(TTYCurrent, 1, "\n", 1);
+                    TTYFlush(TTYCurrent);
+                    TTYWrite(TTYCurrent, 0, buf, bufferi);
                     bufferi = 0;
                 }
                 else if (key < 0x80 || (key >= 0xB1 && key <= 0xD0)) {
                     if (KBState.Shift && !(key >= 0xB1 && key <= 0xD0)) {
                         key = UpperTo(key);
                     }
-                    if (bufferi < sizeof(bufs[TTermID]) - 1) {
-                        bufs[TTermID][bufferi++] = key;
-                        TTYPrintC(key);
-                        TTerm.render();
+                    if (bufferi < sizeof(buf) - 1) {
+                        buf[bufferi++] = key;
+                        Char k = key;
+                        TTYWrite(TTYCurrent, 1, &k, 1);
+                        TTYFlush(TTYCurrent);
                     }
                 }
             }
@@ -87,4 +71,47 @@ U0 TTYInput() {
             lk[key] = False;
         }
     }
+}
+
+U0 TTYInit() {
+    PTYs = ListInit(sizeof(PTY));
+    TTYs = ListInit(sizeof(TTY));
+}
+U32 PTYNew(U32 size, U32 width, U32 height) {
+    PTY pty;
+    PTYMake(&pty, size, width, height);
+    ListAppend(&PTYs, &pty);
+    return PTYs.count - 1;
+}
+U32 TTYNew(U0(*flush)(TTY *this), U32 pty) {
+    if (pty >= PTYs.count) return -1;
+    TTY tty;
+    tty.pty = &((PTY*)PTYs.arr)[pty];
+    tty.flush = flush;
+    tty.last_index = 0;
+    MemSet(tty.data, 0xFF, sizeof(tty.data));
+    ListAppend(&TTYs, &tty);
+    return TTYs.count - 1;
+}
+U32 TTYWrite(U32 tty, U32 pd, String content, U32 count) {
+    if (tty >= TTYs.count) return 0;
+    TTY *t = &((TTY*)TTYs.arr)[tty];
+    for (U32 i = 0; i < count; ++i) {
+        if (t->last_index < 2048) {
+            t->last[t->last_index++] = content[i];
+        } else {
+            MemCpy(t->last, t->last + 1, 2047);
+            t->last[2047] = content[i];
+        }
+    }
+    return PTYWrite(t->pty, pd, content, count);
+}
+U32 TTYRead(U32 tty, U32 pd, String content, U32 count) {
+    if (tty >= TTYs.count) return 0;
+    return PTYRead(((TTY*)TTYs.arr)[tty].pty, pd, content, count);
+}
+U0 TTYFlush(U32 tty) {
+    if (tty >= TTYs.count) return;
+    TTY *t = &((TTY*)TTYs.arr)[tty];
+    t->flush(t);
 }

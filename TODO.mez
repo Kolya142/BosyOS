@@ -1,13 +1,13 @@
 TODO List for $!BBosyOS
 $!A=== Main ===
 $!D- $!BPCI Devices $!F(Done)
-$!D- $!BAdd ring3$!F(Planned)
+$!D- $!BAdd ring3$!F(Done)
 $!D- $!BFix file system $!F(Planned)
 $!D- $!BFix applications loader $!F(Planned)
 
 $!A=== Kernel Improvement ===
 $!D- $!BBetter Interrupts[IRQ, APIC, PIC] $!F(Planned)
-$!D- $!BBetter Processes $!F(In Process)
+$!D- $!BBetter Processes $!F(Done)
 
 $!A=== Special ===
 $!D- $!BUSB HID $!F(In Process)
@@ -19,8 +19,6 @@ $!D- $!BPrograming Language $!F(Planned)
 
 $!A=== Priority ===
 $!BFS & Applications$!F - $!CM0$!F
-$!BRing3            $!F - $!CM0$!F
-$!BProcesses        $!F - $!EM1$!F
 $!BInterrupts       $!F - $!EM1$!F
 $!BUSB              $!F - $!AM2$!F
 $!BNet              $!F - $!AM2$!F

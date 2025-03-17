@@ -14,7 +14,7 @@ U0 PagingID(U32 *first, U32 from, U32 size) {
 
 U0 PagingInit() {
     PrintF("Page: %p\n", Pages);
-    MemSet(Pages, 0, PAGE_SIZE);
+    MemSet(Pages, 0, 1024 * 4);
     MemSet(PageT, 0, 1024 * PAGE_SIZE);
     Sleep(1000);
     for (U32 i = 0; i < 1024*1024; ++i) {
@@ -52,7 +52,8 @@ Ptr PAlloc() {
     }
     return Null;
 }
-Ptr PFree(Ptr ptr) {
+U0 PFree(Ptr ptr) {
+    if (!ptr || ptr < 0x1000000) return;
     U32 index = ((U32)ptr - 0x1000000) / PAGE_SIZE;
     PageBitmap[index / 8] &= ~(1 << (index % 8));
 }

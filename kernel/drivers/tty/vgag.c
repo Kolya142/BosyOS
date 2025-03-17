@@ -32,7 +32,10 @@ static U0 TPutC(Char chr, U32 cur, U8 bg, U8 fg) {
     }
 }
 
-U0 TTYRenderG(TTY *this) {
+U0 TTYRenderG(TTY *this, U32 ttyid) {
+    if (ttyid != TTYCurrent) {
+        return;
+    }
     U32 *fg = &((U32*)this->data)[0];
     U32 *bg = &((U32*)this->data)[1];
     if (*fg >= 16) {

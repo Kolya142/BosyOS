@@ -26,7 +26,8 @@ compile:
 	# fi
 	dd if=bosyboot of=drive bs=512 seek=0 count=13 conv=notrunc
 	dd if=kernel.bin of=drive bs=512 seek=35 count=256 conv=notrunc
-	python3 non-kernel\ files/mkbosyrom.py initrom userdir
+	cp usercode/usercode.bin.bsf userdir/test.bsf
+	non-kernel\ files/mkbosyrom initrom userdir
 	dd if=initrom of=drive bs=512 seek=291 conv=notrunc
 
 iso:
@@ -61,7 +62,7 @@ run:
 	elif [ "$(SYSTEM)" = "macos" ]; then \
 		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC) $(QEMU_MOUSE) $(QEMU_OUT); \
 	else \
-		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT);\
+		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-reboot --no-shutdown;\
 	fi
 	@make userdata_dump
 

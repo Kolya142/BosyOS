@@ -13,7 +13,15 @@
         "*.tcc": "c",
         "bit": "c",
         "cmath": "c",
-        "text_encoding": "c"
+        "text_encoding": "c",
+        "cstdint": "c",
+        "optional": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "utility": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc",
     "C_Cpp.errorSquiggles": "enabled"

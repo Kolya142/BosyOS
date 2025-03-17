@@ -83,7 +83,7 @@ U32 PTYNew(U32 size, U32 width, U32 height) {
     ListAppend(&PTYs, &pty);
     return PTYs.count - 1;
 }
-U32 TTYNew(U0(*flush)(TTY *this), U32 pty) {
+U32 TTYNew(U0(*flush)(TTY *this, U32 ttyid), U32 pty) {
     if (pty >= PTYs.count) return -1;
     TTY tty;
     tty.pty = &((PTY*)PTYs.arr)[pty];
@@ -113,5 +113,5 @@ U32 TTYRead(U32 tty, U32 pd, String content, U32 count) {
 U0 TTYFlush(U32 tty) {
     if (tty >= TTYs.count) return;
     TTY *t = &((TTY*)TTYs.arr)[tty];
-    t->flush(t);
+    t->flush(t, tty);
 }

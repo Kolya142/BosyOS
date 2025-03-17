@@ -2,7 +2,7 @@
 #include <drivers/serial/serial.h>
 
 
-U0 TTYRenderS(TTY *this) {
+U0 TTYRenderS(TTY *this, U32 ttyid) {
     for (Char c;PTYRead(this->pty, 1, &c, 1);) {
         if (c == ASCIIPCtrl) {
             SerialWrite('\x1b');SerialWrite('[');SerialWrite('2');SerialWrite('J');

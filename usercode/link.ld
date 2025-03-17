@@ -1,7 +1,8 @@
-ENTRY(main)
+ENTRY(_start)
 
 SECTIONS {
-    . = 0x2000000;
+    . = 0x0C000000;
+    _start = .;
 
     .text :   { *(.text) }
     .data :   { *(.data) }

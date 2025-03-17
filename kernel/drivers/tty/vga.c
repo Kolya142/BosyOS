@@ -6,7 +6,7 @@ static U0 TPutC(Char chr, U32 cur, U8 col) {
     vga[cur] = (col << 8) | chr;
 }
 
-U0 TTYRenderT(TTY *this) {
+U0 TTYRenderT(TTY *this, U32 ttyid) {
     U32 *fg = &((U32*)this->data)[0];
     U32 *bg = &((U32*)this->data)[1];
     if (*fg >= 16) {

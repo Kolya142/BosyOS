@@ -1,6 +1,0 @@
-Application Communication Interface
-1. EAX
-2. ESI
-3. EDI
-4. EBX
-5. EDX

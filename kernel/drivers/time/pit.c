@@ -53,6 +53,7 @@ INT_DEF(PITHandler) {
             regs_copy(regs, &TaskTail->regs);
         }
         // TTYCurrent = TaskTail->ttyid;
+        // PrintF("Task %d, ESP %p, EIP %p\n", TaskTail->id, regs->esp, regs->eip);
     }
     if (!(PITTicks % 2)) {
         KDogWatchTick();

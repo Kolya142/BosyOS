@@ -122,12 +122,6 @@ U0 KernelMain() {
     KDogWatchLog("SysCalls Initialized", False);
     
     PagingInit();
-    
-    U32 cr0;
-    asm volatile("mov %%cr0, %0" : "=r"(cr0));
-    if (!(cr0 & 0x80000000)) {
-        KDogWatchLog("Paging is NOT enabled!", True);
-    }
 
     KDogWatchLog("Initialized \x9Bpaging\x9C", False);
 
@@ -166,9 +160,8 @@ U0 KernelMain() {
     // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, (Ptr)RFSReadDirV);
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
-    ATARead((Ptr)0x200000, 291, 64);
-    PrintF("%s", 0x200000);
-    ROFSInit((Ptr)0x200000);
+    ATARead((Ptr)0x2000, 291, 64);
+    ROFSInit((Ptr)0x2000);
     KDogWatchLog("Initialized \x9Bromfs\x9C", False);
 
     // MXInit();
@@ -296,5 +289,10 @@ U0 mainloop() {
     PrintF("$!7(BosyOS) $!F");
     TTYCurrent = 1;
 
-    RingSwitch(ring3, (Ptr)0x300000);
+    
+    U8 buf[2048] = {0};
+    VFSRead("test.bsf", buf, 0, 2048);
+    BsfApp app = BsfFromBytes(buf);
+    BsfExec(&app, 0, 1);
+    // RingSwitch(ring3, (Ptr)0x300000);
 }

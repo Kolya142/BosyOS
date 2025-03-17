@@ -21,6 +21,9 @@ uint32_t strcmp(const char *a, const char *b) {
 
     return (uint32_t)(*a-*b);
 }
+void drivercall(uint32_t d1, uint32_t d2, uint32_t id, uint32_t data) {
+    syscall(0, d1, d2, id, data);
+}
 void exit(uint32_t code) {
     syscall(1, code, 0, 0, 0);
 }
@@ -38,6 +41,12 @@ void close(filedesc_t fd) {
 }
 pid_t execa(void *func) {
     return syscall(11, (uint32_t)func, 0, 0, 0);
+}
+void readdir(void(*reader)(const char *filename, stat_t *stat)) {
+    syscall(12, (uint32_t)reader, 0, 0, 0);
+}
+void time(time_t *t) {
+    syscall(13, (uint32_t)t, 0, 0, 0);
 }
 size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2) {
     return syscall(54, fd, req, (uint32_t)a1, (uint32_t)a2);

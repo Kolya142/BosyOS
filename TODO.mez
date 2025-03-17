@@ -2,6 +2,8 @@ TODO List for $!BBosyOS
 $!A=== Main ===
 $!D- $!BPCI Devices $!F(Done)
 $!D- $!BAdd ring3$!F(Done)
+$!D- $!BFix romfs$!F(Planned)
+$!D- $!BAdd more system api$!F(Planned)
 $!D- $!BFix file system $!F(Planned)
 $!D- $!BFix applications loader $!F(Planned)
 
@@ -18,9 +20,9 @@ $!D- $!BMezex terminal(linux) $!F(Planned)
 $!D- $!BPrograming Language $!F(Planned)
 
 $!A=== Priority ===
-$!BFS & Applications$!F - $!CM0$!F
-$!BInterrupts       $!F - $!EM1$!F
-$!BUSB              $!F - $!AM2$!F
-$!BNet              $!F - $!AM2$!F
-$!BOther            $!F - $!AM2$!F
+$!BFS & API & Applications$!F - $!CM0$!F
+$!BInterrupts             $!F - $!EM1$!F
+$!BUSB                    $!F - $!AM2$!F
+$!BNet                    $!F - $!AM2$!F
+$!BOther                  $!F - $!AM2$!F
 $!F

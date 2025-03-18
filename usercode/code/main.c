@@ -13,14 +13,19 @@ void lsfn(const char *filename, stat_t *stat) {
 
 char *c;
 
-void shell(const char *buf);
+void shell(char *buf);
 
 void shella() {
     shell(c);
     exit(0);
 }
 
-void shell(const char *buf) {
+void shell(char *buf) {
+    int s = strlen(buf);
+    if (buf[s-1] == '\n') { // POSIX compatible
+        buf[s-1] = 0;
+    }
+
     if (buf[0] == '&') {
         // c = buf + 1;
         // execa(shella);
@@ -31,6 +36,7 @@ void shell(const char *buf) {
             "commands:\n"
             "help, cat, clear, game\n"
             "beep, ls, cls, time\n"
+            "ser\n"
         );
     }
     else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
@@ -55,28 +61,70 @@ void shell(const char *buf) {
         // print("\x07");
     }
     else if (!strcmp(buf, "game")) {
-        print("// TODO: add game\n");
+        char buf[53*33];
+        for (int i = 0; i < sizeof(buf); ++i) {
+            buf[i] = ' ';
+        }
+        buf[32*53] = '#';
+        int c = 0;
+        char stop = 0;
+        while (!stop) {
+            for (int i = 0; i < 32; ++i) {
+                if (buf[53*(i+1)] == '#') {
+                    buf[53*i] = (buf[53*i] != '#') ? '#' : ' ';
+                }
+            }
+            for (int j = 0; j < 33; ++j) {
+                for (int i = 52; i > 0; --i) {
+                    buf[i+j*53] = buf[i-1+j*53];
+                }
+            }
+            write(1, buf, sizeof(buf));
+            time_t t, v;
+            time(&t);
+            v = t;
+            while (!(c % (53/2)) && v - t < 1) {
+                char _;
+                if (read(0, &_, 1)) {
+                    stop = 1;
+                    break;
+                }
+                time(&v);
+            }
+            ++c;
+        }
     }
     else if (!strcmp(buf, "time")) {
         time_t t;
         time(&t);
-        printf("Real time: %d\nUnix time: %d\n", t.real, t.unixt);
+        printf("Unix time: %d\n", t);
+    }
+    else if (!strcmp(buf, "ser")) {
+        int tty;
+        ioctl(1, 92, &tty, 0, 0);
+        ioctl(1, 91, 0, 0, 0);
+        print("Hello, serial!\n");
+        ioctl(1, 91, (uint32_t*)tty, 0, 0);
     }
     else if (!strcmp(buf, "cls") || !strcmp(buf, "clear")) {
         print("\x80");
     }
     else {
-        printf("Unk %s\n", buf);
+        printf("Unk \"%s\"\n", buf);
     }
 }
 
 void main() {
-    print("\x86\xA6$\x86\xAB ");
+    print("$ ");
     char buf[64];
     for (;;) {
+        for (int i = 0; i < 64; ++i) {
+            buf[i] = 0;
+        }
         if (read(0, buf, 64)) {
             shell(buf);
-            print("\x86\xA6$\x86\xAB ");
+            print("$ ");
         }
     }
+    for(;;);
 }

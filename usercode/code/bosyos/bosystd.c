@@ -49,8 +49,8 @@ void readdir(void(*reader)(const char *filename, stat_t *stat)) {
 void time(time_t *t) {
     syscall(13, (uint32_t)t, 0, 0, 0, 0, 0);
 }
-size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2) {
-    return syscall(54, fd, req, (uint32_t)a1, (uint32_t)a2, 0, 0);
+size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2, uint32_t *a3) {
+    return syscall(54, fd, req, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, 0);
 }
 void print(const char *str) {
     write(1, str, strlen(str));

@@ -15,7 +15,7 @@ BsfApp BsfFromBytes(Byte *app) {
 }
 BsfMeta *BsfMetaLoad(Ptr start, U32 d1, U32 d2, U32 size) { // parsing bossec
     BsfMeta *meta = start;
-    while (meta < start+size) {
+    while ((U32)meta < ((U32)start+size)) {
         if (meta->meta1 == d1 && meta->meta2 == d2) {
             return meta;
         }
@@ -32,6 +32,7 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     }
     U8 *bossec = app->data + head->CodeS;
     BsfMeta *meta = BsfMetaLoad(bossec, m1, m2, head->BosSec);
+
     if (!meta || !meta->func) {
         return 0;
     }
@@ -51,8 +52,6 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
     }
 
     MemCpy((Ptr)UADDR, app->data, head->CodeS);
-
-    PrintF("%p\n", meta->func);
     
     RingSwitch(meta->func, (Ptr)0x300000);
 

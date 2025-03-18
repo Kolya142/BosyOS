@@ -12,7 +12,7 @@ static U32 ROFSReadV(String name, Ptr buf, U32 offset, U32 count) {
             MemCpy(buf, (Byte*)node + sizeof(ROFSNode) + offset, count);
             return count;
         }
-        node += sizeof(ROFSNode) + node->size;
+        node = (ROFSNode*)((U8*)node + sizeof(ROFSNode) + node->size);
     }
     return 0;
 }
@@ -29,7 +29,7 @@ static U0 ROFSStatV(String name, VFSStat *stat) {
             stat->time = 0;
             break;
         }
-        node += sizeof(ROFSNode) + node->size;
+        node = (ROFSNode*)((U8*)node + sizeof(ROFSNode) + node->size);
     }
 }
 
@@ -45,6 +45,6 @@ U0 ROFSInit(Byte *buf) {
     for (U32 i = 0; i < ROFS->count; ++i) {
         PrintF("File: %s\n", node->name);
         VFSMount(node->name, ROFSReadV, ROFSWriteV, ROFSStatV);
-        node += sizeof(ROFSNode) + node->size;
+        node = (ROFSNode*)((U8*)node + sizeof(ROFSNode) + node->size);
     }
 }

@@ -8,11 +8,18 @@ typedef struct stat_t {
     uint32_t mode;
 } stat_t;
 
-typedef struct time_t {
-    uint32_t millis;
-    uint32_t unixt;
-    uint32_t real;
-} time_t;
+typedef struct win
+{
+    // char title[16];
+    // uint32_t x;
+    // uint32_t y;
+    // uint32_t w;
+    // uint32_t h;
+    // uint16_t flags;
+    // PielCanvas canvas;
+    // U0(*update)(Ptr this);
+    // KWSInputData inp;
+} win;
 
 #define FS_DEV 0x40000000
 #define FS_REG 0x20000000
@@ -23,8 +30,20 @@ typedef struct time_t {
 #define FS_OWRIT 0x01000000
 #define FS_OEXEC 0x00800000
 
+#define TIOWINSZ 54
+#define TIOGTCUR 55
+#define TIOSTTTY 91
+#define TIOGTTTY 92
+#define TIONWTTY 63
+#define TIONWPTY 62
+
+#define WIOCREAT 10
+#define WIOKILL  11
+#define WIOUPDFN 20
+
 typedef unsigned char byte_t;
 typedef uint32_t filedesc_t;
+typedef uint32_t time_t;
 typedef uint32_t size_t;
 typedef uint32_t pid_t;
 
@@ -41,7 +60,7 @@ uint32_t write(uint32_t fd, byte_t *buf, uint32_t count);
 filedesc_t open(const char *filename);
 void close(filedesc_t fd);
 pid_t execa(void *func);
-size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2);
+size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2, uint32_t *a3);
 void print(const char *str);
 void readdir(void(*reader)(const char *filename, stat_t *stat));
 void time(time_t *t);

@@ -166,8 +166,8 @@ U0 KernelMain() {
     // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, (Ptr)RFSReadDirV);
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
-    ATARead((Ptr)0x2000, 291, 64);
-    ROFSInit((Ptr)0x2000);
+    ATARead((Ptr)0x20000, 291, 64);
+    ROFSInit((Ptr)0x20000);
     KDogWatchLog("Initialized \x9Bromfs\x9C", False);
 
     // MXInit();
@@ -255,22 +255,7 @@ static U0 loop2() {
 }
 
 U0 ring3() {
-    TTYCurrent = 4;
-    asmV(
-        "int $0x80"
-        :: "a"(11), "S"(loop1)
-    );
     TTYCurrent = 1;
-    asmV(
-        "int $0x80"
-        :: "a"(11), "S"(loop2)
-    );
-    TTYCurrent = 2;
-    asmV(
-        "int $0x80"
-        :: "a"(11), "S"(loop2)
-    );
-    TTYCurrent = 3;
     asmV(
         "int $0x80"
         :: "a"(11), "S"(loop2)
@@ -288,15 +273,14 @@ U0 mainloop() {
     // win.update = TimeUpd;
     // WinSpawn(&win);
 
-    TTYCurrent = 4;
-    PrintF("$!7(BosyOS) $!F");
-    TTYCurrent = 1;
-
     VFSStat stat;
     VFSLStat("test.bsf", &stat);
     U8 *buf = MAlloc(stat.size);
     VFSRead("test.bsf", buf, 0, stat.size);
     BsfApp app = BsfFromBytes(buf);
+    PrintF("Starting program\n");
     BsfExec(&app, 0, 1);
-    // RingSwitch(ring3, (Ptr)0x300000);
+    MFree(buf);
+    PrintF("Failed to run program\n");
+    for(;;);
 }

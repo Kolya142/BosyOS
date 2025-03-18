@@ -17,6 +17,7 @@ void shell(char *buf);
 
 void shella() {
     shell(c);
+    for(;;);
     exit(0);
 }
 
@@ -27,8 +28,8 @@ void shell(char *buf) {
     }
 
     if (buf[0] == '&') {
-        // c = buf + 1;
-        // execa(shella);
+        c = buf + 1;
+        execa(shella);
     }
     else if (!strcmp(buf, "help")) {
         print(
@@ -38,6 +39,10 @@ void shell(char *buf) {
             "beep, ls, cls, time\n"
             "ser\n"
         );
+    }
+    else if (!strcmp(buf, "exit"))
+    {
+        exit(0);
     }
     else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
         filedesc_t fd = open(buf + 4);
@@ -57,8 +62,10 @@ void shell(char *buf) {
     }
     else if (!strcmp(buf, "beep"))
     {
-        print("// TODO: fix beep\n");
-        // print("\x07");
+        print("\x07\n");
+    }
+    else if (!strcmp(buf, "win")) {
+        int win = ioctl(3, WIOCREAT, (uint32_t*)50, (uint32_t*)50, (uint32_t*)"Window");
     }
     else if (!strcmp(buf, "game")) {
         char buf[53*33];
@@ -66,7 +73,6 @@ void shell(char *buf) {
             buf[i] = ' ';
         }
         buf[32*53] = '#';
-        int c = 0;
         char stop = 0;
         while (!stop) {
             for (int i = 0; i < 32; ++i) {
@@ -80,18 +86,16 @@ void shell(char *buf) {
                 }
             }
             write(1, buf, sizeof(buf));
-            time_t t, v;
-            time(&t);
-            v = t;
-            while (!(c % (53/2)) && v - t < 1) {
-                char _;
-                if (read(0, &_, 1)) {
-                    stop = 1;
-                    break;
-                }
-                time(&v);
+            
+            time_t t1, t2;
+            struct time_spec ts;
+            clock_gettime(&ts);
+            t1 = ts.sec * 1000000000 + ts.nsec;
+            t2 = t1;
+            while (t2 - t1 < 100000000) {
+                clock_gettime(&ts);
+                t2 = ts.sec * 1000000000 + ts.nsec;
             }
-            ++c;
         }
     }
     else if (!strcmp(buf, "time")) {
@@ -114,7 +118,7 @@ void shell(char *buf) {
     }
 }
 
-void main() {
+void _main() {
     print("$ ");
     char buf[64];
     for (;;) {
@@ -126,5 +130,17 @@ void main() {
             print("$ ");
         }
     }
+    for(;;);
+}
+
+void main() {
+    execa(_main);
+    ioctl(1, 91, (uint32_t*)2, 0, 0);
+    execa(_main);
+    ioctl(1, 91, (uint32_t*)3, 0, 0);
+    execa(_main);
+    ioctl(1, 91, (uint32_t*)4, 0, 0);
+    
+    _main();
     for(;;);
 }

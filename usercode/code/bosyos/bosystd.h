@@ -7,6 +7,10 @@ typedef struct stat_t {
     uint32_t size;
     uint32_t mode;
 } stat_t;
+struct time_spec {
+    uint32_t sec;
+    uint32_t nsec;
+};
 
 typedef struct win
 {
@@ -64,3 +68,4 @@ size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2, uint32_t *
 void print(const char *str);
 void readdir(void(*reader)(const char *filename, stat_t *stat));
 void time(time_t *t);
+void clock_gettime(struct time_spec *ts);

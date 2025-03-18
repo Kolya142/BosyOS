@@ -1,4 +1,5 @@
 #include <kernel/KDogWatch.h>
+#include <kernel/KAlarm.h>
 #include <kernel/KPanic.h>
 #include <misc/driverreg.h>
 #include <kernel/KTasks.h>
@@ -54,6 +55,13 @@ INT_DEF(PITHandler) {
         }
         // TTYCurrent = TaskTail->ttyid;
         // PrintF("Task %d, ESP %p, EIP %p\n", TaskTail->id, regs->esp, regs->eip);
+    }
+    Alarm *a = AlarmGet();
+    if (a) {
+        if (a->time >= PITTime) {
+            a->event(a->args);
+            AlarmRemove(a);
+        }
     }
     if (!(PITTicks % 2)) {
         KDogWatchTick();

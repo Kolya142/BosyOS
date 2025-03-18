@@ -52,6 +52,11 @@ void time(time_t *t) {
 size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2, uint32_t *a3) {
     return syscall(54, fd, req, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, 0);
 }
+void clock_gettime(struct time_spec *ts) {
+    syscall(265, 0, (uint32_t)ts, 0, 0, 0, 0);
+}
+
+
 void print(const char *str) {
     write(1, str, strlen(str));
 }

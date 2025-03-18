@@ -3,6 +3,7 @@
 #include <kernel/KTasks.h>
 #include <kernel/KPanic.h>
 #include <kernel/KShell.h>
+#include <kernel/KAlarm.h>
 #include <kernel/KSys.h>
 #include <kernel/KMem.h>
 

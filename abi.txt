@@ -1,8 +1,0 @@
-args
-1. EAX
-2. ESI
-3. EDI
-4. EBX
-5. EDX
-result
-1. EAX

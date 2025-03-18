@@ -2,11 +2,15 @@
 #include <kernel/KTasks.h>
 #include <drivers/time/pit.h>
 #include <drivers/sys/beep.h>
+#include <kernel/KAlarm.h>
+
+static U0 BeepEnd(Ptr args) {
+    POut(0x61, PIn(0x61) & ~3);
+}
 
 U0 Beep(U16 dur) {
     POut(0x61, PIn(0x61) | 3);
-    Sleep(dur);
-    POut(0x61, PIn(0x61) & ~3);
+    AlarmCreate(dur, BeepEnd, NULL);
 }
 U0 BeepHz(U16 freq, U16 dur) {
     if (freq < 10 || freq > 20000) return;
@@ -19,8 +23,7 @@ U0 BeepHz(U16 freq, U16 dur) {
     if (!(tmp & 3)) {
         POut(0x61, tmp | 3);
     }
-    Sleep(dur);
-    POut(0x61, PIn(0x61) & ~3);
+    AlarmCreate(dur, BeepEnd, NULL);
     PITInit(); // PIT back
 }
 

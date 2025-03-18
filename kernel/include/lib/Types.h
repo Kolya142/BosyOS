@@ -38,6 +38,7 @@ extern Bool Debugging;
 #define True 1
 #define False 0
 #define Null 0
+#define NULL Null
 
 #define asmv asm volatile
 #define asmV __asm__ volatile

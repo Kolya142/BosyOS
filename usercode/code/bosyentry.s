@@ -4,7 +4,7 @@ extern main
 global _start
 _start:
     mov eax, 11
-    mov esi, main
+    mov ebx, main
     int 0x80
 
     jmp $

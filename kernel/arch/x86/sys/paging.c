@@ -16,7 +16,6 @@ U0 PagingInit() {
     PrintF("Page: %p\n", Pages);
     MemSet(Pages, 0, 1024 * 4);
     MemSet(PageT, 0, 1024 * PAGE_SIZE);
-    Sleep(1000);
     for (U32 i = 0; i < 1024*1024; ++i) {
         PageT[i] = (i * PAGE_SIZE) | PAGE_RW | PAGE_PRESENT | PAGE_USER;
     }

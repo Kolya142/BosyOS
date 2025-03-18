@@ -2,24 +2,23 @@
 section .text
 global _syscall
 _syscall:
-    push ebp
-    mov ebp, esp
     push ebx
     push esi
     push edi
-    push edx
+    push ebp
     
-    mov eax, dword [ebp + 8]
-    mov esi, dword [ebp + 12]
-    mov edi, dword [ebp + 16]
-    mov ebx, dword [ebp + 20]
-    mov edx, dword [ebp + 24]
-    
+    mov eax, [esp + 20]  ; a
+    mov ebx, [esp + 24]  ; b
+    mov ecx, [esp + 28]  ; c
+    mov edx, [esp + 32]  ; d
+    mov esi, [esp + 36]  ; e
+    mov edi, [esp + 40]  ; f
+    mov ebp, [esp + 44]  ; g
+
     int 0x80
 
-    pop edx
+    pop ebp
     pop edi
     pop esi
     pop ebx
-    pop ebp
     ret

@@ -1,17 +1,17 @@
-$!AID$!F |$!ARETURN$!F eax        |$!ANAME$!F       |$!AARG1$!F esi             |$!AARG2$!F edi             |$!AARG3$!F ebx             |$!AARG4$!F edx             |
-$!B0$!F  |$!Evoid$!F              |$!ddriver$!F     |$!Cunsigned int magic1$!F  |$!Cunsigned int magic2$!F  |$!Cunsigned int id$!F      |$!Cunsigned int *buf$!F    |
-$!B1$!F  |$!Evoid$!F              |$!dexit$!F       |$!Cint code$!F             |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B2$!F  |$!Epid_t$!F             |$!dfork$!F       |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B3$!F  |$!Esize_t$!F            |$!dread$!F       |$!Cfiledesc_t fd$!F        |$!Cbyte_t *buf$!F          |$!Csize_t count$!F         |$!C$!F                     |
-$!B4$!F  |$!Esize_t$!F            |$!dwrite$!F      |$!Cfiledesc_t fd$!F        |$!Cbyte_t *buf$!F          |$!Csize_t count$!F         |$!C$!F                     |
-$!B5$!F  |$!Efiledesc_t$!F        |$!dopen$!F       |$!Cconst char *filename$!F |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B6$!F  |$!Evoid$!F              |$!dclose$!F      |$!Cfiledesc_t fd$!F        |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B7$!F  |$!Evoid *$!F            |$!dmalloc$!F     |$!Csize_t count$!F         |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B8$!F  |$!Evoid$!F              |$!dfree$!F       |$!Cvoid *ptr$!F            |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B11$!F |$!Epid_t$!F             |$!dexeca$!F      |$!Cvoid *func$!F           |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B12$!F |$!Evoid$!F              |$!dreaddir$!F    |$!Cvoid(*)(const char *filename, stat_t *stat)$!F$!C$!F|$!C$!F                     |$!C$!F                     |
-$!B13$!F |$!Etime_t$!F            |$!dtime$!F       |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B19$!F |$!Evoid$!F              |$!dlseek$!F      |$!Cunsigned int fd$!F      |$!Csize_t offset$!F        |$!Cunsigned int whence$!F  |$!C$!F                     |
-$!B20$!F |$!Epid_t$!F             |$!dgetpid$!F     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
-$!B54$!F |$!Esize_t$!F            |$!dioctl$!F      |$!Cfiledesc_t fd$!F        |$!Cunsigned int req$!F     |$!Cunsigned int *a1$!F     |$!Cunsigned int *a2$!F     |
-$!B106$!F|$!Evoid$!F              |$!dstat$!F       |$!Cconst char *filename$!F |$!Cstat_t *stat$!F         |$!C$!F                     |$!C$!F                     |
+$!AID$!F |$!ARETURN$!F eax        |$!ANAME$!F       |$!AARG1$!F ebx             |$!AARG2$!F ecx             |$!AARG3$!F edx             |$!AARG4$!F esi             |$!AARG5$!F edi             |$!AARG6$!F ebp             |
+$!B0$!F  |$!Evoid$!F              |$!ddriver$!F     |$!Cunsigned int magic1$!F  |$!Cunsigned int magic2$!F  |$!Cunsigned int id$!F      |$!Cunsigned int *buf$!F    |$!C$!F                     |$!C$!F                     |
+$!B1$!F  |$!Evoid$!F              |$!dexit$!F       |$!Cint code$!F             |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B2$!F  |$!Epid_t$!F             |$!dfork$!F       |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B3$!F  |$!Esize_t$!F            |$!dread$!F       |$!Cfiledesc_t fd$!F        |$!Cbyte_t *buf$!F          |$!Csize_t count$!F         |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B4$!F  |$!Esize_t$!F            |$!dwrite$!F      |$!Cfiledesc_t fd$!F        |$!Cbyte_t *buf$!F          |$!Csize_t count$!F         |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B5$!F  |$!Efiledesc_t$!F        |$!dopen$!F       |$!Cconst char *filename$!F |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B6$!F  |$!Evoid$!F              |$!dclose$!F      |$!Cfiledesc_t fd$!F        |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B7$!F  |$!Evoid *$!F            |$!dmalloc$!F     |$!Csize_t count$!F         |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B8$!F  |$!Evoid$!F              |$!dfree$!F       |$!Cvoid *ptr$!F            |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B11$!F |$!Epid_t$!F             |$!dexeca$!F      |$!Cvoid *func$!F           |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B12$!F |$!Evoid$!F              |$!dreaddir$!F    |$!Cvoid(*)(const char *filename, stat_t *stat)$!F$!C$!F|$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B13$!F |$!Etime_t$!F            |$!dtime$!F       |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B19$!F |$!Evoid$!F              |$!dlseek$!F      |$!Cunsigned int fd$!F      |$!Csize_t offset$!F        |$!Cunsigned int whence$!F  |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B20$!F |$!Epid_t$!F             |$!dgetpid$!F     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |
+$!B54$!F |$!Esize_t$!F            |$!dioctl$!F      |$!Cfiledesc_t fd$!F        |$!Cunsigned int req$!F     |$!Cunsigned int *a1$!F     |$!Cunsigned int *a2$!F     |$!C$!F                     |$!C$!F                     |
+$!B106$!F|$!Evoid$!F              |$!dstat$!F       |$!Cconst char *filename$!F |$!Cstat_t *stat$!F         |$!C$!F                     |$!C$!F                     |$!C$!F                     |$!C$!F                     |

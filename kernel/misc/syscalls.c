@@ -22,7 +22,7 @@ static inline Bool is_userspace(U32 addr) {
 }
 
 U0 SCDriver(INTRegs3 *regs) {
-    DriverCall(regs->esi, regs->edi, regs->ebx, (U32*)regs->edx);
+    DriverCall(regs->ebx, regs->ecx, regs->edx, (U32*)regs->ebx);
 }
 U0 SCExit(INTRegs3 *regs) {
     TaskClose();
@@ -32,9 +32,9 @@ U0 SCFork(INTRegs3 *regs) {
 }
 
 U0 SCRead(INTRegs3 *regs) {
-    U32 fd = regs->esi;
-    U32 buf = regs->edi;
-    U32 count = regs->ebx;
+    U32 fd = regs->ebx;
+    U32 buf = regs->ecx;
+    U32 count = regs->edx;
     if (fd <= 2) {
         regs->eax = TTYRead(TaskTail->ttyid, fd, (Ptr)buf, count);
     }
@@ -47,9 +47,9 @@ U0 SCRead(INTRegs3 *regs) {
 }
 
 U0 SCWrite(INTRegs3 *regs) {
-    U32 fd = regs->esi;
-    U32 buf = regs->edi;
-    U32 count = regs->ebx;
+    U32 fd = regs->ebx;
+    U32 buf = regs->ecx;
+    U32 count = regs->edx;
     if (fd <= 2) {
         regs->eax = TTYWrite(TaskTail->ttyid, fd, (Ptr)buf, count);
         TTYFlush(TaskTail->ttyid);
@@ -63,25 +63,25 @@ U0 SCWrite(INTRegs3 *regs) {
 }
 
 U0 SCOpen(INTRegs3 *regs) {
-    regs->eax = VFSOpen((String)regs->esi);
+    regs->eax = VFSOpen((String)regs->ebx);
 }
 U0 SCClose(INTRegs3 *regs) {
-    VFSClose(regs->esi);
+    VFSClose(regs->ebx);
 }
 
 U0 SCMAlloc(INTRegs3 *regs) {
-    regs->eax = (U32)MAlloc(regs->esi);
+    regs->eax = (U32)MAlloc(regs->ebx);
 }
 U0 SCFree(INTRegs3 *regs) {
-    MFree((Ptr)regs->esi);
+    MFree((Ptr)regs->ebx);
 }
 
 U0 SCExecA(INTRegs3 *regs) {
-    regs->eax = TaskNew(regs->esi, 0x23, 0x1B);
+    regs->eax = TaskNew(regs->ebx, 0x23, 0x1B);
 }
 
 U0 SCReadDir(INTRegs3 *regs) {
-    VFSReadDir((Ptr)regs->esi);
+    VFSReadDir((Ptr)regs->ebx);
 }
 
 U0 SCTime(INTRegs3 *regs) {
@@ -92,12 +92,12 @@ U0 SCTime(INTRegs3 *regs) {
         U32 real;
     };
 
-    if (!is_userspace(regs->esi)) {
+    if (!is_userspace(regs->ebx)) {
         regs->eax = 1;
         return;
     }
     
-    struct time_t *t = (struct time_t*)regs->esi;
+    struct time_t *t = (struct time_t*)regs->ebx;
     t->millis = PITTime % 1000;
     t->unixt = BosyTime + BOSY_EPOCH;
     t->real = t->unixt * 1000 + t->millis;
@@ -106,9 +106,9 @@ U0 SCTime(INTRegs3 *regs) {
 }
 
 U0 SCLSeek(INTRegs3 *regs) {
-    U32 fd = regs->esi;
-    U32 off = regs->edi;
-    U32 whence = regs->ebx;
+    U32 fd = regs->ebx;
+    U32 off = regs->ecx;
+    U32 whence = regs->edx;
     if (fd == 1) {
         switch (whence) {
             case 0: // SET
@@ -133,20 +133,20 @@ U0 SCGetPid(INTRegs3 *regs) {
 }
 
 U0 SCIOCTL(INTRegs3 *regs) {
-    U32 fd = regs->esi;
-    U32 req = regs->edi;
+    U32 fd = regs->ebx;
+    U32 req = regs->ecx;
 
     if (req == 54 && fd == 1) {
-        if (!regs->ebx || !regs->edx) {
+        if (!regs->edx || !regs->esi) {
             regs->eax = 2;
             return;
         }
-        if (!is_userspace(regs->ebx) || !is_userspace(regs->edx)) {
+        if (!is_userspace(regs->edx) || !is_userspace(regs->esi)) {
             regs->eax = 2;
             return;
         }
-        *((U32*)regs->ebx) = ((TTY*)TTYs.arr)[TTYCurrent].pty->width;
-        *((U32*)regs->edx) = ((TTY*)TTYs.arr)[TTYCurrent].pty->height;
+        *((U32*)regs->edx) = ((TTY*)TTYs.arr)[TTYCurrent].pty->width;
+        *((U32*)regs->esi) = ((TTY*)TTYs.arr)[TTYCurrent].pty->height;
         regs->eax = 0;
     }
     else {
@@ -155,10 +155,10 @@ U0 SCIOCTL(INTRegs3 *regs) {
 }
 
 U0 SCStat(INTRegs3 *regs) {
-    if (!is_userspace(regs->esi) || !is_userspace(regs->edi)) {
+    if (!is_userspace(regs->ebx) || !is_userspace(regs->ecx)) {
         return;
     }
-    VFSLStat((String)regs->esi, (VFSStat*)regs->edi);
+    VFSLStat((String)regs->ebx, (VFSStat*)regs->ecx);
 }
 
 U0 SysCallSetup() {

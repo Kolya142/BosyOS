@@ -11,42 +11,6 @@ I32 MouseX = 40, MouseY = 12;
 U8 MouseBtn = 0;
 volatile U8 MouseCycle = 0;
 volatile I8 MousePacket[3];
-U0 MouseWait(U8 how);
-
-U0 MouseWrite(U8 data) {
-    MouseWait(1);
-    POut(0x64, 0xD4);
-    MouseWait(1);
-    POut(0x60, data);
-}
-U8 MouseRead() {
-    MouseWait(0);
-    return PIn(0x60);
-}
-U0 MouseClean() {
-    while (PIn(0x64) & 1) {
-        PIn(0x60);
-    }
-}
-U0 MouseWait(U8 how) {
-    U16 timeout = 100;
-    if (!how) { // Output bit
-        while (--timeout) {
-            if ((PIn(0x64) & 1) == 1)
-                return;
-            Sleep(1);
-        }
-        return;
-    }
-    else { // Input bit
-        while (--timeout) {
-            if ((PIn(0x64) & 2) == 0)
-                return;
-            Sleep(1);
-        }
-        return;
-    }
-}
 
 __attribute__((naked)) U0 MouseUpdate() {
     U32 esp;
@@ -135,9 +99,6 @@ static U0 MouseEnable() {
 }
 
 U0 MouseInit() {
-    U8 ack;
-    PS2Clean();
-
     PICClearMask(12);
     
     MouseEnable();

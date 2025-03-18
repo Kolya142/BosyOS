@@ -62,6 +62,8 @@
 #include <arch/x86/sys/sys.h>
 #include <arch/x86/cpu/pic.h>
 
+// #define FASTBOOT
+
 // extern U0 KernelDebug();
 U0 mainloop();
 U0 cmdloop();
@@ -70,6 +72,10 @@ U0 loop();
 U0 KernelMain() {
     HeapInit();
     TTYInit();
+
+    SerialInit();
+    KDogWatchLog("Initialized \x9Bserial\x9C", False);
+
     U32 ptys = PTYNew(2048, 1, 1);
     U32 ptyg1 = PTYNew(2048, 320/6, 200/6);
     U32 ptyg2 = PTYNew(2048, 320/6, 200/6);
@@ -135,18 +141,18 @@ U0 KernelMain() {
     // KDogWatchLog("Initialized \"PCI\"", False);
     // USBInit();
     // KDogWatchLog("Initialized \"USB\"", False);
-    // SerialInit();
-    // KDogWatchLog("Initialized \x9Bserial\x9C", False);
     // // RTL8139Init();
     // // KDogWatchLog("Initialized \"rtl8139\"", False);
     PS2Init();
     KDogWatchLog("Initialized \"ps/2\"", False);
     KBInit();
     KDogWatchLog("Initialized \x9Bkeyboard\x9C", False);
+    #ifndef FASTBOOT
     MouseInit(); // Portal to hell
     KDogWatchLog("Initialized \"mouse\"", False);
     BeepInit();
     KDogWatchLog("Initialized \x9Bpc speaker\x9C", False);
+    #endif
     IDEInit();
     KDogWatchLog("Initialized \x9Bide disk\x9C", False);
     VDriversReg();
@@ -178,9 +184,6 @@ U0 KernelMain() {
     // // TTYClear(); // FIXME
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
 
-    TTYSwitch(0);
-
-    Sleep(500);
     // TaskNew((U32)mainloop, 0x10, 0x08);
     TTYSwitch(1);
     mainloop();
@@ -289,9 +292,10 @@ U0 mainloop() {
     PrintF("$!7(BosyOS) $!F");
     TTYCurrent = 1;
 
-    
-    U8 buf[2048] = {0};
-    VFSRead("test.bsf", buf, 0, 2048);
+    VFSStat stat;
+    VFSLStat("test.bsf", &stat);
+    U8 *buf = MAlloc(stat.size);
+    VFSRead("test.bsf", buf, 0, stat.size);
     BsfApp app = BsfFromBytes(buf);
     BsfExec(&app, 0, 1);
     // RingSwitch(ring3, (Ptr)0x300000);

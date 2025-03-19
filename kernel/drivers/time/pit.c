@@ -37,6 +37,13 @@ static inline void regs_copy(INTRegs3 *dest, const INTRegs3 *src) {
     dest->eflags   = src->eflags;
 }
 
+static U0 TaskRet() {
+    asmv (
+        "int $0x80"
+        :: "a"(119)
+    );
+}
+
 static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 INT_DEF(PITHandler) {
@@ -55,6 +62,25 @@ INT_DEF(PITHandler) {
         }
         // TTYCurrent = TaskTail->ttyid;
         // PrintF("Task %d, ESP %p, EIP %p\n", TaskTail->id, regs->esp, regs->eip);
+        for (U32 i = 0; i < SIGNALS / 8; ++i) {
+            for (U32 j = 0; j < 8; ++j) {
+                if (TaskTail->signals[i] & (1 << j)) {
+                    if (TaskTail->signals_handles[i * 8 + j]) {
+                        TaskTail->saved_esp = TaskTail->regs.esp;
+                        TaskTail->saved_eip = TaskTail->regs.eip;
+
+                        TaskTail->regs.esp -= 4;
+                        *((U32 *)TaskTail->regs.esp) = TaskRet;
+    
+                        TaskTail->regs.esp -= 4;
+                        *((U32 *)TaskTail->regs.esp) = i * 8 + j;
+
+                        TaskTail->regs.eip  = TaskTail->signals_handles[i * 8 + j];
+                    }
+                    TaskTail->signals[i] &= ~(1 << j);
+                }
+            }
+        }
     }
     Alarm *a = AlarmGet();
     if (a) {

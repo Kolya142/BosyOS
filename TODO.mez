@@ -8,7 +8,7 @@ $!D- $!BFix file system $!F(Planned)
 $!D- $!BFix applications loader $!F(Planned)
 
 $!A=== API ===
-$!D- $!BAdd signals $!F(planned)
+$!D- $!BAdd signals $!F(In Process)
 
 $!A=== Kernel Improvement ===
 $!D- $!BBetter Interrupts[IRQ, APIC, PIC] $!F(Planned)

@@ -230,6 +230,11 @@ U0 SCStat(INTRegs3 *regs) {
     VFSLStat((String)regs->ebx, (VFSStat*)regs->ecx);
 }
 
+U0 SCSigRet(INTRegs3 *regs) {
+    TaskTail->regs.eip = TaskTail->saved_eip;
+    TaskTail->regs.esp = TaskTail->saved_esp;
+}
+
 U0 SCClockGetTime(INTRegs3 *regs) {
     struct time_spec {
         U32 sec;

@@ -70,12 +70,12 @@ INT_DEF(PITHandler) {
                         TaskTail->saved_eip = TaskTail->regs.eip;
 
                         TaskTail->regs.esp -= 4;
-                        *((U32 *)TaskTail->regs.esp) = TaskRet;
+                        *((U32 *)TaskTail->regs.esp) = (U32)TaskRet;
     
                         TaskTail->regs.esp -= 4;
                         *((U32 *)TaskTail->regs.esp) = i * 8 + j;
 
-                        TaskTail->regs.eip  = TaskTail->signals_handles[i * 8 + j];
+                        TaskTail->regs.eip  = (U32)TaskTail->signals_handles[i * 8 + j];
                     }
                     TaskTail->signals[i] &= ~(1 << j);
                 }

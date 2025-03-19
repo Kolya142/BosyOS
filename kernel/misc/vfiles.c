@@ -31,9 +31,30 @@ static U32 ScreenRead(String, Ptr buf, U32 offset, U32 count) {
     return 0;
 }
 
+static U32 NullF(String, Ptr buf, U32 offset, U32 count) {
+    return 0;
+}
+
+static U32 Zeros(String, Ptr buf, U32 offset, U32 count) {
+    MemSet(buf, 0, count);
+    return count;
+}
+
+static U32 MemRead(String, Ptr buf, U32 offset, U32 count) {
+    MemCpy(buf, (Ptr)offset, count);
+    return count;
+}
+static U32 MemWrite(String, Ptr buf, U32 offset, U32 count) {
+    MemCpy((Ptr)offset, buf, count);
+    return count;
+}
+
 
 U0 VFilesInit() {
     VFSDirMk("/dev");
     VFSMount("/dev/urandom", URandom, URandom, Null);
     VFSMount("/dev/screen", ScreenRead, ScreenWrite, Null);
+    VFSMount("/dev/null", NullF, NullF, Null);
+    VFSMount("/dev/zeros", Zeros, NullF, Null);
+    VFSMount("/dev/mem", MemRead, MemWrite, Null);
 }

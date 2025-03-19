@@ -63,6 +63,9 @@ INT_DEF(PITHandler) {
             AlarmRemove(a);
         }
     }
+    
+    TTYFlush(TaskTail->ttyid);
+
     if (!(PITTicks % 2)) {
         KDogWatchTick();
     }

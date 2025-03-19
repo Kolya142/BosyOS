@@ -43,8 +43,8 @@ void close(filedesc_t fd) {
 pid_t execa(void *func) {
     return syscall(11, (uint32_t)func, 0, 0, 0, 0, 0);
 }
-void readdir(void(*reader)(const char *filename, stat_t *stat)) {
-    syscall(12, (uint32_t)reader, 0, 0, 0, 0, 0);
+void readdir(const char *dir, void(*reader)(const char *filename, stat_t *stat)) {
+    syscall(12, (uint32_t)dir, (uint32_t)reader, 0, 0, 0, 0);
 }
 void time(time_t *t) {
     syscall(13, (uint32_t)t, 0, 0, 0, 0, 0);

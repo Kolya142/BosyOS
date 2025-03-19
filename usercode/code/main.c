@@ -21,6 +21,12 @@ void shella() {
     exit(0);
 }
 
+void winupd(win *this) {
+    if (this->inp.mouse_left) {
+        printf("mouse click\n");
+    }
+}
+
 void shell(char *buf) {
     int s = strlen(buf);
     if (buf[s-1] == '\n') { // POSIX compatible
@@ -37,7 +43,7 @@ void shell(char *buf) {
             "commands:\n"
             "help, cat, clear, game\n"
             "beep, ls, cls, time\n"
-            "ser\n"
+            "ser, screen\n"
         );
     }
     else if (!strcmp(buf, "exit"))
@@ -54,11 +60,11 @@ void shell(char *buf) {
             close(fd);
         }
         else {
-            print("file not fount\n");
+            print("file not found\n");
         }
     }
-    else if (!strcmp(buf, "ls")) {
-        readdir(lsfn);
+    else if (buf[0] == 'l' && buf[1] == 's') {
+        readdir(buf + 3, lsfn);
     }
     else if (!strcmp(buf, "beep"))
     {
@@ -66,6 +72,18 @@ void shell(char *buf) {
     }
     else if (!strcmp(buf, "win")) {
         int win = ioctl(3, WIOCREAT, (uint32_t*)50, (uint32_t*)50, (uint32_t*)"Window");
+        ioctl(3, WIOUPDFN, (uint32_t*)win, (uint32_t*)winupd, 0);
+    }
+    else if (!strcmp(buf, "screen")) {
+        filedesc_t fd = open("/dev/screen");
+        if (fd) {
+            uint8_t patch[] = "\x05\x00\x05\x00\x05\x00" "\x0A\x0B\x0C\x0D\x0E" "\x0B\x0C\x0D\x0E\x0A" "\x0C\x0D\x0E\x0A\x0B" "\x0D\x0E\x0A\x0B\x0C" "\x0E\x0A\x0B\x0C\x0D";
+            write(fd, patch, 31);
+            close(fd);
+        }
+        else {
+            print("screen not found\n");
+        }
     }
     else if (!strcmp(buf, "game")) {
         char buf[53*33];
@@ -118,7 +136,7 @@ void shell(char *buf) {
     }
 }
 
-void _main() {
+void main() {
     print("$ ");
     char buf[64];
     for (;;) {
@@ -130,17 +148,5 @@ void _main() {
             print("$ ");
         }
     }
-    for(;;);
-}
-
-void main() {
-    execa(_main);
-    ioctl(1, 91, (uint32_t*)2, 0, 0);
-    execa(_main);
-    ioctl(1, 91, (uint32_t*)3, 0, 0);
-    execa(_main);
-    ioctl(1, 91, (uint32_t*)4, 0, 0);
-    
-    _main();
     for(;;);
 }

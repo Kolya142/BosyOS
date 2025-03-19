@@ -22,7 +22,7 @@ static U0 DriverVStat(String name, VFSStat *stat) {
         if (!StrCmp(Drivers[i].name, name)) {
             stat->ino = i;
             stat->size = 0;
-            stat->mode = VFS_DEV;
+            stat->mode = VFS_IFDEV | VFS_UREAD | VFS_UWRIT;
             stat->time = 0;
         }
     }
@@ -35,7 +35,13 @@ U0 DriverReg(U32 d1, U32 d2, Ptr func, String name) {
             Drivers[i].d2 = d2;
             Drivers[i].name = name;
             Drivers[i].func = func;
-            VFSMount(Drivers[i].name, DriverVRead, DriverVWrite, DriverVStat);
+            U32 s = StrLen(name);
+            String nname = MAlloc(s+5);
+            MemCpy(nname, "dev/", 4);
+            MemCpy(nname + 4, name, s);
+            nname[s] = 0;
+            VFSMount(nname, DriverVRead, DriverVWrite, DriverVStat);
+            MFree(nname);
             break;
         }
     }

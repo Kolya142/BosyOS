@@ -54,7 +54,6 @@ U0 SCWrite(INTRegs3 *regs) {
     U32 count = regs->edx;
     if (fd <= 2) {
         regs->eax = TTYWrite(TaskTail->ttyid, fd, (Ptr)buf, count);
-        TTYFlush(TaskTail->ttyid);
     }
     else if (fd >= 3) {
         regs->eax = VFSWriteV(fd, (Ptr)buf, count);
@@ -83,7 +82,7 @@ U0 SCExecA(INTRegs3 *regs) {
 }
 
 U0 SCReadDir(INTRegs3 *regs) {
-    VFSReadDir((Ptr)regs->ebx);
+    VFSReadDir((String)regs->ebx, (Ptr)regs->ecx);
 }
 
 U0 SCTime(INTRegs3 *regs) {

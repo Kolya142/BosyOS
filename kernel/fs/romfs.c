@@ -24,7 +24,7 @@ static U0 ROFSStatV(String name, VFSStat *stat) {
     for (U32 i = 0; i < ROFS->count; ++i) {
         if (!StrCmp(node->name, name)) {
             stat->ino = i;
-            stat->mode = VFS_REG;
+            stat->mode = VFS_IFREG | VFS_UEXEC | VFS_UREAD | VFS_UWRIT;
             stat->size = node->size;
             stat->time = 0;
             break;

@@ -15,6 +15,7 @@ U0 RFSAdd(String name, U32 size) {
             String nname = MAlloc(StrLen(name));
             StrCpy(nname, name);
             VFSMount(nname, RFSReadV, RFSWriteV, RFSStatV);
+            MFree(nname);
             break;
         }
         else if (!StrCmp(RFS[i].name, name)) {
@@ -82,7 +83,7 @@ U0 RFSStatV(String name, VFSStat *stat) {
     for (U32 i = 0; i < RFS_SIZE; ++i) {
         if (RFS[i].exists && !StrCmp(RFS[i].name, name)) {
             stat->ino = i;
-            stat->mode = VFS_REG;
+            stat->mode = VFS_IFREG | VFS_UEXEC | VFS_UREAD | VFS_UWRIT;
             stat->size = RFS[i].size;
             stat->time = 0;
             break;

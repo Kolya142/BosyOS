@@ -4,7 +4,7 @@ List ListInit(U32 elem_size) {
     list.arr = MCAlloc(elem_size, 8);
     list.elem = elem_size;
     list.count = 0;
-    list.length = 8;
+    list.length = elem_size;
     return list;
 }
 U0 ListAppend(List *this, Ptr elem) {

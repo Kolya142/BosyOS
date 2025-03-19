@@ -11,18 +11,35 @@ struct time_spec {
     uint32_t sec;
     uint32_t nsec;
 };
+typedef struct piel_canvas {
+    uint8_t *arr;
+    uint32_t rwidth;
+    uint32_t width;
+    uint32_t height;
+} piel_canvas;
+
+typedef struct kws_input {
+    int mousex;
+    int mousey;
+    char mouse_left;
+    char mouse_right;
+    char mouse_middle;
+    char mouse_down[3];
+    char key_down[256];
+    char key_pressed[256];
+} kws_input;
 
 typedef struct win
 {
-    // char title[16];
-    // uint32_t x;
-    // uint32_t y;
-    // uint32_t w;
-    // uint32_t h;
-    // uint16_t flags;
-    // PielCanvas canvas;
-    // U0(*update)(Ptr this);
-    // KWSInputData inp;
+    char title[16];
+    uint32_t x;
+    uint32_t y;
+    uint32_t w;
+    uint32_t h;
+    uint16_t flags;
+    piel_canvas canvas;
+    void(*update)(void *this);
+    kws_input inp;
 } win;
 
 #define FS_DEV 0x40000000
@@ -66,6 +83,6 @@ void close(filedesc_t fd);
 pid_t execa(void *func);
 size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2, uint32_t *a3);
 void print(const char *str);
-void readdir(void(*reader)(const char *filename, stat_t *stat));
+void readdir(const char *dir, void(*reader)(const char *filename, stat_t *stat));
 void time(time_t *t);
 void clock_gettime(struct time_spec *ts);

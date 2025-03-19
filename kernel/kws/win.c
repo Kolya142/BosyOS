@@ -60,7 +60,9 @@ U0 WindowsUpdate() {
                 continue;
             }
             KWSUpdate(&win->inp);
-            win->update(win);
+            if (win->update) {
+                win->update(win);
+            }
             WinDraw(win);
         }
     }

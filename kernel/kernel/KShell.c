@@ -252,7 +252,7 @@ U0 termrun(const String cmd) {
         print("!FILE - run bsfexe file FILE\n");
     }
     else if (!StrCmp(cmd, "ls")) {
-        VFSReadDir(lsfunc);
+        VFSReadDir("/", lsfunc);
     }
     else if (StrStartsWith(cmd, "cat")) {
         U8 buf[50] = {0};

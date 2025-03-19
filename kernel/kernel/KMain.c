@@ -72,6 +72,11 @@ U0 loop();
 
 U0 KernelMain() {
     HeapInit();
+
+    VFSInit();
+    VFilesInit();
+    KDogWatchLog("Initialized \"vfs\"", False);
+
     TTYInit();
 
     SerialInit();
@@ -89,8 +94,10 @@ U0 KernelMain() {
     TTYNew(TTYRenderG, ptyg4);
     TTYCurrent = 4;
     // TTYSwitch(TTYC_VGA);
+
     VgaInit();
     TTYSwitch(3);
+
     // TTYClear(); // FIXME
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->width = 80;
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->height = 25;
@@ -112,10 +119,6 @@ U0 KernelMain() {
     if (mem < 64000) {
         KDogWatchLog("$!CWarning: Memory size < $!B64MB$!F", False);
     }
-
-    VFSInit();
-    VFilesInit();
-    KDogWatchLog("Initialized \"vfs\"", False);
 
     VgaBlinkingSet(False);
     VgaCursorDisable();
@@ -163,9 +166,9 @@ U0 KernelMain() {
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
 
-    RFSInit();
-    // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, (Ptr)RFSReadDirV);
-    KDogWatchLog("Initialized \x9Bramfs\x9C", False);
+    // RFSInit();
+    // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, Null);
+    // KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
     ATARead((Ptr)0x20000, 291, 64);
     ROFSInit((Ptr)0x20000);
@@ -218,7 +221,7 @@ U32 syscall(U32 id, U32 a, U32 b, U32 c, U32 d) {
     asmV (
         "int $0x80"
         : "=a"(ret)
-        : "a"(id), "S"(a), "D"(b), "b"(c), "d"(d)
+        : "a"(id), "b"(a), "c"(b), "d"(c), "S"(d)
     );
     return ret;
 }
@@ -264,6 +267,10 @@ U0 ring3() {
     for(;;);
 }
 
+U0 lsfn(String name, VFSStat *stat) {
+    PrintF("File: %s\n", name);
+}
+
 U0 mainloop() {
     for (U32 t = 0; t < TTYs.count; ++t) {
         TTYCurrent = t;
@@ -274,6 +281,20 @@ U0 mainloop() {
     // win.update = TimeUpd;
     // WinSpawn(&win);
 
+    {
+        // VFSReadDir("/", lsfn);
+        U8 buf[16] = {0};
+        U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
+        
+        PrintF("Readed %d entropy bytes: ", readed);
+        for (U32 i = 0; i < readed; ++i) {
+            PrintF("%1X ", buf[i]);
+        }
+        PrintF("\n");
+    }
+
+    VFSReadDir("/", lsfn);
+
     VFSStat stat;
     VFSLStat("test.bsf", &stat);
     U8 *buf = MAlloc(stat.size);
@@ -283,5 +304,5 @@ U0 mainloop() {
     BsfExec(&app, 0, 1);
     MFree(buf);
     PrintF("Failed to run program\n");
-    for(;;);
+    // RingSwitch(ring3, (Ptr)0x300000);
 }

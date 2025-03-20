@@ -11,14 +11,14 @@ void lsfn(const char *filename, stat_t *stat) {
     }
 }
 
-char *c;
+char *ccc;
 
 void shell(char *buf);
 
 void shella() {
-    shell(c);
-    for(;;);
+    shell(ccc);
     exit(0);
+    for(;;);
 }
 
 void winupd(win *this) {
@@ -26,6 +26,13 @@ void winupd(win *this) {
         printf("mouse click\n");
     }
 }
+struct utsname {
+    char sysname[65];
+    char nodename[65];
+    char release[65];
+    char version[65];
+    char machine[65];
+};
 
 void shell(char *buf) {
     int s = strlen(buf);
@@ -34,7 +41,7 @@ void shell(char *buf) {
     }
 
     if (buf[0] == '&') {
-        c = buf + 1;
+        ccc = &buf[1];
         execa(shella);
     }
     else if (!strcmp(buf, "help")) {
@@ -43,20 +50,63 @@ void shell(char *buf) {
             "commands:\n"
             "help, cat, clear, game\n"
             "beep, ls, cls, time\n"
-            "ser, screen\n"
+            "ser, screen, uname, fetch\n"
         );
     }
     else if (!strcmp(buf, "exit"))
     {
         exit(0);
+        for(;;);
+    }
+    else if (!strcmp(buf, "uname"))
+    {
+        struct utsname name;
+        syscall(122, (uint32_t)&name, 0, 0, 0, 0, 0);
+        printf (
+            "OS: %s\n"
+            "Node: %s\n"
+            "Release: %s\n"
+            "Version: %s\n"
+            "Arch: %s\n"
+            ,
+            name.sysname,
+            name.nodename,
+            name.release,
+            name.version,
+            name.machine
+        );
+    }
+    else if (!strcmp(buf, "fetch")) {
+        struct utsname name;
+        syscall(122, (uint32_t)&name, 0, 0, 0, 0, 0);
+
+        if (!strcmp(name.sysname, "BosyOS")) {
+            print("\x80");
+        }
+        else {
+            print("\x1b[2J\x1b[H");
+        }
+        printf(
+            "%s V%s\n"
+            "Builded at %s\n"
+            ,
+            name.sysname,
+            name.release,
+            name.version
+        );
     }
     else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
-        filedesc_t fd = open(buf + 4);
+        filedesc_t fd = (strlen(buf) == 3) ? 0 : open(buf + 4);
         if (fd) {
-            uint32_t count = read(fd, buf, 64);
+            uint32_t count;
             print("file content:\n");
-            write(1, buf, count);
-            print("\n");
+            while (count = read(fd, buf, 64)) {
+                write(1, buf, count);
+                print("\n");
+                if (read(0, (byte_t[]) {0}, 1)) {
+                    break;
+                }
+            }
             close(fd);
         }
         else {
@@ -148,5 +198,14 @@ void main() {
             print("$ ");
         }
     }
+    for(;;);
+}
+void _main() {
+    ioctl(1, 91, (uint32_t*)1, 0, 0);
+    execa(main);
+    ioctl(1, 91, (uint32_t*)2, 0, 0);
+    execa(main);
+    ioctl(1, 91, (uint32_t*)3, 0, 0);
+    execa(main);
     for(;;);
 }

@@ -18,19 +18,14 @@ Task *TaskLast = Null;
 
 U0 TaskClose() {
     KDogWatchLog("exiting task\n", False);
-    U32 id = TaskTail->id;
-    TaskNext();
-    TaskKill(id);
-    TaskTail->flags &= ~TASK_WORKING;
-    TaskTail->flags &= ~TASK_CREATED;
-    if (TaskHead) {
-        for(;;);
-    }
-    else {
-        KDogWatchLog("No more tasks. Halting", False);
-        CpuHalt();
-    }
-    // for(;;);
+    TaskKill(TaskTail->id);
+    // TaskTail->flags &= ~TASK_WORKING;
+    // if (TaskHead) {
+    //     for(;;);
+    // }
+    // else {
+    //     KDogWatchLog("No more tasks.", False);
+    // }
     // asmv("movl %0, %%esp; movl %1, %%ebp; movl $1, %%esi; jmp *%2"
     //     :: "r"(TaskTail->regs.useresp),
     //        "r"(TaskTail->regs.ebp),
@@ -87,7 +82,7 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
 
     task->ttyid = (!TaskTail || !(TaskTail->flags & TASK_WORKING)) ? TTYCurrent : TaskTail->ttyid;
     
-    task->esp = esp; // initial esp
+    task->esp = (U32)stack; // initial esp
 
     task->id = (TaskLast) ? TaskLast->id + 1 : 1; // set tid
     task->next = Null;
@@ -104,17 +99,17 @@ U32 TaskNew(U32 eip, U16 ds, U16 cs) { // recommended to check if an error is de
     asmv("sti");
     return TaskLast->id;
 }
-// Underrated function
+
 U0 TaskKill(U32 id) {
     Task *task = TaskHead;
     Task *prev = Null;
 
     while (task) {
         if (task->id == id) {
-            if (task == TaskTail) {
+            if (task->id == TaskTail->id) {
                 TaskNext();
+                TaskTail->flags &= ~TASK_WORKING;
             }
-            
             if (prev) {
                 prev->next = task->next;
             }
@@ -128,14 +123,15 @@ U0 TaskKill(U32 id) {
             if (task == TaskTail) {
                 TaskTail = prev ? prev : TaskHead;
             }
-            MFree((Ptr)task->esp);
+            if (task->esp) {
+                MFree((Ptr)task->esp);
+            }
             MFree(task);
             break;
         }
         prev = task;
         task = task->next;
     }
-    TaskNext();
 }
 
 U32 TFork() {

@@ -35,13 +35,15 @@ U0 DriverReg(U32 d1, U32 d2, Ptr func, String name) {
             Drivers[i].d2 = d2;
             Drivers[i].name = name;
             Drivers[i].func = func;
-            U32 s = StrLen(name);
-            String nname = MAlloc(s+5);
-            MemCpy(nname, "dev/", 4);
-            MemCpy(nname + 4, name, s);
-            nname[s] = 0;
-            VFSMount(nname, DriverVRead, DriverVWrite, DriverVStat);
-            MFree(nname);
+
+            // U32 s = StrLen(name);
+            // String nname = MAlloc(s+6);
+            // MemSet(nname, 0, s + 6);
+            // MemCpy(nname, "dev/", 4);
+            // MemCpy(nname + 4, name, s);
+
+            // VFSMount(name, DriverVRead, DriverVWrite, DriverVStat);
+            // MFree(nname);
             break;
         }
     }

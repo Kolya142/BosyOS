@@ -51,6 +51,8 @@ INT_DEF(PITHandler) {
     PITTime += 1000/60 + 1;
 
     if (TaskTail && TaskHead) {
+        TTYFlush(TaskTail->ttyid);
+
         if (!(TaskTail->flags & TASK_WORKING)) {
             TaskTail->flags |= TASK_WORKING;
             regs_copy(regs, &TaskTail->regs);
@@ -89,8 +91,6 @@ INT_DEF(PITHandler) {
             AlarmRemove(a);
         }
     }
-    
-    TTYFlush(TaskTail->ttyid);
 
     if (!(PITTicks % 2)) {
         KDogWatchTick();

@@ -235,6 +235,28 @@ U0 SCSigRet(INTRegs3 *regs) {
     TaskTail->regs.esp = TaskTail->saved_esp;
 }
 
+U0 SCUName(INTRegs3 *regs) {
+    struct utsname {
+        Char sysname[65];
+        Char nodename[65];
+        Char release[65];
+        Char version[65];
+        Char machine[65];
+    };
+
+    if (!is_userspace(regs->ebx)) {
+        regs->eax = -1;
+    }
+    struct utsname *name = (Ptr)regs->ebx;
+    MemCpy(name->sysname, "BosyOS", 7);
+    MemCpy(name->nodename, "BosyOS", 7);
+    MemCpy(name->release, "0.0.1", 6);
+    MemCpy(name->version, __DATE__ " " __TIME__, StrLen(__DATE__ " " __TIME__) + 1);
+    MemCpy(name->machine, "x86", 3);
+
+    regs->eax = 0;
+}
+
 U0 SCClockGetTime(INTRegs3 *regs) {
     struct time_spec {
         U32 sec;
@@ -265,5 +287,6 @@ U0 SysCallSetup() {
     SysCallSet(SCGetPid, 20);
     SysCallSet(SCIOCTL, 54);
     SysCallSet(SCStat, 106);
+    SysCallSet(SCUName, 122);
     SysCallSet(SCClockGetTime, 265);
 }

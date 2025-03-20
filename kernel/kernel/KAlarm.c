@@ -22,12 +22,12 @@ U0 AlarmCreate(U32 delay, U0(*event)(Ptr args), Ptr args) {
         AlarmTail->next = a;
     }
 }
-Alarm *AlarmGet() { // Only PIT
+Alarm *AlarmGet() {
     Alarm *a = AlarmTail;
     AlarmTail = AlarmTail->next;
     return a;
 }
-U0 AlarmRemove(Alarm *a) { // Only PIT
+U0 AlarmRemove(Alarm *a) {
     if (a == AlarmHead) {
         AlarmHead = Null;
         AlarmTail = Null;

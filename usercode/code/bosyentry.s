@@ -1,6 +1,7 @@
 [bits 32]
 section .text
 extern main
+extern _main
 global _start
 global start
 _start:
@@ -9,7 +10,7 @@ _start:
 
 start:
     mov eax, 11
-    mov ebx, main
+    mov ebx, _main
     int 0x80
 
     jmp $

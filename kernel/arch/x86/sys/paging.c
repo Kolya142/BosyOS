@@ -29,7 +29,7 @@ U0 PMap(U32 vaddr, U32 raddr, U32 flags) {
     U32 pdid = vaddr >> 22;
     U32 ptid = (vaddr >> 12) & 0x3FF;
     U32* pt = (U32*)(Pages[pdid] & ~0xFFF);
-    pt[ptid] = raddr | flags | PAGE_PRESENT | PAGE_USER;
+    pt[ptid] = raddr | flags | PAGE_PRESENT;
     Paginginvlpg(vaddr);
 }
 U32 PGet(U32 vaddr) {

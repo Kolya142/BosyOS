@@ -27,6 +27,7 @@ void drivercall(uint32_t d1, uint32_t d2, uint32_t id, uint32_t data) {
 }
 void exit(uint32_t code) {
     syscall(1, code, 0, 0, 0, 0, 0);
+    for(;;);
 }
 uint32_t read(uint32_t fd, byte_t *buf, uint32_t count) {
     return syscall(3, fd, (uint32_t)buf, count, 0, 0, 0);
@@ -48,6 +49,12 @@ void readdir(const char *dir, void(*reader)(const char *filename, stat_t *stat))
 }
 void time(time_t *t) {
     syscall(13, (uint32_t)t, 0, 0, 0, 0, 0);
+}
+void lseek(filedesc_t fd, uint32_t off, uint32_t whence) {
+    syscall(19, fd, off, whence, 0, 0, 0);
+}
+int is_bosy() {
+    return ioctl(1, 40, 0, 0, 0) == 0xBEEFB0B0;
 }
 size_t ioctl(filedesc_t fd, uint32_t req, uint32_t *a1, uint32_t *a2, uint32_t *a3) {
     return syscall(54, fd, req, (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, 0);

@@ -9,8 +9,9 @@
 // fixed 90% bugs at 1741183725s from unix stamp
 // proccesses start at 1741763233 from unix stamp
 // problem "i need ring3" found at 1742038534 from unix stamp
-// FIXED BUGS at 1742113941 from unix stamp
-
+// FIXED RING3 BUG at 1742113941 from unix stamp
+// Exec and Link Format, start fixing tasks at 1742569936 from unix stamp
+Bool TaskingCan = False;
 static U32 task_count = 0;
 Task *TaskHead = Null;
 Task *TaskTail = Null;
@@ -19,7 +20,9 @@ Task *TaskLast = Null;
 U0 TaskClose() {
     KDogWatchLog("exiting task\n", False);
     TaskKill(TaskTail->id);
-    // TaskTail->flags &= ~TASK_WORKING;
+    // TaskTail->flags |= TASK_KILLED;
+    TaskNext();
+    TaskTail->flags &= ~TASK_WORKING;
     // if (TaskHead) {
     //     for(;;);
     // }
@@ -106,10 +109,6 @@ U0 TaskKill(U32 id) {
 
     while (task) {
         if (task->id == id) {
-            if (task->id == TaskTail->id) {
-                TaskNext();
-                TaskTail->flags &= ~TASK_WORKING;
-            }
             if (prev) {
                 prev->next = task->next;
             }
@@ -132,6 +131,7 @@ U0 TaskKill(U32 id) {
         prev = task;
         task = task->next;
     }
+    SerialPrintF("TASK KILLED\nCurrent task: %d, Next task: %p\n", TaskTail->id, TaskTail->next);
 }
 
 U32 TFork() {

@@ -3,32 +3,31 @@
 #include <lib/IO/TTY.h>
 #include <fs/vfs.h>
 
+static inline Bool is_userspace(U32 addr) {
+    return 1 || addr >= 0x0C000000;
+}
+
 static U32 URandom(String, Ptr buf, U32 offset, U32 count) {
+    if (!is_userspace((U32)buf) || !is_userspace((U32)buf+count)) {
+        return 0;
+    }
     for (U32 i = 0; i < count; ++i) {
         ((U8*)buf)[i] = RandomU();
     }
     return count;
 }
 static U32 ScreenWrite(String, Ptr buf, U32 offset, U32 count) {
-    struct patch {
-        U16 x;
-        U16 y;
-        U16 w;
-        U8 data[];
-    } __attribute__((packed));
-    if (count < sizeof(struct patch)) return 0;
-    struct patch *patch = buf;
-    if (!patch->w) {
+    count = min(count, 320*200 - offset);
+    if (!is_userspace((U32)buf) || !is_userspace((U32)buf+count)) {
         return 0;
     }
-    for (U32 i = 0; i < count - 2 - 2 - 2; ++i) {
-        // PrintF("%d, %d -> %1x \n", patch->x + i % patch->w, patch->y + i / patch->w, patch->data[i]);
-        VRMPSet(patch->x + i % patch->w, patch->y + i / patch->w, patch->data[i]);
-    }
+    MemCpy(VRM+offset, buf, count);
     return count;
 }
 static U32 ScreenRead(String, Ptr buf, U32 offset, U32 count) {
-    return 0;
+    count = min(count, 320*200 - offset);
+    MemCpy(buf, VRM+offset, count);
+    return count;
 }
 
 static U32 NullF(String, Ptr buf, U32 offset, U32 count) {
@@ -52,7 +51,7 @@ static U32 MemWrite(String, Ptr buf, U32 offset, U32 count) {
 
 U0 VFilesInit() {
     VFSDirMk("/dev");
-    VFSMount("/dev/urandom", URandom, URandom, Null);
+    VFSMount("/dev/urandom", URandom, NullF, Null);
     VFSMount("/dev/screen", ScreenRead, ScreenWrite, Null);
     VFSMount("/dev/null", NullF, NullF, Null);
     VFSMount("/dev/zeros", Zeros, NullF, Null);

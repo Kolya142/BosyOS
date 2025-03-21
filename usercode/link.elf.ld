@@ -2,7 +2,7 @@ OUTPUT_FORMAT(elf32-i386)
 ENTRY(_start)
 
 SECTIONS {
-    . = 0x08048000;
+    # . = 0x0C000000;
     _start = .;
 
     .text ALIGN(4K) : {

@@ -16,7 +16,7 @@ userdata_dump:
 	# 	echo "Error: drive file not found!"; \
 	# fi
 prog:
-	cd usercode && bash build.sh && python3 bsfexe.py usercode.bin N
+	cd usercode && bash build.sh
 compile:
 	truncate -s 181760 drive
 	# @if [ -e drive ]; then \
@@ -26,7 +26,7 @@ compile:
 	# fi
 	dd if=bosyboot of=drive bs=512 seek=0 count=13 conv=notrunc
 	dd if=kernel.bin of=drive bs=512 seek=35 count=256 conv=notrunc
-	cp usercode/usercode.bin.bsf userdir/test.bsf
+	cp usercode/usercode.elf userdir/test.elf
 	non-kernel\ files/mkbosyrom initrom userdir
 	dd if=initrom of=drive bs=512 seek=291 conv=notrunc
 

@@ -49,6 +49,7 @@ U0 VFSClose(U32 fd);
 U32 VFSWriteV(U32 fd, Ptr buf, U32 count);
 U32 VFSReadV(U32 fd, Ptr buf, U32 count);
 U0 VFSLStat(String filename, VFSStat *stat);
+U0 VFSLSeek(U32 fd, U32 off, U32 whence);
 U0 VFSReadDir(String path, U0(*reader)(String, VFSStat*));
 U0 VFSMount(String name, U32(*read)(String, Ptr, U32, U32), U32(*write)(String, Ptr, U32, U32), U0(*stat)(String, VFSStat*));
 U0 VFSDirMk(String name);

@@ -18,9 +18,11 @@
 #include <arch/x86/cpu/io.h>
 #include <kws/input.h>
 #include <kws/win.h>
+#include <drivers/input/mouse.h>
+#include <lib/formats/ELF.h>
 
 static inline Bool is_userspace(U32 addr) {
-    return 1 || addr >= 0x0C000000;
+    return addr >= 0x0C000000;
 }
 
 U0 SCDriver(INTRegs3 *regs) {
@@ -77,8 +79,24 @@ U0 SCFree(INTRegs3 *regs) {
     MFree((Ptr)regs->ebx);
 }
 
-U0 SCExecA(INTRegs3 *regs) {
-    regs->eax = TaskNew(regs->ebx, 0x23, 0x1B);
+U0 SCExecVE(INTRegs3 *regs) {
+    VFSStat stat;
+    VFSLStat((String)regs->ebx, &stat);
+    U8 *buf = MAlloc(stat.size);
+    if (!buf) {
+        regs->eax = 1;
+        return;
+    }
+    if (!VFSRead((String)regs->ebx, buf, 0, stat.size)) {
+        regs->eax = 1;
+        return;
+    }
+    BsfApp app = BsfFromBytes(buf);
+    PrintF("Starting program\n");
+
+    ELFLoad(buf);
+    MFree(buf);
+    regs->eax = 0;
 }
 
 U0 SCReadDir(INTRegs3 *regs) {
@@ -115,17 +133,7 @@ U0 SCLSeek(INTRegs3 *regs) {
         }
     }
     else {
-        VFSFD *file = (VFSFD*)fd;
-        switch (whence) {
-            case 0: // SET
-                file->head = off;
-                break;
-            case 1: // CUR
-                file->head += off;
-                break;
-            case 2: // END
-                break;
-        }
+        VFSLSeek(fd, off, whence);
     }
     regs->eax = 0;
 }
@@ -143,6 +151,9 @@ U0 SCGetPid(INTRegs3 *regs) {
 #define WIOCREAT 10
 #define WIOKILL  11
 #define WIOUPDFN 20
+#define WIOMOUSE 50
+
+#define BIOPING  40
 U0 SCIOCTL(INTRegs3 *regs) {
     U32 fd = regs->ebx;
     U32 req = regs->ecx;
@@ -160,6 +171,9 @@ U0 SCIOCTL(INTRegs3 *regs) {
             *((U32*)regs->edx) = ((TTY*)TTYs.arr)[TTYCurrent].pty->width;
             *((U32*)regs->esi) = ((TTY*)TTYs.arr)[TTYCurrent].pty->height;
             regs->eax = 0;
+        }
+        else if (req == BIOPING) {
+            regs->eax = 0xBEEFB0B0;
         }
         else if (req == TIOGTCUR) {
             if (!regs->edx || !regs->esi) {
@@ -215,6 +229,12 @@ U0 SCIOCTL(INTRegs3 *regs) {
             } break;
             case WIOKILL : {
                 windows[regs->edx].w = 0;
+            } break;
+            case WIOMOUSE: {
+                U32 *buf = (U32*)regs->edx;
+                buf[0] = MouseX;
+                buf[1] = MouseY;
+                buf[2] = MouseBtn;
             } break;
         }
     }
@@ -280,7 +300,7 @@ U0 SysCallSetup() {
     SysCallSet(SCClose, 6);
     SysCallSet(SCMAlloc, 7);
     SysCallSet(SCFree, 8);
-    SysCallSet(SCExecA, 11);
+    SysCallSet(SCExecVE, 11);
     SysCallSet(SCReadDir, 12);
     SysCallSet(SCTime, 13);
     SysCallSet(SCLSeek, 19);

@@ -141,6 +141,19 @@ U0 VFSLStat(String filename, VFSStat *stat) {
 
     return node->stat(filename, stat);
 }
+U0 VFSLSeek(U32 fd, U32 off, U32 whence) {
+    switch (whence) {
+        case 0:
+            fds[fd].head = off;
+            break;
+        case 1:
+            fds[fd].head += off;
+            break;
+        case 2:
+            // 2 whence is stange
+            break;
+    }
+}
 U0 VFSReadDir(String path, U0(*reader)(String, VFSStat*)) {
     VFSNode *dir = VFSFind(VFSRoot, path);
     if (!dir) {

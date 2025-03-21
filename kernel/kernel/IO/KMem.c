@@ -1,5 +1,6 @@
 #include <kernel/KDogWatch.h>
 #include <kernel/KMem.h>
+#include <lib/IO/TTY.h>
 
 #define ALIGNMENT (sizeof(HeapMemBlock))
 
@@ -41,6 +42,7 @@ Ptr HeapAlloc(U32 size) {
         curr = curr->next;
     }
     KDogWatchLog("Failed to malloc some memory", False);
+    SerialPrintF("Tried to alloc %p bytes", size);
     return Null;
 }
 

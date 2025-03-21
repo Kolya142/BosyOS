@@ -5,8 +5,11 @@
 struct Task;
 typedef struct Task Task;
 
+extern Bool TaskingCan;
+
 #define TASK_WORKING 1
 #define TASK_CREATED 2
+#define TASK_KILLED  4
 
 #define SIGNALS 32
 
@@ -17,7 +20,11 @@ typedef struct Task {
     Task *next;
     U32 esp;
     U32 ttyid;
-    U8 fpu[512];
+    struct PageMap {
+        U32 vaddr;
+        U32 raddr;
+        Bool exists;
+    } pages[32];
 
     U32 saved_eip;
     U32 saved_esp;

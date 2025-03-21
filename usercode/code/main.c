@@ -1,5 +1,4 @@
 #include "bosyos/bosystd.h"
-#include "bosyos/bsfexe.h"
 
 void lsfn(const char *filename, stat_t *stat) {
     print(filename);
@@ -41,8 +40,11 @@ void shell(char *buf) {
     }
 
     if (buf[0] == '&') {
-        ccc = &buf[1];
-        execa(shella);
+        // ccc = &buf[1];
+        // execa(shella);
+    }
+    else if (buf[0] == '!') {
+        syscall(11, (uint32_t)&buf[1], 0, 0, 0, 0, 0);
     }
     else if (!strcmp(buf, "help")) {
         print(
@@ -75,6 +77,17 @@ void shell(char *buf) {
             name.version,
             name.machine
         );
+    }
+    else if (!strcmp(buf, "stat")) {
+        int hash1 = 0;
+        int hash2 = 0;
+        for (unsigned int i = 0x100000; i < 0x100000+256*512; ++i) {
+            hash1 ^= *(uint16_t*)i;
+            hash1 ^= (hash2 << 5);
+            hash2 ^= hash1;
+            hash2 ^= (hash1 << 2);
+        }
+        printf("Kernel hash: %X%X\n", hash1, hash2);
     }
     else if (!strcmp(buf, "fetch")) {
         struct utsname name;
@@ -126,13 +139,19 @@ void shell(char *buf) {
     }
     else if (!strcmp(buf, "screen")) {
         filedesc_t fd = open("/dev/screen");
-        if (fd) {
-            uint8_t patch[] = "\x05\x00\x05\x00\x05\x00" "\x0A\x0B\x0C\x0D\x0E" "\x0B\x0C\x0D\x0E\x0A" "\x0C\x0D\x0E\x0A\x0B" "\x0D\x0E\x0A\x0B\x0C" "\x0E\x0A\x0B\x0C\x0D";
-            write(fd, patch, 31);
+        if (is_bosy() && fd) {
+            while (!read(0, (byte_t[]) {0}, 1)) {
+                int mouse[3] = {0};
+                ioctl(3, 50, mouse, 0, 0);
+                if (mouse[2]) {
+                    lseek(fd, mouse[0]-1+mouse[1]*320, 0);
+                    write(fd, (byte_t[]) {0x0F}, 1);
+                }
+            }
             close(fd);
         }
         else {
-            print("screen not found\n");
+            print("screen not found, you are probable using system other than BosyOS\n");
         }
     }
     else if (!strcmp(buf, "game")) {
@@ -166,6 +185,33 @@ void shell(char *buf) {
             }
         }
     }
+    else if (!strcmp(buf, "paint")) {
+        // filedesc_t fd = open("/dev/screen");
+        // byte_t patch[] = "\x00\x00\x00\x00\x01\x00\x0F";
+        // if (fd) {
+        //     for (;;) {
+        //         int mouse[3];
+        //         drivercall(DMOUSE, 0, (uint32_t)mouse);
+        //         unsigned short *p = (unsigned short*)patch;
+        //         p[0] = mouse[0];
+        //         p[1] = mouse[1];
+        //         write(fd, patch, sizeof(patch));
+        //         printf("\x80%2X %2X %2X\n", p[0], p[1], p[2]);
+        //         if (read(0, (byte_t[]) {0}, 1)) {
+        //             break;
+        //         }
+        //     }
+        //     close(fd);
+        // }
+        // else {
+        //     print("screen not found\n");
+        // }
+    }
+    else if (!strcmp(buf, "err")) {
+        print("1 / 0\n");
+        int x = 1;
+        x = x / 0;
+    }
     else if (!strcmp(buf, "time")) {
         time_t t;
         time(&t);
@@ -186,7 +232,7 @@ void shell(char *buf) {
     }
 }
 
-void main() {
+void _start() {
     print("$ ");
     char buf[64];
     for (;;) {
@@ -198,14 +244,5 @@ void main() {
             print("$ ");
         }
     }
-    for(;;);
-}
-void _main() {
-    ioctl(1, 91, (uint32_t*)1, 0, 0);
-    execa(main);
-    ioctl(1, 91, (uint32_t*)2, 0, 0);
-    execa(main);
-    ioctl(1, 91, (uint32_t*)3, 0, 0);
-    execa(main);
     for(;;);
 }

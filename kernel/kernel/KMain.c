@@ -258,17 +258,13 @@ static U0 loop2() {
     }
 }
 
-U0 ring3() {
-    TTYCurrent = 1;
-    asmV(
-        "int $0x80"
-        :: "a"(11), "S"(loop2)
-    );
-    for(;;);
+U0 lsfn(String name, VFSStat *stat) {
+    PrintF("File: %s, Size: %d\n", name, stat->size);
 }
 
-U0 lsfn(String name, VFSStat *stat) {
-    PrintF("File: %s\n", name);
+static U0 ring3() {
+    TaskingCan = True;
+    for (;;);
 }
 
 U0 mainloop() {
@@ -295,14 +291,16 @@ U0 mainloop() {
 
     VFSReadDir("/", lsfn);
 
-    VFSStat stat;
-    VFSLStat("test.bsf", &stat);
+    VFSStat stat = {0};
+    VFSLStat("test.elf", &stat);
     U8 *buf = MAlloc(stat.size);
-    VFSRead("test.bsf", buf, 0, stat.size);
-    BsfApp app = BsfFromBytes(buf);
+    VFSRead("test.elf", buf, 0, stat.size);
     PrintF("Starting program\n");
-    BsfExec(&app, 0, 1);
+
+    TTYCurrent = 1;
+    ELFLoad(buf);
+    // BsfExec(&app, 0, 1);
     MFree(buf);
-    PrintF("Failed to run program\n");
-    // RingSwitch(ring3, (Ptr)0x300000);
+
+    RingSwitch(ring3, (Ptr)0x3000);
 }

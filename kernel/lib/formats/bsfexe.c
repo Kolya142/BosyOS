@@ -6,6 +6,9 @@
 #include <arch/x86/sys/gdt.h>
 #include <lib/IO/TTY.h>
 #include <lib/graphics/Graphics.h>
+#include <kernel/KTasks.h>
+#include <kernel/KPanic.h>
+#include <fs/vfs.h>
 
 BsfApp BsfFromBytes(Byte *app) {
     BsfApp bapp;
@@ -37,27 +40,20 @@ I32 BsfExec(BsfApp *app, U32 m1, U32 m2) {
         return 0;
     }
 
-    U32 ptrb[PAGES];
-    U32 ptr[PAGES];
+    U32 tid = TaskNew(UADDR, 0x23, 0x1B);
+    Task *task = TaskLast;
+    MFree((Ptr)task->esp); // Remove STSP(Standart Task Stack Pointer)
+    task->regs.esp = UADDR + (PAGES - 1) * PAGE_SIZE;
+
     for (U32 i = 0; i < PAGES; ++i) {
-        ptrb[i] = PGet(UADDR+PAGE_SIZE*i);
-        ptr[i] = (U32)PallocMap(UADDR+PAGE_SIZE*i, PAGE_RW | PAGE_USER);
-        if (!ptr[i]) {
-            for (U32 j = 0; j < i; ++j) {
-                PFree((Ptr)ptr[j]);
-                PMap(UADDR+PAGE_SIZE*j, ptrb[j], PAGE_RW | PAGE_USER | PAGE_PRESENT);
-            }
-            return 0;
+        U32 addr = (U32)PAlloc();
+        if (!addr) {
+            KPanic("No free space for program", False); // TODO: make it safer
         }
-    }
-
-    MemCpy((Ptr)UADDR, app->data, head->CodeS);
-    
-    RingSwitch(meta->func, (Ptr)0x300000);
-
-    for (U32 i = 0; i < PAGES; ++i) {
-        PFree((Ptr)ptr[i]);
-        PMap(UADDR+PAGE_SIZE*i, ptrb[i], PAGE_RW | PAGE_USER | PAGE_PRESENT);
+        MemCpy((Ptr)addr, (Ptr)(app->data + i * PAGE_SIZE), PAGE_SIZE);
+        task->pages[i].exists = True;
+        task->pages[i].vaddr = UADDR + i * PAGE_SIZE;
+        task->pages[i].raddr = addr;
     }
 
     return 2;

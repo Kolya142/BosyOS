@@ -9,6 +9,7 @@
 #include <lib/memory/MemLib.h>
 #include <arch/x86/sys/gdt.h>
 #include <lib/time/Time.h>
+#include <arch/x86/sys/paging.h>
 #include <lib/IO/TTY.h>
 #include <kws/win.h>
 
@@ -46,24 +47,46 @@ static U0 TaskRet() {
 
 static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
+#define TASK_DEBUG
+
 INT_DEF(PITHandler) {
     ++PITTicks;
     PITTime += 1000/60 + 1;
 
-    if (TaskTail && TaskHead) {
-        TTYFlush(TaskTail->ttyid);
+    if (TaskTail && TaskHead && TaskingCan) {
+        if (!(TaskTail->flags & TASK_KILLED)) {
+            TTYFlush(TaskTail->ttyid);
 
-        if (!(TaskTail->flags & TASK_WORKING)) {
-            TaskTail->flags |= TASK_WORKING;
-            regs_copy(regs, &TaskTail->regs);
+            if (!(TaskTail->flags & TASK_WORKING)) {
+                TaskTail->flags |= TASK_WORKING;
+                regs_copy(regs, &TaskTail->regs);
+                TaskNext();
+            }
+            else {
+                regs_copy(&TaskTail->regs, regs);
+                TaskNext();
+                regs_copy(regs, &TaskTail->regs);
+            }
         }
         else {
-            regs_copy(&TaskTail->regs, regs);
             TaskNext();
-            regs_copy(regs, &TaskTail->regs);
         }
-        // TTYCurrent = TaskTail->ttyid;
-        // PrintF("Task %d, ESP %p, EIP %p\n", TaskTail->id, regs->esp, regs->eip);
+        #ifdef TASK_DEBUG
+            SerialPrintF("Task %d, ESP %p, EIP %p, PAGES {", TaskTail->id, regs->esp, regs->eip);
+            for (U32 i = 0; i < 32; ++i) {
+                if (TaskTail->pages[i].exists) {
+                    SerialPrintF("    Page(%p, %p)", TaskTail->pages[i].vaddr, TaskTail->pages[i].raddr);
+                    PMap(TaskTail->pages[i].vaddr, TaskTail->pages[i].raddr, PAGE_USER | PAGE_RW);
+                }
+            }
+            SerialPrintF("}\n");
+        #else
+            for (U32 i = 0; i < 32; ++i) {
+                if (TaskTail->pages[i].exists) {
+                    PMap(TaskTail->pages[i].vaddr, TaskTail->pages[i].raddr, PAGE_USER | PAGE_RW);
+                }
+            }
+        #endif
         for (U32 i = 0; i < SIGNALS / 8; ++i) {
             for (U32 j = 0; j < 8; ++j) {
                 if (TaskTail->signals[i] & (1 << j)) {

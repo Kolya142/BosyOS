@@ -21,22 +21,30 @@ volatile U32 KDogWatchTicks = 0;
 volatile KDogWatchProfile Profiles[255] = {0};
 
 #define ERR(name, text) INT_DEF(name) { \
-    KDogWatchLog(text, True); \
+    KDogWatchLog(text, False); \
+    if (TaskTail) TaskClose(); \
+    else KPanic("x86 exception", False); \
 }
+ERR(DWErr00, "#DIVIDE BY 0");
 ERR(DWErr0D, "#GP");
 ERR(DWErr05, "#BOUND");
-ERR(DWErr08, "#Double fault");
+ERR(DWErr08, "#DOUBLE FAULT");
+ERR(DWErr0C, "#STACK SEGMENT FAULT");
 INT_DEF(DWErr0E) {
     U32 cr2;
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
     PrintF("#Page fault code: %p\n", cr2);
-    KDogWatchLog("#Page fault", True);
+    KDogWatchLog("#Page fault", False);
+    if (TaskTail) TaskClose();
+    else KPanic("x86 exception", False);
 }
 U0 KDogWatchInit() {
+    IDTSet(0x00, DWErr00, 0x08, 0x8E);
     IDTSet(0x0D, DWErr0D, 0x08, 0x8E);
     IDTSet(0x0E, DWErr0E, 0x08, 0x8E);
     IDTSet(0x05, DWErr05, 0x08, 0x8E);
     IDTSet(0x08, DWErr08, 0x08, 0x8E);
+    IDTSet(0x0C, DWErr0C, 0x08, 0x8E);
     KDogWatchLog("Init", False);
 }
 

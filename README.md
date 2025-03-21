@@ -1,3 +1,13 @@
+![GitHub Repo stars](https://img.shields.io/github/stars/Kolya142/BosyOS?style=flat-square)
+![GitHub forks](https://img.shields.io/github/forks/Kolya142/BosyOS?style=flat-square)
+![GitHub Contributors](https://img.shields.io/github/contributors/Kolya142/BosyOS?style=flat-square)
+![License](https://img.shields.io/github/license/Kolya142/BosyOS?style=flat-square)
+![Issues](https://img.shields.io/github/issues/Kolya142/BosyOS?style=flat-square)
+![Pull Requests](https://img.shields.io/github/issues-pr/Kolya142/BosyOS?style=flat-square)
+![Downloads](https://img.shields.io/github/downloads/Kolya142/BosyOS/total?style=flat-square)
+
+![KIS](https://github.com/Kolya142/BosyOS/blob/main/non-kernel%20files/kis.png?raw=true)
+
 # Usage
 ## first run
 ### Install qemu

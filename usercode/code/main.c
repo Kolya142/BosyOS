@@ -20,11 +20,6 @@ void shella() {
     for(;;);
 }
 
-void winupd(win *this) {
-    if (this->inp.mouse_left) {
-        printf("mouse click\n");
-    }
-}
 struct utsname {
     char sysname[65];
     char nodename[65];
@@ -38,56 +33,58 @@ void shell(char *buf) {
     if (buf[s-1] == '\n') { // POSIX compatible
         buf[s-1] = 0;
     }
-
-    if (buf[0] == '&') {
-        // ccc = &buf[1];
-        // execa(shella);
-    }
-    else if (buf[0] == '!') {
-        syscall(11, (uint32_t)&buf[1], 0, 0, 0, 0, 0);
-    }
-    else if (!strcmp(buf, "help")) {
+    
+    if (!strcmp(buf, "help")) {
         print(
-            "simple BosyOS shell\n"
-            "commands:\n"
-            "help, cat, clear, game\n"
-            "beep, ls, cls, time\n"
-            "ser, screen, uname, fetch\n"
+            "BosyOS shell\n"
+            "help  - show this message\n"
+            "fetch - show simple system information\n"
+            "paint - just paint\n"
+            "anim  - show a simple animation\n"
+            "cls   - clear screen\n"
+            "clear - clear screen\n"
+            "tut   - open a simple tutorial\n"
         );
     }
-    else if (!strcmp(buf, "exit"))
-    {
-        exit(0);
-        for(;;);
+    else if (!strcmp(buf, "tut")) {
+        print(
+            "Steps:\n"
+            "1. releases\n"
+            "\n"
+            "write something and press enter to start\n"
+        );
+        
+        while (!read(0, (byte_t[]) {0}, 1));
+        {
+            print(
+                "BosyOS releases has 4 types:\n"
+                "night         - main & unstable branch\n"
+                "stable        - stable branch\n"
+                "test          - tests branch\n"
+                "user-friendly - for users branch\n"
+                "\n"
+                "BosyOS releases names:\n"
+                "BRANCH       KERNEL HASH\n"
+                "  |               |     \n"
+                "  V               V     \n"
+                "night  -  e36613e617249726"
+                "\n"
+                "write something and press enter to end\n"
+            );
+        }
+        
+        while (!read(0, (byte_t[]) {0}, 1));
     }
-    else if (!strcmp(buf, "uname"))
-    {
+    else if (!strcmp(buf, "cls") || !strcmp(buf, "clear")) {
         struct utsname name;
         syscall(122, (uint32_t)&name, 0, 0, 0, 0, 0);
-        printf (
-            "OS: %s\n"
-            "Node: %s\n"
-            "Release: %s\n"
-            "Version: %s\n"
-            "Arch: %s\n"
-            ,
-            name.sysname,
-            name.nodename,
-            name.release,
-            name.version,
-            name.machine
-        );
-    }
-    else if (!strcmp(buf, "stat")) {
-        int hash1 = 0;
-        int hash2 = 0;
-        for (unsigned int i = 0x100000; i < 0x100000+256*512; ++i) {
-            hash1 ^= *(uint16_t*)i;
-            hash1 ^= (hash2 << 5);
-            hash2 ^= hash1;
-            hash2 ^= (hash1 << 2);
+
+        if (!strcmp(name.sysname, "BosyOS")) {
+            print("\x80");
         }
-        printf("Kernel hash: %X%X\n", hash1, hash2);
+        else {
+            print("\x1b[2J\x1b[H");
+        }
     }
     else if (!strcmp(buf, "fetch")) {
         struct utsname name;
@@ -108,36 +105,8 @@ void shell(char *buf) {
             name.version
         );
     }
-    else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
-        filedesc_t fd = (strlen(buf) == 3) ? 0 : open(buf + 4);
-        if (fd) {
-            uint32_t count;
-            print("file content:\n");
-            while (count = read(fd, buf, 64)) {
-                write(1, buf, count);
-                print("\n");
-                if (read(0, (byte_t[]) {0}, 1)) {
-                    break;
-                }
-            }
-            close(fd);
-        }
-        else {
-            print("file not found\n");
-        }
-    }
-    else if (buf[0] == 'l' && buf[1] == 's') {
-        readdir(buf + 3, lsfn);
-    }
-    else if (!strcmp(buf, "beep"))
-    {
-        print("\x07\n");
-    }
-    else if (!strcmp(buf, "win")) {
-        int win = ioctl(3, WIOCREAT, (uint32_t*)50, (uint32_t*)50, (uint32_t*)"Window");
-        ioctl(3, WIOUPDFN, (uint32_t*)win, (uint32_t*)winupd, 0);
-    }
-    else if (!strcmp(buf, "screen")) {
+    else if (!strcmp(buf, "paint")) {
+        print("\x80");
         filedesc_t fd = open("/dev/screen");
         if (is_bosy() && fd) {
             while (!read(0, (byte_t[]) {0}, 1)) {
@@ -154,7 +123,9 @@ void shell(char *buf) {
             print("screen not found, you are probable using system other than BosyOS\n");
         }
     }
-    else if (!strcmp(buf, "game")) {
+    else if (!strcmp(buf, "anim")) {
+        print("write something and press enter to exit\nwrite something and press enter to start");
+        while (!read(0, (byte_t[]) {0}, 1));
         char buf[53*33];
         for (int i = 0; i < sizeof(buf); ++i) {
             buf[i] = ' ';
@@ -183,56 +154,15 @@ void shell(char *buf) {
                 clock_gettime(&ts);
                 t2 = ts.sec * 1000000000 + ts.nsec;
             }
+            if (read(0, (byte_t[]) {0}, 1)) {
+                stop = 1;
+            }
         }
-    }
-    else if (!strcmp(buf, "paint")) {
-        // filedesc_t fd = open("/dev/screen");
-        // byte_t patch[] = "\x00\x00\x00\x00\x01\x00\x0F";
-        // if (fd) {
-        //     for (;;) {
-        //         int mouse[3];
-        //         drivercall(DMOUSE, 0, (uint32_t)mouse);
-        //         unsigned short *p = (unsigned short*)patch;
-        //         p[0] = mouse[0];
-        //         p[1] = mouse[1];
-        //         write(fd, patch, sizeof(patch));
-        //         printf("\x80%2X %2X %2X\n", p[0], p[1], p[2]);
-        //         if (read(0, (byte_t[]) {0}, 1)) {
-        //             break;
-        //         }
-        //     }
-        //     close(fd);
-        // }
-        // else {
-        //     print("screen not found\n");
-        // }
-    }
-    else if (!strcmp(buf, "err")) {
-        print("1 / 0\n");
-        int x = 1;
-        x = x / 0;
-    }
-    else if (!strcmp(buf, "time")) {
-        time_t t;
-        time(&t);
-        printf("Unix time: %d\n", t);
-    }
-    else if (!strcmp(buf, "ser")) {
-        int tty;
-        ioctl(1, 92, &tty, 0, 0);
-        ioctl(1, 91, 0, 0, 0);
-        print("Hello, serial!\n");
-        ioctl(1, 91, (uint32_t*)tty, 0, 0);
-    }
-    else if (!strcmp(buf, "cls") || !strcmp(buf, "clear")) {
-        print("\x80");
-    }
-    else {
-        printf("Unk \"%s\"\n", buf);
     }
 }
 
 void _start() {
+    print("Welcome to BosyOS shell\n");
     print("$ ");
     char buf[64];
     for (;;) {

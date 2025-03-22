@@ -188,7 +188,7 @@ void shell(char *buf) {
 }
 
 // NOTE: remove this before push
-#define DEBUG
+// #define DEBUG
 
 void _start() {
     #ifdef DEBUG

@@ -39,7 +39,10 @@ void shell(char *buf) {
         buf[s-1] = 0;
     }
     
-    if (!strcmp(buf, "help")) {
+    if (buf[0] == '!') {
+        execa(buf+1);
+    }
+    else if (!strcmp(buf, "help")) {
         print(
             "BosyOS shell\n"
             "help  - show this message\n"
@@ -49,7 +52,25 @@ void shell(char *buf) {
             "cls   - clear screen\n"
             "clear - clear screen\n"
             "tut   - open a simple tutorial\n"
+            "ls    - list files\n"
+            "cat   - read file\n"
         );
+    }
+    else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
+        filedesc_t fd = open(buf + 4);
+        if (fd) {
+            uint32_t count = read(fd, buf, 64);
+            print("file content:\n");
+            write(1, buf, count);
+            print("\n");
+            close(fd);
+        }
+        else {
+            print("file not found\n");
+        }
+    }
+    else if (buf[0] == 'l' && buf[1] == 's') {
+        readdir(buf + 3, lsfn);
     }
     else if (!strcmp(buf, "tut")) {
         print(
@@ -166,7 +187,30 @@ void shell(char *buf) {
     }
 }
 
+// NOTE: remove this before push
+#define DEBUG
+
 void _start() {
+    #ifdef DEBUG
+    if (is_bosy()) {
+        screen = open("/dev/screen");
+    }
+    else {
+        print("you can't use debug mode in non bosyos\n");
+        exit(1);
+    }
+    print("Testing\n");
+    const char *commands[] = {
+        "fetch",
+        "ls /",
+        "!test2.elf",
+    };
+    for (int i = 0; i < sizeof(commands)/sizeof(commands[0]); ++i) {
+        shell(commands[i]);
+    }
+    print("\nSCRIPT END.\n");
+    for(;;);
+    #else
     if (is_bosy()) {
         screen = open("/dev/screen");
     }
@@ -183,4 +227,5 @@ void _start() {
         }
     }
     for(;;);
+    #endif
 }

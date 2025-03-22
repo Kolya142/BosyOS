@@ -40,10 +40,18 @@ static U32 Zeros(String, Ptr buf, U32 offset, U32 count) {
 }
 
 static U32 MemRead(String, Ptr buf, U32 offset, U32 count) {
+    count = min(count, 0x100000 - offset);
+    if (offset > 0x100000 || offset + count > 0x100000) {
+        return 0;
+    }
     MemCpy(buf, (Ptr)offset, count);
     return count;
 }
 static U32 MemWrite(String, Ptr buf, U32 offset, U32 count) {
+    count = min(count, 0x100000 - offset);
+    if (offset > 0x100000 || offset + count > 0x100000) {
+        return 0;
+    }
     MemCpy((Ptr)offset, buf, count);
     return count;
 }

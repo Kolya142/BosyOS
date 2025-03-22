@@ -27,6 +27,11 @@ struct utsname {
     char version[65];
     char machine[65];
 };
+int screen = 0;
+void put_pixel(int x, int y, char c) {
+    lseek(screen, x+y*320, 0);
+    write(screen, (byte_t[]) {c}, 1);
+}
 
 void shell(char *buf) {
     int s = strlen(buf);
@@ -63,7 +68,7 @@ void shell(char *buf) {
                 "test          - tests branch\n"
                 "user-friendly - for users branch\n"
                 "\n"
-                "BosyOS releases names:\n"
+                "BosyOS release name:\n"
                 "BRANCH       KERNEL HASH\n"
                 "  |               |     \n"
                 "  V               V     \n"
@@ -90,7 +95,7 @@ void shell(char *buf) {
         struct utsname name;
         syscall(122, (uint32_t)&name, 0, 0, 0, 0, 0);
 
-        if (!strcmp(name.sysname, "BosyOS")) {
+        if (is_bosy()) {
             print("\x80");
         }
         else {
@@ -106,21 +111,15 @@ void shell(char *buf) {
         );
     }
     else if (!strcmp(buf, "paint")) {
-        print("\x80");
-        filedesc_t fd = open("/dev/screen");
-        if (is_bosy() && fd) {
+        if (screen) {
             while (!read(0, (byte_t[]) {0}, 1)) {
                 int mouse[3] = {0};
                 ioctl(3, 50, mouse, 0, 0);
                 if (mouse[2]) {
-                    lseek(fd, mouse[0]-1+mouse[1]*320, 0);
-                    write(fd, (byte_t[]) {0x0F}, 1);
+                    lseek(screen, mouse[0]-1+mouse[1]*320, 0);
+                    write(screen, (byte_t[]) {0x0F}, 1);
                 }
             }
-            close(fd);
-        }
-        else {
-            print("screen not found, you are probable using system other than BosyOS\n");
         }
     }
     else if (!strcmp(buf, "anim")) {
@@ -159,9 +158,18 @@ void shell(char *buf) {
             }
         }
     }
+    else if (!strcmp(buf, "graph")) {
+        for (int x = 0; x < 3200; ++x) {
+            int i = (x / 10) - 320/2;
+            put_pixel(x / 10, 200 - (i*i) / 10, 0x0F);
+        }
+    }
 }
 
 void _start() {
+    if (is_bosy()) {
+        screen = open("/dev/screen");
+    }
     print("Welcome to BosyOS shell\n");
     print("$ ");
     char buf[64];

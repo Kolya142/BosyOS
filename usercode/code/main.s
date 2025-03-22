@@ -11,7 +11,7 @@ _start:
     mov eax, 1
     xor ebx, ebx
     int 0x80
-    jmp $
+    ; jmp $
 
 section .rodata
 msg db "Hello, ELF", 10

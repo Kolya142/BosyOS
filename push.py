@@ -1,4 +1,7 @@
+<<<<<<< HEAD
+=======
 import datetime
+>>>>>>> test
 import hashlib
 import os
 import sys
@@ -38,6 +41,10 @@ import tarfile
 tar_name = f"release/release.tar.gz"
 
 with tarfile.open(tar_name, "w:gz") as tar:
+<<<<<<< HEAD
+    tar.add(f"release/{branch}/{name}", arcname=name)
+=======
     tar.add(f"release/{branch}/{name}", arcname=name+'_'+datetime.datetime.now().strftime("%d.%m.%Y_%H-%M-%S"))
+>>>>>>> test
 
 os.system(f"gh release create {name} {tar_name} --title \"kernel {name}\" --notes 'Automated build from {branch}'")

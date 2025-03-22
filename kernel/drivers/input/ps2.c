@@ -1,5 +1,5 @@
 #include <kernel/KPanic.h>
-#include <drivers/input/ps2.h>
+#include <drivers/controllers/ps2.h>
 #include <lib/time/Time.h>
 #include <lib/IO/TTY.h>
 

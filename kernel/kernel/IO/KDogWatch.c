@@ -33,7 +33,7 @@ ERR(DWErr0C, "#STACK SEGMENT FAULT");
 INT_DEF(DWErr0E) {
     U32 cr2;
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
-    PrintF("#Page fault code: %p\n", cr2);
+    SerialPrintF("#Page fault code: %p\n", cr2);
     KDogWatchLog("#Page fault", False);
     if (TaskTail) TaskClose();
     else KPanic("x86 exception", False);
@@ -59,7 +59,16 @@ U0 KDogWatchLog(const String str, Bool panic) {
     }
 }
 U0 KDogWatchLogF(const String format, ...) {
-    KDogWatchLog(format, False); // FIXME
+    KDogWatchLog(format, False);
+    SerialPrintF("[DogWatch]:");
+
+    va_list args;
+    va_start(args, format);
+    VPrintF(0, format, args);
+    TTYUPrintC(0, '\n');
+    va_end(args);
+
+    SerialPrintF(" at %X", PITTime);
 }
 
 U0 KDogWatchTick() {

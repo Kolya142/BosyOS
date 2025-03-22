@@ -27,7 +27,7 @@ void drivercall(uint32_t d1, uint32_t d2, uint32_t id, uint32_t data) {
 }
 void exit(uint32_t code) {
     syscall(1, code, 0, 0, 0, 0, 0);
-    for(;;);
+    // for(;;);
 }
 uint32_t read(uint32_t fd, byte_t *buf, uint32_t count) {
     return syscall(3, fd, (uint32_t)buf, count, 0, 0, 0);

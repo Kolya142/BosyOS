@@ -18,7 +18,7 @@
 #include <drivers/video/vga.h>
 #include <drivers/disk/ide.h>
 #include <drivers/time/pit.h>
-#include <drivers/input/ps2.h>
+#include <drivers/controllers/ps2.h>
 #include <drivers/sys/beep.h>
 #include <drivers/sys/pci.h>
 
@@ -98,7 +98,7 @@ U0 KernelMain() {
     VgaInit();
     TTYSwitch(3);
 
-    // TTYClear(); // FIXME
+    // TTYClear();
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->width = 80;
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->height = 25;
     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
@@ -185,7 +185,7 @@ U0 KernelMain() {
 
     KDogWatchLog("System Initialized", False);
     KDogWatchLog("Entering shell", False);
-    // // TTYClear(); // FIXME
+    TTYWrite(1, 1, "\x80", 1);
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
 
     // TaskNew((U32)mainloop, 0x10, 0x08);
@@ -216,48 +216,6 @@ static U0 TimeUpd(Ptr this) {
     WPrintF(win, 0, 0, "%d:%d:%d    ", SystemTime.hour, SystemTime.minute, SystemTime.second);
 }
 
-U32 syscall(U32 id, U32 a, U32 b, U32 c, U32 d) {
-    U32 ret;
-    asmV (
-        "int $0x80"
-        : "=a"(ret)
-        : "a"(id), "b"(a), "c"(b), "d"(c), "S"(d)
-    );
-    return ret;
-}
-U0 print(String text) {
-    syscall(4, 1, (U32)text, StrLen(text), 0);
-}
-
-static U0 loop1() {
-    Char buffer[50] = {0};
-    for (;;) {
-        MemSet(buffer, 0, 50);
-        if (syscall(3, 0, (U32)buffer, 50, 0)) {
-            if (!StrCmp(buffer, "panic")) {
-                KPanic("panic command", True);
-            }
-            else if (!StrCmp(buffer, "help")) {
-                syscall(4, 1, (U32)"commands:\npanic\nhelp\n", 21, 0);
-            }
-        }
-        Sleep(10);
-    }
-}
-
-static U0 loop2() {
-    Char buffer[50] = {0};
-    print("$ ");
-    for (;;) {
-        MemSet(buffer, 0, 50);
-        if (syscall(3, 0, (U32)buffer, 50, 0)) {
-            termrun(buffer);
-            print("$ ");
-        }
-        Sleep(10);
-    }
-}
-
 U0 lsfn(String name, VFSStat *stat) {
     PrintF("File: %s, Size: %d\n", name, stat->size);
 }
@@ -282,11 +240,11 @@ U0 mainloop() {
         U8 buf[16] = {0};
         U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
         
-        PrintF("Readed %d entropy bytes: ", readed);
+        SerialPrintF("Readed %d entropy bytes: ", readed);
         for (U32 i = 0; i < readed; ++i) {
-            PrintF("%1X ", buf[i]);
+            SerialPrintF("%1X ", buf[i]);
         }
-        PrintF("\n");
+        SerialPrintF("");
     }
 
     VFSReadDir("/", lsfn);
@@ -295,7 +253,7 @@ U0 mainloop() {
     VFSLStat("test.elf", &stat);
     U8 *buf = MAlloc(stat.size);
     VFSRead("test.elf", buf, 0, stat.size);
-    PrintF("Starting program\n");
+    SerialPrintF("Starting program\n");
 
     TTYCurrent = 1;
     ELFLoad(buf);

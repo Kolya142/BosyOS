@@ -39,4 +39,4 @@ typedef struct ELFProgramHeader {
     U32 align;
 } __attribute__((packed)) ELFProgramHeader;
 
-I32 ELFLoad(U8 *buf);
+U32 ELFLoad(U8 *buf);

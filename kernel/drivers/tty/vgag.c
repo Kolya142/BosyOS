@@ -48,7 +48,7 @@ U0 TTYRenderG(TTY *this, U32 ttyid) {
     for (Char c;PTYRead(this->pty, 1, &c, 1);) {
         if (this->pty->cursor >= (320/6)*(200/6)) {
             MemCpy(VRM, VRM+320*6, 64000-320*6);
-            VRMDrawRect(vec2(0, 320 * 6 - 6), vec2(320 * 6, 200 * 6), *bg);
+            VRMDrawRect(vec2(0, 200-6), vec2(320, 200), *bg);
             this->pty->cursor = (320/6) * (200/6-1);
         }
         if (raw) {

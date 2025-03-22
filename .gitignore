@@ -1,1 +1,9 @@
 release
+kernel/build
+initrom
+kernel.bin
+kernel/kernel.b
+kernel/kernel.elf
+kernel/func-dump.txt
+usercode/build
+drive

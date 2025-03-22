@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import os
 import sys
@@ -30,13 +31,13 @@ else:
 os.system(f"cp drive release/{branch}/{name}")
 os.system(f"cp drive release/current")
 os.system(f"mv drive release/all/{name}")
-os.system("rm kernel.bin kernel/kernel.b initrom")
+os.system("rm kernel.bin kernel/kernel.b initrom kernel/kernel.elf")
 
 import tarfile
 
 tar_name = f"release/release.tar.gz"
 
 with tarfile.open(tar_name, "w:gz") as tar:
-    tar.add(f"release/{branch}/{name}", arcname=name)
+    tar.add(f"release/{branch}/{name}", arcname=name+'_'+datetime.datetime.now().strftime("%d.%m.%Y_%H-%M-%S"))
 
 os.system(f"gh release create {name} {tar_name} --title \"kernel {name}\" --notes 'Automated build from {branch}'")

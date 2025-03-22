@@ -47,7 +47,7 @@ static U0 TaskRet() {
 
 static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-#define TASK_DEBUG
+// #define TASK_DEBUG
 
 INT_DEF(PITHandler) {
     ++PITTicks;

@@ -1,5 +1,5 @@
 #pragma once
-#include <drivers/input/ps2.h>
+#include <drivers/controllers/ps2.h>
 #include <lib/Types.h>
 #include <arch/x86/sys/idt.h>
 #include <arch/x86/cpu/io.h>

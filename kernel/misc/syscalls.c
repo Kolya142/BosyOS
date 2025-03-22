@@ -28,8 +28,12 @@ static inline Bool is_userspace(U32 addr) {
 U0 SCDriver(INTRegs3 *regs) {
     DriverCall(regs->ebx, regs->ecx, regs->edx, (U32*)regs->ebx);
 }
+static U0 loop() {
+    for(;;);
+}
 U0 SCExit(INTRegs3 *regs) {
     TaskClose();
+    regs->eip = (U32)loop; // BAD4WORK
 }
 U0 SCFork(INTRegs3 *regs) {
     regs->eax = TFork();
@@ -84,19 +88,18 @@ U0 SCExecVE(INTRegs3 *regs) {
     VFSLStat((String)regs->ebx, &stat);
     U8 *buf = MAlloc(stat.size);
     if (!buf) {
-        regs->eax = 1;
+        regs->eax = 3;
         return;
     }
     if (!VFSRead((String)regs->ebx, buf, 0, stat.size)) {
-        regs->eax = 1;
+        regs->eax = 3;
         return;
     }
     BsfApp app = BsfFromBytes(buf);
     PrintF("Starting program\n");
 
-    ELFLoad(buf);
+    regs->eax = ELFLoad(buf);
     MFree(buf);
-    regs->eax = 0;
 }
 
 U0 SCReadDir(INTRegs3 *regs) {
@@ -265,14 +268,14 @@ U0 SCUName(INTRegs3 *regs) {
     };
 
     if (!is_userspace(regs->ebx)) {
-        regs->eax = -1;
+        regs->eax = 1;
     }
     struct utsname *name = (Ptr)regs->ebx;
     MemCpy(name->sysname, "BosyOS", 7);
     MemCpy(name->nodename, "BosyOS", 7);
-    MemCpy(name->release, "0.0.1", 6);
+    MemCpy(name->release, "0.0.2", 6);
     MemCpy(name->version, __DATE__ " " __TIME__, StrLen(__DATE__ " " __TIME__) + 1);
-    MemCpy(name->machine, "x86", 3);
+    MemCpy(name->machine, "i386", 5);
 
     regs->eax = 0;
 }

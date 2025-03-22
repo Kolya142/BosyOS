@@ -3,17 +3,17 @@
 #include <kernel/KTasks.h>
 #include <lib/IO/TTY.h>
 
-I32 ELFLoad(U8 *buf)
+U32 ELFLoad(U8 *buf)
 {
     ELFHeader *elf = (ELFHeader*)buf;
 
     if (elf->magic != 0x464C457F) {
         PrintF("Invalid ELF Magic: %x", elf->magic);
-        return -1;
+        return 1;
     }
     
     if (elf->arch != 1 || elf->machine != 3) {
-        return -2;
+        return 2;
     }
 
     ELFProgramHeader *ph = (ELFProgramHeader*)((U32)buf + elf->phoff);
@@ -52,11 +52,12 @@ I32 ELFLoad(U8 *buf)
             SerialPrintF("Page: vaddr=%p, raddr=%p", page_off, raddr);
         }
     }
-    MFree((Ptr)task->esp); // Remove STST(Standart Task STack)
+    MFree((Ptr)task->esp); // Removing STST(Standart Task STack)
 
     Ptr stack = PAlloc();
     task->pages[page].vaddr = 0x0C000000;
     task->pages[page].raddr = (U32)stack;
     task->pages[page].exists = True;
     // for(;;);
+    return 0;
 }

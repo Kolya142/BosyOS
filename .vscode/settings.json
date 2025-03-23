@@ -25,7 +25,8 @@
         "string": "c",
         "string_view": "c",
         "span": "c",
-        "cstdarg": "c"
+        "cstdarg": "c",
+        "ostream": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc",
     "C_Cpp.errorSquiggles": "enabled"

@@ -7,4 +7,5 @@ $!ASysCalls$!F:
 $!ATasks$!F:
 [0003] program $!Cwithout$!F jmp \$ after $!Dexit $!Cbreaks$!F system (fixed)
 [0004] $!Afork$!F works incorrectly
+[0005] program $!Cend$!F terminates shell
 $!F

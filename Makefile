@@ -9,6 +9,12 @@ kernel:
 	cd kernel && python3 build.py
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
+_kernel_super_real_fast:
+	cd kernel && python3 build.py --fast
+	cp kernel/kernel.b kernel.bin
+	truncate -s 131072 kernel.bin
+kernel_super_real_fast:
+	make _kernel_super_real_fast -j$(nproc)
 userdata_dump:
 	# @if [ -e drive ]; then \
 	# 	dd if=drive of=userdata bs=512 skip=291 count=2048; \
@@ -74,8 +80,3 @@ kernelc: kernel compile
 kernelrun: kernel compile run
 load: img
 	sudo bash load.sh
-loadfromrelease:
-	cp release/* .
-releaserun: loadfromrelease run
-driveget:
-	curl https://raw.githubusercontent.com/Kolya142/BosyOS/refs/heads/main/release/drive -o drive

@@ -84,7 +84,7 @@ U32 VFSWrite(String name, Ptr buf, U32 offset, U32 count) {
 }
 U32 VFSOpen(String filename) {
     VFSNode *node = VFSFind(VFSRoot, filename);
-    if (!node) {
+    if (!node || StrCmp(node->name, filename)) {
         return 0;
     }
 

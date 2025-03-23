@@ -8,6 +8,7 @@ $!D- $!BFix file system $!F(Planned)
 $!D- $!BFix applications loader $!F(Planned)
 
 $!A=== API ===
+$!D- $!BAdd ANSI excape codes $!F(Planned)
 $!D- $!BAdd signals $!F(In Process)
 
 $!A=== Kernel Improvement ===

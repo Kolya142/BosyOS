@@ -2,6 +2,7 @@
 #include <drivers/time/pit.h>
 #include <lib/strings/String.h>
 #include <drivers/tty.h>
+#include <kernel/KTasks.h>
 
 List PTYs;
 List TTYs;
@@ -48,6 +49,17 @@ U0 TTYInput() {
                 else if (key == ASCIIPF3) TTYSwitch(2);
                 else if (key == ASCIIPF4) TTYSwitch(3);
                 else if (key == '\x1b') return;
+                else if (key == 'c' && KBState.Ctrl) {
+                    // TaskSigSend(TaskTail, SIGTERM);
+                }
+                else if (key == 'l' && KBState.Ctrl && TaskTail) {
+                    TTYWrite(TaskTail->ttyid, 1, "\x80", 1);
+                }
+                else if (key == 'u' && KBState.Ctrl && TaskTail) {
+                    for (; bufferi; --bufferi) {
+                        TTYWrite(TaskTail->ttyid, 1, "\b", 1);
+                    }
+                }
                 else if (key == '\r') {
                     TTYWrite(TTYCurrent, 1, "\n", 1);
                     buf[++bufferi] = '\n';

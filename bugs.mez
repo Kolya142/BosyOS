@@ -1,0 +1,11 @@
+$!AShell$!F:
+[0000] can't exit from $!Dsierpinski triangle$!F (fixed)
+$!ATTY$!F:
+[0001] $!Bascii+$!F color codes works weird
+$!ASysCalls$!F:
+[0002] $!BSC 11$!F doen't return success code (fixed)
+$!ATasks$!F:
+[0003] program $!Cwithout$!F jmp \$ after $!Dexit $!Cbreaks$!F system (fixed)
+[0004] $!Afork$!F works incorrectly
+[0005] program $!Cend$!F terminates shell
+$!F

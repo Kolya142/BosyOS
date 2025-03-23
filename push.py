@@ -31,7 +31,7 @@ else:
 os.system(f"cp drive release/{branch}/{name}")
 os.system(f"cp drive release/current")
 os.system(f"mv drive release/all/{name}")
-os.system("rm kernel.bin kernel/kernel.b initrom")
+os.system("rm kernel.bin kernel/kernel.b initrom kernel/kernel.elf")
 
 import tarfile
 

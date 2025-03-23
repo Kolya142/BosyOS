@@ -1,0 +1,10 @@
+clear
+echo Welcome to BosyOS v0.0.3!
+echo ------------------
+echo First time? use command "tut" to see the tutorial
+echo Type 'help' to list available commands.
+# this is shell written in shell script
+:1
+put $ 
+uexec
+gt 1

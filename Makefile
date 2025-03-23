@@ -80,8 +80,3 @@ kernelc: kernel compile
 kernelrun: kernel compile run
 load: img
 	sudo bash load.sh
-loadfromrelease:
-	cp release/* .
-releaserun: loadfromrelease run
-driveget:
-	curl https://raw.githubusercontent.com/Kolya142/BosyOS/refs/heads/main/release/drive -o drive

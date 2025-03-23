@@ -36,10 +36,11 @@ uint32_t write(uint32_t fd, byte_t *buf, uint32_t count) {
     return syscall(4, fd, (uint32_t)buf, count, 0, 0, 0);
 }
 filedesc_t open(const char *filename) {
-    return syscall(5, (uint32_t)filename, 0, 0, 0, 0, 0);
+    filedesc_t fd = syscall(5, (uint32_t)filename, 0, 0, 0, 0, 0);
+    return (fd == 0xFFFFFFFE) ? 0 : fd;
 }
 void close(filedesc_t fd) {
-    syscall(4, fd, 0, 0, 0, 0, 0);
+    syscall(6, fd, 0, 0, 0, 0, 0);
 }
 pid_t execa(void *func) {
     return syscall(11, (uint32_t)func, 0, 0, 0, 0, 0);

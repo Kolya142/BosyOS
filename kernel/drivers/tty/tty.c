@@ -62,7 +62,6 @@ U0 TTYInput() {
                 }
                 else if (key == '\r') {
                     TTYWrite(TTYCurrent, 1, "\n", 1);
-                    buf[++bufferi] = '\n';
                     TTYWrite(TTYCurrent, 0, buf, bufferi);
                     TTYFlush(TTYCurrent);
                     bufferi = 0;

@@ -83,9 +83,21 @@ U32 VFSWrite(String name, Ptr buf, U32 offset, U32 count) {
     return node->write(name, buf, offset, count);
 }
 U32 VFSOpen(String filename) {
+    Char parsd[10][64];
+    VFSPathParse(filename, (Char*)parsd, 10, 64);
+    U32 i = 0;
+    for (;i < 10;) {
+        if (!parsd[i][0]) {
+            break;
+        }
+        ++i;
+    }
+    if (i) {
+        --i;
+    }
     VFSNode *node = VFSFind(VFSRoot, filename);
-    if (!node || StrCmp(node->name, filename)) {
-        return 0;
+    if (!node || StrCmp(node->name, parsd[i])) {
+        return -1;
     }
 
     for (U32 i = 4; i < VFS_MAX_OPEN; ++i) {
@@ -95,7 +107,7 @@ U32 VFSOpen(String filename) {
             return i;
         }
     }
-    return 0;
+    return -1;
 }
 U0 VFSClose(U32 fd) {
     if (fd >= VFS_MAX_OPEN || !fds[fd].pos) {

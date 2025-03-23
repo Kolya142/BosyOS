@@ -281,7 +281,10 @@ void shell(char *buf) {
         }
     }
     else if (!strcmp(buf, "uexec")) {
-        char buf[64] = {0};
+        char buf[64];
+        for (int i = 0; i < 64; ++i) {
+            buf[i] = 0;
+        }
         while (!read(0, buf, 64));
         shell(buf);
     }
@@ -333,10 +336,11 @@ void shell(char *buf) {
 // #define DEBUG
 
 void _start() {
-    #ifdef DEBUG
     if (is_bosy()) {
         screen = open("/dev/screen");
+        printf("screen: %d\n", screen);
     }
+    #ifdef DEBUG
     print("Testing\n");
     const char *commands[] = {
         "bsh test.bsh"
@@ -347,9 +351,6 @@ void _start() {
     print("\nSCRIPT END.\n");
     for(;;);
     #else
-    if (is_bosy()) {
-        screen = open("/dev/screen");
-    }
     shell("bsh init.bsh");
     #endif
 }

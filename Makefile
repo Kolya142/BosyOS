@@ -80,3 +80,6 @@ kernelc: kernel compile
 kernelrun: kernel compile run
 load: img
 	sudo bash load.sh
+shell:
+	make prog
+	cd userdir && ../usercode/usercode.elf

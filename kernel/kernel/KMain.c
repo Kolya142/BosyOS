@@ -248,11 +248,13 @@ U0 mainloop() {
     }
 
     VFSReadDir("/", lsfn);
+    PrintF("\n");
+    VFSReadDir("/etc", lsfn);
 
     VFSStat stat = {0};
-    VFSLStat("test.elf", &stat);
+    VFSLStat("bin/test.elf", &stat);
     U8 *buf = MAlloc(stat.size);
-    VFSRead("test.elf", buf, 0, stat.size);
+    VFSRead("bin/test.elf", buf, 0, stat.size);
     SerialPrintF("Starting program\n");
 
     TTYCurrent = 1;

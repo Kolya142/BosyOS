@@ -34,6 +34,7 @@ typedef struct VFSNode {
 
 typedef struct VFSFD {
     VFSNode *pos;
+    String name;
     U32 head;
 } VFSFD;
 

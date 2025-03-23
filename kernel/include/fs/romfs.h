@@ -8,7 +8,7 @@ typedef struct ROFSSB {
 } __attribute__((packed)) ROFSSB;
 
 typedef struct ROFSNode {
-    Char name[12];
+    Char name[20];
     U32 size;
 } __attribute__((packed)) ROFSNode;
 

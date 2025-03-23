@@ -81,10 +81,12 @@ void shell(char *buf) {
     }
     else if (buf[0] == 'b' && buf[1] == 's' && buf[2] == 'h') {
         int file = open(buf + 4);
+        // printf("bsh: %d\n", file);
         if (file) {
             int labels[16] = {0};
             char fbuf[2048] = {0};
             read(file, fbuf, 2048);
+            // printf("script: \n%s\n", fbuf);
             int i = 0;
             int j = 0;
             char line[64] = {0};
@@ -92,6 +94,7 @@ void shell(char *buf) {
                 if (fbuf[i] == '\n') {
                     line[j] = 0;
                     j = 0;
+                    // printf("line: %s\n", line);
                     if (line[0] == ':') {
                         labels[atoi(line + 1)] = i;
                     }
@@ -351,6 +354,7 @@ void _start() {
     print("\nSCRIPT END.\n");
     for(;;);
     #else
-    shell("bsh init.bsh");
+    printf("Loading /etc/rc.bsh\n");
+    shell("bsh etc/rc.bsh");
     #endif
 }

@@ -103,6 +103,9 @@ U32 VFSOpen(String filename) {
     for (U32 i = 4; i < VFS_MAX_OPEN; ++i) {
         if (!fds[i].pos) {
             fds[i].pos = node;
+            U32 s = StrLen(filename) + 1;
+            fds[i].name = MAlloc(s);
+            MemCpy(fds[i].name, filename, s);
             fds[i].head = 0;
             return i;
         }
@@ -113,6 +116,7 @@ U0 VFSClose(U32 fd) {
     if (fd >= VFS_MAX_OPEN || !fds[fd].pos) {
         return;
     }
+    MFree(fds[fd].name);
     fds[fd].pos = 0;
 }
 U32 VFSWriteV(U32 fd, Ptr buf, U32 count) {
@@ -121,12 +125,15 @@ U32 VFSWriteV(U32 fd, Ptr buf, U32 count) {
     }
     if (fds[fd].pos->stat) {
         VFSStat stat;
-        fds[fd].pos->stat(fds[fd].pos->name, &stat);
+        fds[fd].pos->stat(fds[fd].name, &stat);
         if (!(stat.mode & VFS_UWRIT)) {
             return 0;
         }
     }
-    U32 a = fds[fd].pos->write(fds[fd].pos->name, buf, fds[fd].head, count);
+    if (!fds[fd].pos->write) {
+        return 0;
+    }
+    U32 a = fds[fd].pos->write(fds[fd].name, buf, fds[fd].head, count);
     fds[fd].head += a;
     return a;
 }
@@ -134,14 +141,18 @@ U32 VFSReadV(U32 fd, Ptr buf, U32 count) {
     if (fd >= VFS_MAX_OPEN || !fds[fd].pos) {
         return 0;
     }
+    PrintF("reading %s\n", fds[fd].name);
     if (fds[fd].pos->stat) {
         VFSStat stat;
-        fds[fd].pos->stat(fds[fd].pos->name, &stat);
+        fds[fd].pos->stat(fds[fd].name, &stat);
         if (!(stat.mode & VFS_UREAD)) {
             return 0;
         }
     }
-    U32 a = fds[fd].pos->read(fds[fd].pos->name, buf, fds[fd].head, count);
+    if (!fds[fd].pos->read) {
+        return 0;
+    }
+    U32 a = fds[fd].pos->read(fds[fd].name, buf, fds[fd].head, count);
     fds[fd].head += a;
     return a;
 }

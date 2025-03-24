@@ -49,6 +49,7 @@
 #include <lib/net/IP.h>
 
 // FileSystem
+#include <fs/iso9660.h>
 #include <fs/minix.h>
 #include <fs/ramfs.h>
 #include <fs/romfs.h>
@@ -166,13 +167,23 @@ U0 KernelMain() {
     // FSs
     KDogWatchLog("Setuping FileSystems", False);
 
+    ISO9660Init();
+    KDogWatchLog("Initialized \x9BISO9660\x9C", False);
+
     // RFSInit();
     // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, Null);
     // KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
-    ATARead((Ptr)0x20000, 291, 64);
+    ISO9660DirEntry *initrom = ISO9660Get("initrom.");
+    // if (!initrom) {
+    //     KPanic("Cannot get initrom.", False);
+    // }
+    // return;
+    ATARead((Ptr)0x20000, initrom->extent_lba_le * 4, (initrom->data_length_le + 511) / 512);
     ROFSInit((Ptr)0x20000);
     KDogWatchLog("Initialized \x9Bromfs\x9C", False);
+    RFSInit();
+    KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
     // MXInit();
     // KDogWatchLog("Initialized \"minix fs\"", False);
@@ -185,11 +196,11 @@ U0 KernelMain() {
 
     KDogWatchLog("System Initialized", False);
     KDogWatchLog("Entering shell", False);
+    TTYSwitch(1);
     TTYWrite(1, 1, "\x80", 1);
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
 
     // TaskNew((U32)mainloop, 0x10, 0x08);
-    TTYSwitch(1);
     mainloop();
     // mainloop();
     // TaskNew((U32)mainloop);
@@ -248,11 +259,13 @@ U0 mainloop() {
     }
 
     VFSReadDir("/", lsfn);
+    PrintF("\n");
+    VFSReadDir("/etc", lsfn);
 
     VFSStat stat = {0};
-    VFSLStat("test.elf", &stat);
+    VFSLStat("bin/test.elf", &stat);
     U8 *buf = MAlloc(stat.size);
-    VFSRead("test.elf", buf, 0, stat.size);
+    VFSRead("bin/test.elf", buf, 0, stat.size);
     SerialPrintF("Starting program\n");
 
     TTYCurrent = 1;

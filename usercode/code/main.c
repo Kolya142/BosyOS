@@ -81,10 +81,12 @@ void shell(char *buf) {
     }
     else if (buf[0] == 'b' && buf[1] == 's' && buf[2] == 'h') {
         int file = open(buf + 4);
+        // printf("bsh: %d\n", file);
         if (file) {
             int labels[16] = {0};
             char fbuf[2048] = {0};
             read(file, fbuf, 2048);
+            // printf("script: \n%s\n", fbuf);
             int i = 0;
             int j = 0;
             char line[64] = {0};
@@ -92,6 +94,7 @@ void shell(char *buf) {
                 if (fbuf[i] == '\n') {
                     line[j] = 0;
                     j = 0;
+                    // printf("line: %s\n", line);
                     if (line[0] == ':') {
                         labels[atoi(line + 1)] = i;
                     }
@@ -165,9 +168,15 @@ void shell(char *buf) {
     else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
         filedesc_t fd = open(buf + 4);
         if (fd) {
-            uint32_t count = read(fd, buf, 64);
             print("file content:\n");
-            write(1, buf, count);
+            uint32_t count;
+            for(;;) {
+                count = read(fd, buf, 64);
+                if (!count) {
+                    break;
+                }
+                write(1, buf, count);
+            }
             print("\n");
             close(fd);
         }
@@ -270,12 +279,29 @@ void shell(char *buf) {
     }
     else if (!strcmp(buf, "paint")) {
         if (screen) {
+            char m2_prev = 0;
+            uint8_t col = 0x0F;
             while (!read(0, (byte_t[]) {0}, 1)) {
                 int mouse[3] = {0};
                 ioctl(3, 50, mouse, 0, 0);
-                if (mouse[2]) {
-                    lseek(screen, mouse[0]-1+mouse[1]*320, 0);
-                    write(screen, (byte_t[]) {0x0F}, 1);
+                if (mouse[2] & 1) {
+                    lseek(screen, mouse[0]+mouse[1]*320, 0);
+                    write(screen, &col, 1);
+                }
+                if (mouse[2] & 4) {
+                    lseek(screen, mouse[0]+mouse[1]*320, 0);
+                    read(screen, &col, 1);
+                }
+                if (mouse[2] & 2) {
+                    if (!m2_prev) {
+                        m2_prev = 1;
+                        col = (col + 1) % 0x10;
+                        lseek(screen, 0, 0);
+                        write(screen, &col, 1);
+                    }
+                }
+                else {
+                    m2_prev = 0;
                 }
             }
         }
@@ -351,6 +377,7 @@ void _start() {
     print("\nSCRIPT END.\n");
     for(;;);
     #else
-    shell("bsh init.bsh");
+    printf("Loading /etc/rc.bsh\n");
+    shell("bsh etc/rc.bsh");
     #endif
 }

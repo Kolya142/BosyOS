@@ -28,12 +28,14 @@ typedef struct VFSNode {
     U32(*read)(String, Ptr, U32, U32);
     U32(*write)(String, Ptr, U32, U32);
     U0(*stat)(String, VFSStat*);
+    U0(*create)(String);
     struct VFSNode *parent;
     List child;
 } VFSNode;
 
 typedef struct VFSFD {
     VFSNode *pos;
+    String name;
     U32 head;
 } VFSFD;
 
@@ -52,4 +54,4 @@ U0 VFSLStat(String filename, VFSStat *stat);
 U0 VFSLSeek(U32 fd, U32 off, U32 whence);
 U0 VFSReadDir(String path, U0(*reader)(String, VFSStat*));
 U0 VFSMount(String name, U32(*read)(String, Ptr, U32, U32), U32(*write)(String, Ptr, U32, U32), U0(*stat)(String, VFSStat*));
-U0 VFSDirMk(String name);
+U0 VFSDirMk(String name, U0(*create)(String));

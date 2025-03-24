@@ -22,6 +22,7 @@ U0 PagingInit() {
     for (U32 i = 0; i < 1024; ++i) {
        Pages[i] = ((U32)&PageT[i * 1024]) | PAGE_RW | PAGE_PRESENT | PAGE_USER;
     }
+    Sleep(1000);
     PagingEnable();
 }
 

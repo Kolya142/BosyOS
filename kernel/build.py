@@ -65,7 +65,7 @@ obj_files = " ".join(
 )
 
 print("Linking")
-# run_command(f"{"ld -m elf_i386" if plat == 1 else "i686-elf-ld"} -T link.elf.ld build/KMain.o {obj_files} -o kernel.elf") # --verbose")
+run_command(f"{"ld -m elf_i386" if plat == 1 else "i686-elf-ld"} -T link.elf.ld build/KMain.o {obj_files} -o kernel.elf") # --verbose")
 run_command(f"{"ld -m elf_i386" if plat == 1 else "i686-elf-ld"} -T link.ld build/KMain.o {obj_files} -o kernel.b") # --verbose")
 
 if not fast:

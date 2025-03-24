@@ -15,12 +15,6 @@ _kernel_super_real_fast:
 	truncate -s 131072 kernel.bin
 kernel_super_real_fast:
 	make _kernel_super_real_fast -j$(nproc)
-userdata_dump:
-	# @if [ -e drive ]; then \
-	# 	dd if=drive of=userdata bs=512 skip=291 count=2048; \
-	# else \
-	# 	echo "Error: drive file not found!"; \
-	# fi
 prog:
 	cd usercode && bash build.sh
 compile:
@@ -30,20 +24,17 @@ compile:
 	# elif [ ! -e userdata ]; then \
  	# 	truncate -s 181760 userdata; \
 	# fi
-	dd if=bosyboot of=drive bs=512 seek=0 count=13 conv=notrunc
-	dd if=kernel.bin of=drive bs=512 seek=35 count=256 conv=notrunc
-	cp usercode/usercode.elf userdir/bin/test.elf
 	non-kernel\ files/mkbosyrom initrom userdir
-	dd if=initrom of=drive bs=512 seek=291 conv=notrunc
-
-iso:
-	touch bosyos.iso
-	sudo losetup /dev/loop1 bosyos.iso
-	sudo dd if=drive of=/dev/loop1p1
-	sudo losetup -d /dev/loop1
+	cp initrom grub/iso/initrom
+	cd grub && bash build.sh
+	# dd if=bosyboot of=drive bs=512 seek=0 count=13 conv=notrunc
+	# dd if=kernel.bin of=drive bs=512 seek=35 count=256 conv=notrunc
+	# cp usercode/usercode.elf userdir/bin/test.elf
+	# non-kernel\ files/mkbosyrom initrom userdir
+	# dd if=initrom of=drive bs=512 seek=291 conv=notrunc
 
 QEMU=qemu-system-i386
-QEMU_DRIVE=-drive format=raw,file=drive
+QEMU_DRIVE=-hda grub/bosyos.iso
 QEMU_MOUSE=
 QEMU_MEM=-m 64M
 QEMU_SER=-serial stdio
@@ -70,7 +61,6 @@ run:
 	else \
 		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-reboot --no-shutdown;\
 	fi
-	@make userdata_dump
 
 all: kernel prog compile run
 allr: kernel prog compile

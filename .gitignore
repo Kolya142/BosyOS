@@ -6,4 +6,6 @@ kernel/kernel.b
 kernel/kernel.elf
 kernel/func-dump.txt
 usercode/build
+grub/bosyos.iso
+grub/iso/boot/kernel.elf
 drive

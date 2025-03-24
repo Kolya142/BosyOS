@@ -168,9 +168,15 @@ void shell(char *buf) {
     else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
         filedesc_t fd = open(buf + 4);
         if (fd) {
-            uint32_t count = read(fd, buf, 64);
             print("file content:\n");
-            write(1, buf, count);
+            uint32_t count;
+            for(;;) {
+                count = read(fd, buf, 64);
+                if (!count) {
+                    break;
+                }
+                write(1, buf, count);
+            }
             print("\n");
             close(fd);
         }
@@ -273,12 +279,29 @@ void shell(char *buf) {
     }
     else if (!strcmp(buf, "paint")) {
         if (screen) {
+            char m2_prev = 0;
+            uint8_t col = 0x0F;
             while (!read(0, (byte_t[]) {0}, 1)) {
                 int mouse[3] = {0};
                 ioctl(3, 50, mouse, 0, 0);
-                if (mouse[2]) {
-                    lseek(screen, mouse[0]-1+mouse[1]*320, 0);
-                    write(screen, (byte_t[]) {0x0F}, 1);
+                if (mouse[2] & 1) {
+                    lseek(screen, mouse[0]+mouse[1]*320, 0);
+                    write(screen, &col, 1);
+                }
+                if (mouse[2] & 4) {
+                    lseek(screen, mouse[0]+mouse[1]*320, 0);
+                    read(screen, &col, 1);
+                }
+                if (mouse[2] & 2) {
+                    if (!m2_prev) {
+                        m2_prev = 1;
+                        col = (col + 1) % 0x10;
+                        lseek(screen, 0, 0);
+                        write(screen, &col, 1);
+                    }
+                }
+                else {
+                    m2_prev = 0;
                 }
             }
         }

@@ -58,7 +58,7 @@ static U32 MemWrite(String, Ptr buf, U32 offset, U32 count) {
 
 
 U0 VFilesInit() {
-    VFSDirMk("/dev");
+    VFSDirMk("/dev", Null);
     VFSMount("/dev/urandom", URandom, NullF, Null);
     VFSMount("/dev/screen", ScreenRead, ScreenWrite, Null);
     VFSMount("/dev/null", NullF, NullF, Null);

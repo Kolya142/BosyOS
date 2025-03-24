@@ -9,12 +9,12 @@
 //     return ~sum;
 // }
 
-// U16 HtonW(U16 w) {
-//     return (w >> 8) | ((w & 0xff) << 8);
-// }
-// U32 HtonD(U32 w) {
-//     return (HtonW(w >> 16)) | (HtonW(w & 0xffff) << 16);
-// }
+U16 HtonW(U16 w) {
+    return (w >> 8) | ((w & 0xff) << 8);
+}
+U32 HtonD(U32 w) {
+    return (HtonW(w >> 16)) | (HtonW(w & 0xffff) << 16);
+}
 
 // U0 UDPSend(U16 lp, U16 rp, U32 lip, U32 rip, Ptr payload, U32 count) {
 //     NetMac mac = RTL8139MacGet();

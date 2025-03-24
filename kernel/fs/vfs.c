@@ -141,7 +141,6 @@ U32 VFSReadV(U32 fd, Ptr buf, U32 count) {
     if (fd >= VFS_MAX_OPEN || !fds[fd].pos) {
         return 0;
     }
-    PrintF("reading %s\n", fds[fd].name);
     if (fds[fd].pos->stat) {
         VFSStat stat;
         fds[fd].pos->stat(fds[fd].name, &stat);
@@ -153,6 +152,7 @@ U32 VFSReadV(U32 fd, Ptr buf, U32 count) {
         return 0;
     }
     U32 a = fds[fd].pos->read(fds[fd].name, buf, fds[fd].head, count);
+    // PrintF("reading %s %d\n", fds[fd].name, a);
     fds[fd].head += a;
     return a;
 }
@@ -231,7 +231,7 @@ U0 VFSMount(String name, U32(*read)(String, Ptr, U32, U32), U32(*write)(String, 
         // SerialPrintF("-> ()%s", child->name);
     }
 }
-U0 VFSDirMk(String name) {
+U0 VFSDirMk(String name, U0(*create)(String)) {
     Char parsd[10][64];
     VFSPathParse(name, (Char*)parsd, 10, 64);
     U32 i = 0;
@@ -256,6 +256,7 @@ U0 VFSDirMk(String name) {
     MemCpy(node->name, parsd[i], s);
     node->read = Null;
     node->write = Null;
+    node->create = create;
     node->stat = Null;
     node->child = ListInit(sizeof(VFSNode));
 

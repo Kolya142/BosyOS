@@ -4,6 +4,7 @@ RFSFile *RFS;
 U0 RFSInit() {
     RFS = MAlloc(sizeof(RFSFile) * RFS_SIZE);
     MemSet(RFS, 0, sizeof(RFSFile) * RFS_SIZE);
+    VFSDirMk("/tmp", Null); // TODO: add VFSCreateV
 }
 U0 RFSAdd(String name, U32 size) {
     for (U32 i = 0; i < RFS_SIZE; ++i) {

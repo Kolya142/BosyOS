@@ -45,11 +45,11 @@ U0 ROFSInit(Byte *buf) {
         return;
     }
     PrintF("loading romfs\n");
-    VFSDirMk("/bin");
-    VFSDirMk("/etc");
+    VFSDirMk("/bin", Null);
+    VFSDirMk("/etc", Null);
     ROFSNode *node = (ROFSNode*)(buf+sizeof(ROFSSB));
     for (U32 i = 0; i < ROFS->count; ++i) {
-        PrintF("File: %s\n", node->name);
+        // PrintF("File: %s\n", node->name);
         VFSMount(node->name, ROFSReadV, ROFSWriteV, ROFSStatV);
         node = (ROFSNode*)((U8*)node + sizeof(ROFSNode) + node->size);
     }

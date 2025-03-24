@@ -262,3 +262,24 @@ U0 VFSDirMk(String name, U0(*create)(String)) {
 
     ListAppend(&parent->child, node);
 }
+U0 VFSCreate(String name) {
+    Char parsd[10][64];
+    VFSPathParse(name, (Char*)parsd, 10, 64);
+    U32 i = 0;
+    for (;i < 10;) {
+        if (!parsd[i][0]) {
+            break;
+        }
+        ++i;
+    }
+    if (i) {
+        --i;
+    }
+
+    VFSNode *parent = VFSFind(VFSRoot, name);
+    if (!parent || !StrCmp(parent->name, parsd[i]) || !parent->create) {
+        return;
+    }
+    PrintF("parent->create(%s)\n", name);
+    parent->create(name);
+}

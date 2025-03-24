@@ -55,3 +55,4 @@ U0 VFSLSeek(U32 fd, U32 off, U32 whence);
 U0 VFSReadDir(String path, U0(*reader)(String, VFSStat*));
 U0 VFSMount(String name, U32(*read)(String, Ptr, U32, U32), U32(*write)(String, Ptr, U32, U32), U0(*stat)(String, VFSStat*));
 U0 VFSDirMk(String name, U0(*create)(String));
+U0 VFSCreate(String name);

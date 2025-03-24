@@ -75,6 +75,12 @@ U0 SCOpen(INTRegs3 *regs) {
 U0 SCClose(INTRegs3 *regs) {
     VFSClose(regs->ebx);
 }
+U0 SCPidWait(INTRegs3 *regs) {
+
+}
+U0 SCCreat(INTRegs3 *regs) {
+    VFSCreate((String)regs->ebx);
+}
 
 U0 SCMAlloc(INTRegs3 *regs) {
     regs->eax = (U32)MAlloc(regs->ebx);
@@ -302,7 +308,7 @@ U0 SysCallSetup() {
     SysCallSet(SCOpen, 5);
     SysCallSet(SCClose, 6);
     SysCallSet(SCMAlloc, 7);
-    SysCallSet(SCFree, 8);
+    SysCallSet(SCCreat, 8);
     SysCallSet(SCExecVE, 11);
     SysCallSet(SCReadDir, 12);
     SysCallSet(SCTime, 13);

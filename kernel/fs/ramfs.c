@@ -1,10 +1,11 @@
+#include <lib/IO/TTY.h>
 #include <fs/ramfs.h>
 RFSFile *RFS;
 
 U0 RFSInit() {
     RFS = MAlloc(sizeof(RFSFile) * RFS_SIZE);
     MemSet(RFS, 0, sizeof(RFSFile) * RFS_SIZE);
-    VFSDirMk("/tmp", Null); // TODO: add VFSCreateV
+    VFSDirMk("/tmp", RFSCreateV);
 }
 U0 RFSAdd(String name, U32 size) {
     for (U32 i = 0; i < RFS_SIZE; ++i) {
@@ -13,8 +14,10 @@ U0 RFSAdd(String name, U32 size) {
             RFS[i].size = size;
             StrCpy(RFS[i].name, name);
             RFS[i].data = MAlloc(size);
-            String nname = MAlloc(StrLen(name));
-            StrCpy(nname, name);
+            String nname = MAlloc(StrLen(name) + 5);
+            StrCpy(nname, "tmp/");
+            StrCpy(nname + 4, name);
+            PrintF("File: %s\n", nname);
             VFSMount(nname, RFSReadV, RFSWriteV, RFSStatV);
             MFree(nname);
             break;
@@ -79,6 +82,11 @@ U32 RFSWriteV(String name, Ptr buf, U32 offset, U32 count) {
     r->head = offset;
     RFSWrite(fd, buf, count);
     RFSClose(fd);
+}
+U0 RFSCreateV(String name) {
+    while (*name == '/') ++name;
+    name += 4;
+    RFSAdd(name, 1024);
 }
 U0 RFSStatV(String name, VFSStat *stat) {
     for (U32 i = 0; i < RFS_SIZE; ++i) {

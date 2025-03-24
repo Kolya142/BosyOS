@@ -165,6 +165,9 @@ void shell(char *buf) {
         close(rand);
         print("\n");
     }
+    else if (buf[0] == 't' && buf[1] == 'h') {
+        syscall(8, (uint32_t)(buf + 3), 0, 0, 0, 0, 0);
+    }
     else if (buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't') {
         filedesc_t fd = open(buf + 4);
         if (fd) {

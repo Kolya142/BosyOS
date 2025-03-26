@@ -16,6 +16,9 @@ static U32 task_count = 0;
 Task *TaskHead = Null;
 Task *TaskTail = Null;
 Task *TaskLast = Null;
+static U0 loop() {
+    for(;;);
+}
 
 U0 TaskClose() {
     KDogWatchLog("exiting task\n", False);
@@ -109,23 +112,9 @@ U0 TaskKill(U32 id) {
 
     while (task) {
         if (task->id == id) {
-            if (prev) {
-                prev->next = task->next;
-            }
-            else {
-                TaskHead = task->next;
-                if (TaskHead == Null) TaskTail = Null;
-            }
-            if (task == TaskLast) {
-                TaskLast = prev;
-            }
-            if (task == TaskTail) {
-                TaskTail = prev ? prev : TaskHead;
-            }
-            if (task->esp) {
-                MFree((Ptr)task->esp);
-            }
-            MFree(task);
+            task->flags |= TASK_KILLED;
+            task->flags &= ~TASK_WORKING;
+            task->regs.eip = (U32)loop; // BAD4WORK
             break;
         }
         prev = task;

@@ -14,17 +14,14 @@ U0 Beep(U16 dur) {
 }
 U0 BeepHz(U16 freq, U16 dur) {
     if (freq < 10 || freq > 20000) return;
-    U32 Div = 1193180 / (U32)freq;
-    POut(0x43, 0xB6);
-    POut(0x42, (U8)(Div));
-    POut(0x42, (U8)(Div >> 8));
+    // U32 Div = 1193180 / (U32)freq;
+    // POut(0x43, 0xB6);
+    // POut(0x42, (U8)(Div));
+    // POut(0x42, (U8)(Div >> 8));
 
     U8 tmp = PIn(0x61);
-    if (!(tmp & 3)) {
-        POut(0x61, tmp | 3);
-    }
+    POut(0x61, tmp | 3);
     AlarmCreate(dur, BeepEnd, NULL);
-    PITInit(); // PIT back
 }
 
 U0 BeepSPC(U8 tone, U16 dur) {

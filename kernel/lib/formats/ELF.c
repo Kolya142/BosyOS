@@ -19,6 +19,9 @@ U32 ELFLoad(U8 *buf)
     ELFProgramHeader *ph = (ELFProgramHeader*)((U32)buf + elf->phoff);
     TaskNew(elf->entry, 0x23, 0x1B);
     Task *task = TaskLast;
+    if (!task) {
+        return 3;
+    }
 
     U32 page = 0;
 
@@ -53,11 +56,15 @@ U32 ELFLoad(U8 *buf)
         }
     }
     MFree((Ptr)task->esp); // Removing STST(Standart Task STack)
+    task->esp = 0;
 
-    Ptr stack = PAlloc();
-    task->pages[page].vaddr = 0x0C000000;
-    task->pages[page].raddr = (U32)stack;
-    task->pages[page].exists = True;
+    for (U32 i = 0; i < 12; ++i) {
+        task->pages[page].vaddr = 0x0C000000 + PAGE_SIZE*i;
+        task->pages[page].raddr = (U32)PAlloc();
+        task->pages[page].exists = True;
+        ++page;
+    }
+    task->regs.esp = 0x0C000000 + PAGE_SIZE*11;
     // for(;;);
     return 0;
 }

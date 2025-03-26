@@ -21,11 +21,14 @@ ISO9660DirEntry *ISO9660Get(String name) {
         if (!entry->length) {
             break;
         }
-        PrintF("File: %s\n", entry->name);
+        SerialPrintF("File: %s\n", entry->name);
         if (entry->name_len == s + 2) {
             Bool cmp = True;
             for (U32 i = 0; i < s; ++i) {
-                if (entry->name[i] != name[i]) {
+                if (entry->name[i] == ';') {
+                    break;
+                }
+                if ((entry->name[i] >= 'A' && entry->name[i] <= 'Z' ? entry->name[i] - 'A' + 'a' : entry->name[i]) != name[i]) {
                     cmp = False;
                     break;
                 }

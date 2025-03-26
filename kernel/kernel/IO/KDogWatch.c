@@ -22,8 +22,7 @@ volatile KDogWatchProfile Profiles[255] = {0};
 
 #define ERR(name, text) INT_DEF(name) { \
     KDogWatchLog(text, False); \
-    if (TaskTail) TaskClose(); \
-    else KPanic("x86 exception", False); \
+    KPanic("x86 exception", False); \
 }
 ERR(DWErr00, "#DIVIDE BY 0");
 ERR(DWErr0D, "#GP");

@@ -14,10 +14,12 @@ U0 RFSAdd(String name, U32 size) {
             RFS[i].size = size;
             StrCpy(RFS[i].name, name);
             RFS[i].data = MAlloc(size);
+            MemSet(RFS[i].data, 0, size);
             String nname = MAlloc(StrLen(name) + 5);
             StrCpy(nname, "tmp/");
             StrCpy(nname + 4, name);
-            PrintF("File: %s\n", nname);
+            nname[4 + StrLen(name)] = 0;
+            // PrintF("File: %s\n", nname);
             VFSMount(nname, RFSReadV, RFSWriteV, RFSStatV);
             MFree(nname);
             break;
@@ -31,64 +33,55 @@ U0 RFSReSize(String name, U32 size) {
     for (U32 i = 0; i < RFS_SIZE; ++i) {
         if (RFS[i].exists && !StrCmp(RFS[i].name, name)) {
             RFS[i].data = MReAlloc(RFS[i].data, RFS[i].size, size);
+            MemSet(RFS[i].data, 0, size);
             RFS[i].size = size;
             break;
         }
     }
 }
-U32 RFSOpen(String name) {
+U32 RFSReadV(String name, Ptr buf, U32 offset, U32 count) {
+    // SerialPrintF("ramfs read: %s\n", name);
+    while (*name == '/') ++name;
+    // SerialPrintF("ramfs read: %s\n", name);
+    name += 4;
+    // SerialPrintF("ramfs read: %s\n", name);
     for (U32 i = 0; i < RFS_SIZE; ++i) {
         if (RFS[i].exists && !StrCmp(RFS[i].name, name)) {
-            RFSFileDescriptor *r = MAlloc(sizeof(RFSFileDescriptor));
-            r->head = 0;
-            r->pos = i;
-            return (U32)r;
+            count = min(count, RFS[i].size - offset);
+            MemCpy(buf, RFS->data + offset, count);
+            // PrintF("Reading %d:\n%s\n", count, buf);
+            return count;
         }
     }
-    return Null;
-}
-U32 RFSWrite(U32 fd, Ptr buf, U32 count) {
-    RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
-    if (r->head >= RFS[r->pos].size) return 0;
-    U32 m = RFS[r->pos].size - r->head;
-    U32 c = min(count, m);    
-    if (c) {
-        MemCpy(RFS[r->pos].data + r->head, buf, c);
-        r->head += c;
-    }
-    return c;
-}
-U32 RFSRead(U32 fd, Ptr buf, U32 count) {
-    RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
-    if (r->head >= RFS[r->pos].size) return 0;
-    U32 m = RFS[r->pos].size - r->head;
-    U32 c = min(count, m);    
-    if (c) {
-        MemCpy(buf, RFS[r->pos].data + r->head, c);
-        r->head += c;
-    }
-    return c;
-}
-U32 RFSReadV(String name, Ptr buf, U32 offset, U32 count) {
-    U32 fd = RFSOpen(name);
-    RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
-    r->head = offset;
-    RFSRead(fd, buf, count);
-    RFSClose(fd);
 }
 U32 RFSWriteV(String name, Ptr buf, U32 offset, U32 count) {
-    U32 fd = RFSOpen(name);
-    RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
-    r->head = offset;
-    RFSWrite(fd, buf, count);
-    RFSClose(fd);
+    // SerialPrintF("ramfs write: %s\n", name);
+    while (*name == '/') ++name;
+    // SerialPrintF("ramfs write: %s\n", name);
+    name += 4;
+    // SerialPrintF("ramfs write: %s\n", name);
+    for (U32 i = 0; i < RFS_SIZE; ++i) {
+        if (RFS[i].exists && !StrCmp(RFS[i].name, name)) {
+            if (count > RFS[i].size - offset) {
+                RFSReSize(name, count + offset);
+            }
+            MemCpy(RFS->data + offset, buf, count);
+            // PrintF("Writing %d:\n%s\n", count, buf);
+            return count;
+        }
+    }
 }
 U0 RFSCreateV(String name) {
     while (*name == '/') ++name;
     name += 4;
-    RFSAdd(name, 1024);
+    RFSAdd(name, 1);
 }
 U0 RFSStatV(String name, VFSStat *stat) {
+    // SerialPrintF("ramfs stat: %s\n", name);
+    while (*name == '/') ++name;
+    // SerialPrintF("ramfs stat: %s\n", name);
+    name += 4;
+    // SerialPrintF("ramfs stat: %s\n", name);
     for (U32 i = 0; i < RFS_SIZE; ++i) {
         if (RFS[i].exists && !StrCmp(RFS[i].name, name)) {
             stat->ino = i;
@@ -98,8 +91,4 @@ U0 RFSStatV(String name, VFSStat *stat) {
             break;
         }
     }
-}
-U0 RFSClose(U32 fd) {
-    RFSFileDescriptor *r = (RFSFileDescriptor*)fd;
-    MFree(r);
 }

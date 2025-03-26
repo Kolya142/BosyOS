@@ -28,6 +28,7 @@
 #include <misc/vdrivers.h>
 #include <lib/sys/syscall.h>
 #include <misc/wordgen.h>
+#include <misc/multiboot.h>
 
 // Lang
 #include <lang/Tokenizer.h>
@@ -71,7 +72,34 @@ U0 mainloop();
 U0 cmdloop();
 U0 loop();
 
-U0 KernelMain() {
+U0 KernelMain(struct MultiBoot *mbi) {
+    mb = mbi;
+
+    {
+        Ptr ptr = (Ptr)((U32)mb)+8;
+        for (;;) {
+            struct MultiBootTag *tag = ptr;
+            if (tag->type == 0) {
+                break;
+            }
+            if (tag->type == 8) {
+                struct {
+                    U32 type;
+                    U32 size;
+                    uint64_t addr;
+                    U32 pitch;
+                    U32 width;
+                    U32 height;
+                    U8 bpp;
+                    U8 fb_type;
+                    U16 reserved;
+                } __attribute__((packed)) *fb = (Ptr)tag;
+                VVRM = (U32*)(U32)fb->addr;
+                VVRM[100] = 0xFF00FF;
+            }
+            ptr += (tag->size + 7) & ~7;
+        }
+    }
     HeapInit();
 
     VFSInit();
@@ -84,16 +112,17 @@ U0 KernelMain() {
     KDogWatchLog("Initialized \x9Bserial\x9C", False);
 
     U32 ptys = PTYNew(2048, 1, 1);
-    U32 ptyg1 = PTYNew(2048, 320/6, 200/6);
-    U32 ptyg2 = PTYNew(2048, 320/6, 200/6);
-    U32 ptyg3 = PTYNew(2048, 320/6, 200/6);
-    U32 ptyg4 = PTYNew(2048, 320/6, 200/6);
+    U32 ptyg1 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
+    U32 ptyg2 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
+    U32 ptyg3 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
+    U32 ptyg4 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
     TTYNew(TTYRenderS, ptys);
     TTYNew(TTYRenderG, ptyg1);
     TTYNew(TTYRenderG, ptyg2);
     TTYNew(TTYRenderG, ptyg3);
     TTYNew(TTYRenderG, ptyg4);
     TTYCurrent = 4;
+    SerialPrintF("%p", VVRM);
     // TTYSwitch(TTYC_VGA);
 
     VgaInit();
@@ -103,14 +132,14 @@ U0 KernelMain() {
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->width = 80;
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->height = 25;
     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
-    KDogWatchInit();
     GDTInit();
     IDTInit();
     PICMap();
     PITInit();
     TaskInit();
-    KDogWatchLog("Switching to 320x200", False);
-    VgaGraphicsSet();
+    KDogWatchInit();
+    // KDogWatchLog("Switching to 320x200", False);
+    // VgaGraphicsSet();
     // VESAInit();
     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
     KDogWatchLog("System initializing start", False);
@@ -120,7 +149,6 @@ U0 KernelMain() {
     if (mem < 64000) {
         KDogWatchLog("$!CWarning: Memory size < $!B64MB$!F", False);
     }
-
     VgaBlinkingSet(False);
     VgaCursorDisable();
     VgaCursorEnable();
@@ -150,8 +178,6 @@ U0 KernelMain() {
     // // KDogWatchLog("Initialized \"rtl8139\"", False);
     PS2Init();
     KDogWatchLog("Initialized \"ps/2\"", False);
-    KBInit();
-    KDogWatchLog("Initialized \x9Bkeyboard\x9C", False);
     #ifndef FASTBOOT
     MouseInit(); // Portal to hell
     KDogWatchLog("Initialized \"mouse\"", False);
@@ -170,17 +196,17 @@ U0 KernelMain() {
     ISO9660Init();
     KDogWatchLog("Initialized \x9BISO9660\x9C", False);
 
-    // RFSInit();
-    // VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, Null);
-    // KDogWatchLog("Initialized \x9Bramfs\x9C", False);
+    RFSInit();
+    VFSMount("tmp/", (Ptr)RFSReadV, (Ptr)RFSWriteV, Null);
+    KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
     ISO9660DirEntry *initrom = ISO9660Get("initrom.");
-    // if (!initrom) {
-    //     KPanic("Cannot get initrom.", False);
-    // }
+    if (!initrom) {
+        KPanic("Cannot get initrom.", False);
+    }
     // return;
-    ATARead((Ptr)0x20000, initrom->extent_lba_le * 4, (initrom->data_length_le + 511) / 512);
-    ROFSInit((Ptr)0x20000);
+    ATARead((Ptr)0x200000, initrom->extent_lba_le * 4, (initrom->data_length_le + 511) / 512);
+    ROFSInit((Ptr)0x200000);
     KDogWatchLog("Initialized \x9Bromfs\x9C", False);
     RFSInit();
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
@@ -198,6 +224,8 @@ U0 KernelMain() {
     KDogWatchLog("Entering shell", False);
     TTYSwitch(1);
     TTYWrite(1, 1, "\x80", 1);
+    KBInit();
+    KDogWatchLog("Initialized \x9Bkeyboard\x9C", False);
     // ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
 
     // TaskNew((U32)mainloop, 0x10, 0x08);
@@ -263,10 +291,10 @@ U0 mainloop() {
     VFSReadDir("/etc", lsfn);
 
     VFSStat stat = {0};
-    VFSLStat("bin/test.elf", &stat);
+    VFSLStat("/bin/init.elf", &stat);
     U8 *buf = MAlloc(stat.size);
-    VFSRead("bin/test.elf", buf, 0, stat.size);
-    SerialPrintF("Starting program\n");
+    VFSRead("/bin/init.elf", buf, 0, stat.size);
+    SerialPrintF("Starting program %x %d\n", *(U32*)(buf), stat.size);
 
     TTYCurrent = 1;
     ELFLoad(buf);

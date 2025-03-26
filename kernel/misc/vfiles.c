@@ -1,5 +1,6 @@
 #include <drivers/misc/random.h>
 #include <lib/graphics/Graphics.h>
+#include <drivers/sys/beep.h>
 #include <lib/IO/TTY.h>
 #include <fs/vfs.h>
 
@@ -17,7 +18,7 @@ static U32 URandom(String, Ptr buf, U32 offset, U32 count) {
     return count;
 }
 static U32 ScreenWrite(String, Ptr buf, U32 offset, U32 count) {
-    count = min(count, 320*200 - offset);
+    count = min(count, WIDTH*HEIGHT - offset);
     if (!is_userspace((U32)buf) || !is_userspace((U32)buf+count)) {
         return 0;
     }
@@ -25,7 +26,7 @@ static U32 ScreenWrite(String, Ptr buf, U32 offset, U32 count) {
     return count;
 }
 static U32 ScreenRead(String, Ptr buf, U32 offset, U32 count) {
-    count = min(count, 320*200 - offset);
+    count = min(count, WIDTH*HEIGHT - offset);
     MemCpy(buf, VRM+offset, count);
     return count;
 }
@@ -56,6 +57,10 @@ static U32 MemWrite(String, Ptr buf, U32 offset, U32 count) {
     return count;
 }
 
+static U32 SPCWrite(String, Ptr buf, U32 offset, U32 count) {
+    BeepSPC(((U16*)buf)[0], ((U16*)buf)[1]);
+    return 4;
+}
 
 U0 VFilesInit() {
     VFSDirMk("/dev", Null);
@@ -64,4 +69,5 @@ U0 VFilesInit() {
     VFSMount("/dev/null", NullF, NullF, Null);
     VFSMount("/dev/zeros", Zeros, NullF, Null);
     VFSMount("/dev/mem", MemRead, MemWrite, Null);
+    VFSMount("/dev/spc", NullF, SPCWrite, Null);
 }

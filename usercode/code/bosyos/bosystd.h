@@ -67,6 +67,9 @@ typedef uint32_t filedesc_t;
 typedef uint32_t time_t;
 typedef uint32_t size_t;
 typedef uint32_t pid_t;
+void print_mezc(char c);
+void print_mez(char *s);
+void draw_win(int x, int y, int w, int h, const char *title, char *buf);
 
 uint32_t syscall(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f, uint32_t g);
 

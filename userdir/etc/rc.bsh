@@ -1,11 +1,11 @@
 clear
-echo Welcome to BosyOS v0.0.3!
+echo Welcome to BosyOS v0.1.0!
 echo -------------------------
 echo First time? use command "tut" to see the tutorial
-echo Type 'help' to list available commands.
+echo Type 'help' to list available commands
 # this is shell written in shell script
 th /tmp/doc
 :1
-put $ 
+echm $!A\$$!F 
 uexec
 gt 1

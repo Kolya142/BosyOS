@@ -39,5 +39,7 @@ tar_name = f"release/release.tar.gz"
 
 with tarfile.open(tar_name, "w:gz") as tar:
     tar.add(f"release/{branch}/{name}", arcname=name+'_'+datetime.datetime.now().strftime("%d.%m.%Y_%H-%M-%S"))
+    tar.add("CHANGELOG.mez", arcname="changelog.mez")
+    tar.add("non-kernel files/mez", arcname="mez")
 
 os.system(f"gh release create {name} {tar_name} --title \"kernel {name}\" --notes 'Automated build from {branch}'")

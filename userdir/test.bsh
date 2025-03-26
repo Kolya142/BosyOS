@@ -1,6 +1,4 @@
 echo Testing!
-th /tmp/1
-th /tmp/2
-th /tmp/HelloWorld!
-ls /tmp
+!/bin/test2.elf
+# !/bin/test2.elf
 echo Testing end!

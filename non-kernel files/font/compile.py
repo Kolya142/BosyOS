@@ -1,5 +1,5 @@
 form = """
-unsigned char TTYFont[256][5] = {
+unsigned char TTYFont[256][8] = {
 $$
 };
 """

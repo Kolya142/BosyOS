@@ -1,6 +1,9 @@
 #include <lib/graphics/Graphics.h>
+#include <drivers/time/pit.h>
 Bool VRMState = True;
-U8 *VRM = (U8*)0x3000;
+U32 *VVRM;
+U8 *VRM = (U8*)0x300000+(WIDTH*HEIGHT)*0;
+U8 *VRM1 = (U8*)0x300000+(WIDTH*HEIGHT)*1;
 U8 GCursor[] = {
     0,0,2,2,2,2,
     0,1,0,2,2,2,
@@ -16,14 +19,41 @@ Vec2 vec2(I32 x, I32 y)
     return (Vec2) {.x = x, .y = y};
 }
 U0 VRMPSet(U16 x, U16 y, U8 c) {
-    if (x >= 320 || y >= 200) return;
-    VRM[y * 320 + x] = c;
+    if (x >= WIDTH || y >= HEIGHT) return;
+    VRM[y * WIDTH + x] = c;
 }
 U0 VRMClear(U8 c) {
-    MemSet(VRM, c, 320*200);
+    MemSet(VRM, c, WIDTH*HEIGHT);
 }
 U0 VRMFlush() {
-    MemCpy(VVRM, VRM, 320*200);
+    static const U32 colors[] = {
+        0x000000,
+        0x000055,
+        0x005500,
+        0x005555,
+        0x550000,
+        0x550055,
+        0x554400,
+
+        0x565656,
+
+        0x444444,
+
+        0x0000FF,
+        0x00FF00,
+        0x00FFFF,
+        0xFF0000,
+        0xFF00FF,
+        0xF5D400,
+        0xFFFFFF,
+    };
+    for (U32 i = 0; i < WIDTH * HEIGHT; ++i) {
+        U8 c = VRM1[i] != 0xFF ? VRM1[i] : VRM[i];
+        if (c > sizeof(colors) / sizeof(colors[0])) {
+            continue;
+        }
+        VVRM[i] = colors[c];
+    }
 }
 
 U0 VRMDrawLine(Vec2 start, Vec2 end, U8 c) {

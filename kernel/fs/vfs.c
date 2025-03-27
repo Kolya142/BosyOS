@@ -97,7 +97,7 @@ U32 VFSOpen(String filename) {
     }
     VFSNode *node = VFSFind(VFSRoot, filename);
     if (!node || StrCmp(node->name, parsd[i])) {
-        return -1;
+        return -2;
     }
 
     for (U32 i = 4; i < VFS_MAX_OPEN; ++i) {
@@ -110,7 +110,7 @@ U32 VFSOpen(String filename) {
             return i;
         }
     }
-    return -1;
+    return -2;
 }
 U0 VFSClose(U32 fd) {
     if (fd >= VFS_MAX_OPEN || !fds[fd].pos) {
@@ -120,19 +120,25 @@ U0 VFSClose(U32 fd) {
     fds[fd].pos = 0;
 }
 U32 VFSWriteV(U32 fd, Ptr buf, U32 count) {
+    // PrintF("Writing to %s:\n%s\n", fds[fd].name, buf);
     if (fd >= VFS_MAX_OPEN || !fds[fd].pos) {
         return 0;
     }
+    // PrintF("Writing to %s:\n%s\n", fds[fd].name, buf);
     if (fds[fd].pos->stat) {
-        VFSStat stat;
+        VFSStat stat = {0};
+        // PrintF("Stat: %X\n", stat.mode);
         fds[fd].pos->stat(fds[fd].name, &stat);
+        // PrintF("Stat: %X\n", stat.mode);
         if (!(stat.mode & VFS_UWRIT)) {
             return 0;
         }
     }
+    // PrintF("Writing to %s:\n%s\n", fds[fd].name, buf);
     if (!fds[fd].pos->write) {
         return 0;
     }
+    // PrintF("Writing to %s:\n%s\n", fds[fd].name, buf);
     U32 a = fds[fd].pos->write(fds[fd].name, buf, fds[fd].head, count);
     fds[fd].head += a;
     return a;
@@ -182,11 +188,17 @@ U0 VFSReadDir(String path, U0(*reader)(String, VFSStat*)) {
     if (!dir) {
         return;
     }
+    U32 s = StrLen(path);
     for (U32 i = 0; i < dir->child.count; ++i) {
         VFSNode *curr = &((VFSNode*)dir->child.arr)[i];
-        VFSStat stat;
+        VFSStat stat = {0};
         if (curr->stat) {
-            curr->stat(curr->name, &stat);
+            String nname = MCAlloc(s + 2 + StrLen(curr->name), 1);
+            MemCpy(nname, path, s);
+            nname[s] = '/';
+            StrCpy(nname + s + 1, curr->name);
+            curr->stat(nname, &stat);
+            MFree(nname);
         }
         else {
             MemSet(&stat, 0, sizeof(VFSStat));
@@ -261,4 +273,25 @@ U0 VFSDirMk(String name, U0(*create)(String)) {
     node->child = ListInit(sizeof(VFSNode));
 
     ListAppend(&parent->child, node);
+}
+U0 VFSCreate(String name) {
+    Char parsd[10][64];
+    VFSPathParse(name, (Char*)parsd, 10, 64);
+    U32 i = 0;
+    for (;i < 10;) {
+        if (!parsd[i][0]) {
+            break;
+        }
+        ++i;
+    }
+    if (i) {
+        --i;
+    }
+
+    VFSNode *parent = VFSFind(VFSRoot, name);
+    if (!parent || !StrCmp(parent->name, parsd[i]) || !parent->create) {
+        return;
+    }
+    // PrintF("parent->create(%s)\n", name);
+    parent->create(name);
 }

@@ -1,16 +1,16 @@
 #include <drivers/input/keyboard.h>
 #include <misc/driverreg.h>
 #include <drivers/input/mouse.h>
+#include <lib/graphics/Graphics.h>
 #include <drivers/time/pit.h>
 #include <arch/x86/cpu/pic.h>
 #include <lib/time/Time.h>
 #include <lib/IO/TTY.h>
 
-I32 MouseVX = 40*2, MouseVY = 12*2;
-I32 MouseX = 40, MouseY = 12;
+I32 MouseX = WIDTH/2, MouseY = HEIGHT/2;
 U8 MouseBtn = 0;
-volatile U8 MouseCycle = 0;
-volatile I8 MousePacket[3];
+static volatile U8 MouseCycle = 0;
+static volatile I8 MousePacket[3];
 
 __attribute__((naked)) U0 MouseUpdate() {
     U32 esp;
@@ -40,15 +40,14 @@ __attribute__((naked)) U0 MouseUpdate() {
                 MouseCycle = 0;
 
                 MouseBtn = MousePacket[0] & 0b111;
-                MouseVX += MousePacket[1];
-                MouseVY -= MousePacket[2];
+                MouseX += MousePacket[1];
+                MouseY -= MousePacket[2];
 
-                if (MouseVX < 0) MouseVX = 0;
-                if (MouseVY < 0) MouseVY = 0;
-                if (MouseVX > 319*2) MouseVX = 319*2;
-                if (MouseVY > 199*2) MouseVY = 199*2;
-                MouseX = MouseVX / 2;
-                MouseY = MouseVY / 2;
+                if (MouseX < 0) MouseX = 0;
+                if (MouseY < 0) MouseY = 0;
+
+                if (MouseX > WIDTH - 1) MouseX = WIDTH - 1;
+                if (MouseY > HEIGHT - 1) MouseY = HEIGHT - 1;
             break;
         }
     }

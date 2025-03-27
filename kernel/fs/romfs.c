@@ -1,3 +1,4 @@
+#include <kernel/KPanic.h>
 #include <lib/IO/TTY.h>
 #include <fs/romfs.h>
 
@@ -5,7 +6,7 @@ ROFSSB *ROFS;
 
 static U32 ROFSReadV(String name, Ptr buf, U32 offset, U32 count) {
     while (*name == '/') ++name;
-    // PrintF("reading: %s\n", name);
+    SerialPrintF("reading: \"%s\"\n", name);
     ROFSNode *node = (ROFSNode*)((U8*)ROFS+sizeof(ROFSSB));
     for (U32 i = 0; i < ROFS->count; ++i) {
         if (!StrCmp(node->name, name)) {
@@ -42,6 +43,7 @@ U0 ROFSInit(Byte *buf) {
     ROFS = (ROFSSB*)buf;
     PrintF("magic: %s", ROFS->magic);
     if (!StrStartsWith(ROFS->magic, "-romfs-")) {
+        KPanic("Failed to init romfs", False);
         return;
     }
     PrintF("loading romfs\n");
@@ -49,7 +51,7 @@ U0 ROFSInit(Byte *buf) {
     VFSDirMk("/etc", Null);
     ROFSNode *node = (ROFSNode*)(buf+sizeof(ROFSSB));
     for (U32 i = 0; i < ROFS->count; ++i) {
-        // PrintF("File: %s\n", node->name);
+        PrintF("File: %s\n", node->name);
         VFSMount(node->name, ROFSReadV, ROFSWriteV, ROFSStatV);
         node = (ROFSNode*)((U8*)node + sizeof(ROFSNode) + node->size);
     }

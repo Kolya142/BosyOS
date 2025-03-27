@@ -1,8 +1,131 @@
 #include "bosystd.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
 
 extern uint32_t _syscall(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f, uint32_t g);
+
+void print_mezc(char c) {
+    static bool lbs = false;
+    static bool lds = false; // $
+    static char   ldv = 0    ;
+    static char   lbd = 0    ;
+    static char   lbp = 0    ;
+    if (lbs) {
+        if (c == '\\') 
+            print("\\");
+        if (c == 'n')
+            print("\n");
+        if (c == '$') 
+            print("$"); 
+        lbs = false;
+    }
+    else if (lds) {
+        if (c == '!') {
+            ldv = 1;
+        }
+        else if (c == '*') {
+            ldv = 2;
+        }
+        else if (c == 'x') {
+            lbp = 1;
+        }
+        else if (lbp) {
+            lbd <<= 4;
+            unsigned char d = 255;
+            if (c >= '0' && c <= '9') {
+                d = c - '0';
+            }
+            else if (c >= 'A' && c <= 'F') {
+                d = c - 'A' + 10;
+            }
+            else if (c >= 'a' && c <= 'f') {
+                d = c - 'a' + 10;
+            }
+            lbd |= d;
+            lbp ++;
+            if (lbp == 3) {
+                write(1, (byte_t[]) {0xAC, lbd}, 2);
+                lbd = 0;
+                lds = false;
+                lbp = 0;
+            }
+        }
+        else {
+            unsigned char d = 255;
+            if (c >= '0' && c <= '9') {
+                d = c - '0';
+            }
+            else if (c >= 'A' && c <= 'F') {
+                d = c - 'A' + 10;
+            }
+            else if (c >= 'a' && c <= 'f') {
+                d = c - 'a' + 10;
+            }
+            if (d - 255) {
+                switch (ldv) {
+                    case 1: {
+                        char buf[2];
+                        buf[0] = 0x86;
+                        buf[1] = 0x9C + d;
+                        write(1, buf, 2);
+                    } break;
+                    case 2: {
+                        char buf[2];
+                        buf[0] = 0x87;
+                        buf[1] = 0x9C + d;
+                        write(1, buf, 2);
+                    } break;
+                }
+            }
+            ldv = 0;
+            lds = false;
+        }
+    }
+    else if (c & 0x80) {
+        char buf[2];
+        buf[0] = 0xAC;
+        buf[1] = c;
+        write(1, buf, 2);
+    }
+    else if (c == '\\') {lbs = true;}
+    else {
+        if (c == '$') {
+            lds = true;
+        } 
+        else {
+            write(1, &c, 1);
+        }
+    }
+}
+void print_mez(char *s) {
+    while (*s) {
+        print_mezc(*s);
+        ++s;
+    }
+}
+void draw_win(int x, int y, int w, int h, const char *title, char *buf) {
+    struct time_spec t;
+    clock_gettime(&t);
+
+    buf[x + y * 80] = '\x83';
+    buf[x + y * 80 + w] = '\x85';
+
+    buf[x + (y + h - 1) * 80] = '\xA5';
+    buf[x + (y + h - 1) * 80 + w] = '\x86';
+    for (int i = 1; i < w; ++i) {
+        buf[x + y * 80 + i] = '\xA4';
+        buf[x + (y + h - 1) * 80 + i] = '\xA4';
+    }
+    for (int i = 1; i < h - 1; ++i) {
+        buf[x + (y + i) * 80] = '\xA3';
+        buf[x + (y + i) * 80 + w] = '\xA3';
+    }
+    int s = strlen(title);
+    for (int i = 0; i < w-1; ++i) {
+        buf[x + 1 + i + y * 80] = title[(t.sec + i) % s];
+    }
+}
 
 __attribute__((cdecl)) uint32_t syscall(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f, uint32_t g) { // x86 magic
     volatile uint32_t ret;
@@ -16,6 +139,9 @@ uint32_t strlen(const char *str) {
         ++i;
     }
     return i;
+}
+void memset(void *ptr, int v, int c) {
+    for (;c;--c,++ptr) *((byte_t*)ptr) = v;
 }
 uint32_t strcmp(const char *a, const char *b) {
     while (*b && (*a == *b)) {++a; ++b;}

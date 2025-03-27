@@ -1,5 +1,7 @@
 #include <drivers/misc/random.h>
 #include <lib/graphics/Graphics.h>
+#include <drivers/input/keyboard.h>
+#include <drivers/sys/beep.h>
 #include <lib/IO/TTY.h>
 #include <fs/vfs.h>
 
@@ -17,7 +19,7 @@ static U32 URandom(String, Ptr buf, U32 offset, U32 count) {
     return count;
 }
 static U32 ScreenWrite(String, Ptr buf, U32 offset, U32 count) {
-    count = min(count, 320*200 - offset);
+    count = min(count, WIDTH*HEIGHT - offset);
     if (!is_userspace((U32)buf) || !is_userspace((U32)buf+count)) {
         return 0;
     }
@@ -25,7 +27,7 @@ static U32 ScreenWrite(String, Ptr buf, U32 offset, U32 count) {
     return count;
 }
 static U32 ScreenRead(String, Ptr buf, U32 offset, U32 count) {
-    count = min(count, 320*200 - offset);
+    count = min(count, WIDTH*HEIGHT - offset);
     MemCpy(buf, VRM+offset, count);
     return count;
 }
@@ -56,6 +58,26 @@ static U32 MemWrite(String, Ptr buf, U32 offset, U32 count) {
     return count;
 }
 
+static U32 SPCWrite(String, Ptr buf, U32 offset, U32 count) {
+    BeepSPC(((U16*)buf)[0], ((U16*)buf)[1]);
+    return 4;
+}
+
+static U32 COLWrite(String, Ptr buf, U32 offset, U32 count) {
+    if (count != 4*16) {
+        return 0;
+    }
+    MemCpy(VRMColors, buf, 4*16);
+    return 4*16;
+}
+
+static U32 KBDRead(String, Ptr buf, U32 offset, U32 count) {
+    if (count != 256) {
+        return 0;
+    }
+    MemCpy(buf, KBState.keys, 256);
+    return 256;
+}
 
 U0 VFilesInit() {
     VFSDirMk("/dev", Null);
@@ -64,4 +86,7 @@ U0 VFilesInit() {
     VFSMount("/dev/null", NullF, NullF, Null);
     VFSMount("/dev/zeros", Zeros, NullF, Null);
     VFSMount("/dev/mem", MemRead, MemWrite, Null);
+    VFSMount("/dev/spc", NullF, SPCWrite, Null);
+    VFSMount("/dev/color", NullF, COLWrite, Null);
+    VFSMount("/dev/keyboard", KBDRead, NullF, Null);
 }

@@ -33,6 +33,11 @@ compile:
 	# non-kernel\ files/mkbosyrom initrom userdir
 	# dd if=initrom of=drive bs=512 seek=291 conv=notrunc
 
+make_drive:
+	rm drive
+	truncate -s 8192 drive
+	cp drive grub/iso/drive
+
 QEMU=qemu-system-i386
 QEMU_DRIVE=-hda grub/bosyos.iso
 QEMU_MOUSE=
@@ -42,7 +47,7 @@ QEMU_NET=-device rtl8139,netdev=net0 -netdev user,id=net0
 QEMU_DEBUG=-D ~/bosyos.qemu.log -d int,cpu_reset --no-reboot --no-shutdown
 QEMU_AUDIO_LINUX=-audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
 QEMU_AUDIO_MAC=-audiodev coreaudio,id=snd0 -machine pcspk-audiodev=snd0
-QEMU_DISPLAY=-display gtk,zoom-to-fit=on
+QEMU_DISPLAY=-display gtk,zoom-to-fit=on,gl=off
 QEMU_KVM=--enable-kvm
 QEMU_USB=-device piix3-usb-uhci,id=usb
 QEMU_GDB=-s -S
@@ -72,4 +77,4 @@ load: img
 	sudo bash load.sh
 shell:
 	make prog
-	cd userdir && ../usercode/usercode.elf
+	cd userdir && bin/init.elf

@@ -1,6 +1,0 @@
-digraph G {
-    night -> test;
-    "user-friendly" -> test;
-    test -> stable;
-    stable -> main;
-}

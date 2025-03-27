@@ -6,6 +6,7 @@
 
 static U0 BeepEnd(Ptr args) {
     POut(0x61, PIn(0x61) & ~3);
+    PITInit(); // Reseting
 }
 
 U0 Beep(U16 dur) {
@@ -20,11 +21,8 @@ U0 BeepHz(U16 freq, U16 dur) {
     POut(0x42, (U8)(Div >> 8));
 
     U8 tmp = PIn(0x61);
-    if (!(tmp & 3)) {
-        POut(0x61, tmp | 3);
-    }
+    POut(0x61, tmp | 3);
     AlarmCreate(dur, BeepEnd, NULL);
-    PITInit(); // PIT back
 }
 
 U0 BeepSPC(U8 tone, U16 dur) {

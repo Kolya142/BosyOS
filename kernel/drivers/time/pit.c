@@ -19,7 +19,7 @@ volatile U32 BosyTime = 0;
 
 extern Bool VRMState;
 
-static inline void regs_copy(INTRegs3 *dest, const INTRegs3 *src) {
+static void regs_copy(INTRegs3 *dest, const INTRegs3 *src) {
     dest->eax      = src->eax;
     dest->ecx      = src->ecx;
     dest->edx      = src->edx;
@@ -69,7 +69,18 @@ INT_DEF(PITHandler) {
             }
         }
         else {
+            Task *task = TaskTail;
             TaskNext();
+            if (task->esp) {
+                MFree((Ptr)task->esp);
+            }
+            for (U32 i = 0; i < 32; ++i) {
+                if (task->pages[i].exists) {
+                    PFree((Ptr)task->pages[i].raddr);
+                    task->pages[i].exists = False;
+                }
+            }
+            MFree(task);
         }
         #ifdef TASK_DEBUG
             SerialPrintF("Task %d, ESP %p, EIP %p, PAGES {", TaskTail->id, regs->esp, regs->eip);
@@ -87,25 +98,25 @@ INT_DEF(PITHandler) {
                 }
             }
         #endif
-        for (U32 i = 0; i < SIGNALS / 8; ++i) {
-            for (U32 j = 0; j < 8; ++j) {
-                if (TaskTail->signals[i] & (1 << j)) {
-                    if (TaskTail->signals_handles[i * 8 + j]) {
-                        TaskTail->saved_esp = TaskTail->regs.esp;
-                        TaskTail->saved_eip = TaskTail->regs.eip;
+        // for (U32 i = 0; i < SIGNALS / 8; ++i) {
+        //     for (U32 j = 0; j < 8; ++j) {
+        //         if (TaskTail->signals[i] & (1 << j)) {
+        //             if (TaskTail->signals_handles[i * 8 + j]) {
+        //                 TaskTail->saved_esp = TaskTail->regs.esp;
+        //                 TaskTail->saved_eip = TaskTail->regs.eip;
 
-                        TaskTail->regs.esp -= 4;
-                        *((U32 *)TaskTail->regs.esp) = (U32)TaskRet;
+        //                 TaskTail->regs.esp -= 4;
+        //                 *((U32 *)TaskTail->regs.esp) = (U32)TaskRet;
     
-                        TaskTail->regs.esp -= 4;
-                        *((U32 *)TaskTail->regs.esp) = i * 8 + j;
+        //                 TaskTail->regs.esp -= 4;
+        //                 *((U32 *)TaskTail->regs.esp) = i * 8 + j;
 
-                        TaskTail->regs.eip  = (U32)TaskTail->signals_handles[i * 8 + j];
-                    }
-                    TaskTail->signals[i] &= ~(1 << j);
-                }
-            }
-        }
+        //                 TaskTail->regs.eip  = (U32)TaskTail->signals_handles[i * 8 + j];
+        //             }
+        //             TaskTail->signals[i] &= ~(1 << j);
+        //         }
+        //     }
+        // }
     }
     Alarm *a = AlarmGet();
     if (a) {
@@ -123,11 +134,13 @@ INT_DEF(PITHandler) {
         WindowsUpdate();
         
         if (VRMState) {
-            VRMFlush();
             Ptr vrm = VRM;
-            VRM = VVRM;
-            VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
+            VRM = VRM1;
+            VRMClear(0xFF);
+            VRMDrawSprite(vec2(MouseX, MouseY), vec2(10, 10), White, Black, GCursor);
             VRM = vrm;
+            VRMFlush();
+            // VRMClear(Black);
         }
         if (PITTime % 1000 < 500) {
             for (U32 i = 0; i < 6; ++i) {
@@ -175,10 +188,10 @@ U0 PITInit() {
     U16 div = PIT_FREQ / 60;
 
     DriverReg(0x09ca4b4d, 0x5fa68611, PITDriverHandler, "pit");
+    IDTSet(32, PITHandler, 0x08, 0x8E);
 
     POut(0x43, 0x36);
     POut(0x40, div & 0xff);
     POut(0x40, (div>>8) & 0xff);
     POut(0x21, PIn(0x21) & ~1);
-    IDTSet(32, PITHandler, 0x08, 0x8E);
 }

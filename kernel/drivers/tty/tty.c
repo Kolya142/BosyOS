@@ -53,18 +53,24 @@ U0 TTYInput() {
                     // TaskSigSend(TaskTail, SIGTERM);
                 }
                 else if (key == 'l' && KBState.Ctrl && TaskTail) {
-                    TTYWrite(TaskTail->ttyid, 1, "\x80", 1);
+                    TTYWrite(TTYCurrent, 1, "\x80", 1);
                 }
                 else if (key == 'u' && KBState.Ctrl && TaskTail) {
                     for (; bufferi; --bufferi) {
-                        TTYWrite(TaskTail->ttyid, 1, "\b", 1);
+                        TTYWrite(TTYCurrent, 1, "\b", 1);
                     }
                 }
                 else if (key == '\r') {
-                    TTYWrite(TTYCurrent, 1, "\n", 1);
-                    TTYWrite(TTYCurrent, 0, buf, bufferi);
-                    TTYFlush(TTYCurrent);
-                    bufferi = 0;
+                    if (bufferi) {
+                        TTYWrite(TTYCurrent, 1, "\n", 1);
+                        TTYWrite(TTYCurrent, 0, buf, bufferi);
+                        TTYFlush(TTYCurrent);
+                        bufferi = 0;
+                    }
+                    else {
+                        TTYWrite(TTYCurrent, 1, "\n", 1);
+                        TTYWrite(TTYCurrent, 0, "\n", 1);
+                    }
                 }
                 else if (key < 0x80 || (key >= 0xB1 && key <= 0xD0)) {
                     if (KBState.Shift && !(key >= 0xB1 && key <= 0xD0)) {

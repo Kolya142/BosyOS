@@ -13,20 +13,27 @@ for i in range(0x80, 0xFF):
     char = open(f"chars/{i:2x}.txt").read()
     font[c] = char.replace('\n', '')
 
-text = "the quick brown fox jumps over a lazy dog. THE QUICK BROWN FOX JUMPS OVER A LAZY DOG. \xc0\xc1\xb9\xb3\xb6\xc3 \xbd\xb9\xc1 $echo 123 \\//##@!$%^&*()_+-=~`"
-color = (0, 255, 255)
+text = "".join(chr(i) for i in range(256))
 
-img = np.zeros((5, len(text)*6, 3))
+img = np.zeros((len(text)*9//16, len(text)*9//16, 3))
+
+colors = [
+    (0x00, 0x00, 0xFF),
+    (0x00, 0xFF, 0x00),
+    (0x00, 0xFF, 0xFF),
+    (0xFF, 0x00, 0x00),
+    (0xFF, 0x00, 0xFF),
+    (0xF5, 0xD4, 0x00),
+    (0xFF, 0xFF, 0xFF),
+]
 
 for i, c in enumerate(text):
     if c not in font:
         continue
-    char = np.zeros((5, 5, 3))
-    for j in range(25):
-        char[j//5,j%5,0] = color[0] if font[c][j] == 'a' else 0
-        char[j//5,j%5,1] = color[1] if font[c][j] == 'a' else 0
-        char[j//5,j%5,2] = color[2] if font[c][j] == 'a' else 0
-    x = i * 6
-    img[:, x:x + 5] = char
+    print(c)
+    for j in range(8*8):
+        if font[c][j] == 'a':
+            img[j//8+(i//16)*9,j%8+(i%16)*9] = (255, 255, 255)
+    x = i * 8
 
 cv2.imwrite("text.png", img)

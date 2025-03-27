@@ -1,12 +1,17 @@
 #pragma once
 #include <drivers/video/vga.h>
 #include <lib/memory/MemLib.h>
-#define VVRM ((U8*)0xA0000)
+#include <misc/multiboot.h>
+#define WIDTH 640
+#define HEIGHT 480
 #define abs(x) ((x) < 0 ? -(x) : (x))
 
 
+extern U32 *VVRM;
 extern U8 *VRM;
+extern U8 *VRM1;
 extern U8 GCursor[]; // Graphics Cursor
+extern U32 VRMColors[];
 
 // Vga gRaphics Mode
 

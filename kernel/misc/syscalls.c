@@ -28,12 +28,8 @@ static inline Bool is_userspace(U32 addr) {
 U0 SCDriver(INTRegs3 *regs) {
     DriverCall(regs->ebx, regs->ecx, regs->edx, (U32*)regs->ebx);
 }
-static U0 loop() {
-    for(;;);
-}
 U0 SCExit(INTRegs3 *regs) {
     TaskClose();
-    regs->eip = (U32)loop; // BAD4WORK
 }
 U0 SCFork(INTRegs3 *regs) {
     regs->eax = TFork();
@@ -74,6 +70,12 @@ U0 SCOpen(INTRegs3 *regs) {
 }
 U0 SCClose(INTRegs3 *regs) {
     VFSClose(regs->ebx);
+}
+U0 SCPidWait(INTRegs3 *regs) {
+
+}
+U0 SCCreat(INTRegs3 *regs) {
+    VFSCreate((String)regs->ebx);
 }
 
 U0 SCMAlloc(INTRegs3 *regs) {
@@ -273,7 +275,7 @@ U0 SCUName(INTRegs3 *regs) {
     struct utsname *name = (Ptr)regs->ebx;
     MemCpy(name->sysname, "BosyOS", 7);
     MemCpy(name->nodename, "BosyOS", 7);
-    MemCpy(name->release, "0.0.3", 6);
+    MemCpy(name->release, "0.1.1", 6);
     MemCpy(name->version, __DATE__ " " __TIME__, StrLen(__DATE__ " " __TIME__) + 1);
     MemCpy(name->machine, "i386", 5);
 
@@ -302,7 +304,7 @@ U0 SysCallSetup() {
     SysCallSet(SCOpen, 5);
     SysCallSet(SCClose, 6);
     SysCallSet(SCMAlloc, 7);
-    SysCallSet(SCFree, 8);
+    SysCallSet(SCCreat, 8);
     SysCallSet(SCExecVE, 11);
     SysCallSet(SCReadDir, 12);
     SysCallSet(SCTime, 13);

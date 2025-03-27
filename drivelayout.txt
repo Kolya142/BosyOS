@@ -1,6 +1,6 @@
 Disk Layout:
-name:  Boot  zeroes Kernel     UserData
-         |     |         |          |
-         |     |         |          |
-size :  [3]   [32]     [256]       [64]
-start:  [0]   [03]     [035]      [291]
+name:  Boot  Kernel  InitRom   EIFS
+         |      |       |        |
+         |      |       |        |
+size :  [3]  [2048]  [4096]   [4096]
+start:  [0]   [004]  [2052]   [6149]

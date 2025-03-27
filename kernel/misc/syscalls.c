@@ -275,7 +275,7 @@ U0 SCUName(INTRegs3 *regs) {
     struct utsname *name = (Ptr)regs->ebx;
     MemCpy(name->sysname, "BosyOS", 7);
     MemCpy(name->nodename, "BosyOS", 7);
-    MemCpy(name->release, "0.1.0", 6);
+    MemCpy(name->release, "0.1.1", 6);
     MemCpy(name->version, __DATE__ " " __TIME__, StrLen(__DATE__ " " __TIME__) + 1);
     MemCpy(name->machine, "i386", 5);
 

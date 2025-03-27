@@ -9,8 +9,8 @@
 
 I32 MouseX = WIDTH/2, MouseY = HEIGHT/2;
 U8 MouseBtn = 0;
-volatile U8 MouseCycle = 0;
-volatile I8 MousePacket[3];
+static volatile U8 MouseCycle = 0;
+static volatile I8 MousePacket[3];
 
 __attribute__((naked)) U0 MouseUpdate() {
     U32 esp;
@@ -42,6 +42,12 @@ __attribute__((naked)) U0 MouseUpdate() {
                 MouseBtn = MousePacket[0] & 0b111;
                 MouseX += MousePacket[1];
                 MouseY -= MousePacket[2];
+
+                if (MouseX < 0) MouseX = 0;
+                if (MouseY < 0) MouseY = 0;
+
+                if (MouseX > WIDTH - 1) MouseX = WIDTH - 1;
+                if (MouseY > HEIGHT - 1) MouseY = HEIGHT - 1;
             break;
         }
     }

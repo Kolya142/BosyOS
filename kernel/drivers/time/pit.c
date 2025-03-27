@@ -47,7 +47,7 @@ static U0 TaskRet() {
 
 static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-#define TASK_DEBUG
+// #define TASK_DEBUG
 
 INT_DEF(PITHandler) {
     ++PITTicks;
@@ -137,7 +137,7 @@ INT_DEF(PITHandler) {
             Ptr vrm = VRM;
             VRM = VRM1;
             VRMClear(0xFF);
-            VRMDrawSprite(vec2(MouseX, MouseY), vec2(6, 8), Black, White, GCursor);
+            VRMDrawSprite(vec2(MouseX, MouseY), vec2(10, 10), White, Black, GCursor);
             VRM = vrm;
             VRMFlush();
             // VRMClear(Black);

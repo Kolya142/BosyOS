@@ -4,15 +4,39 @@ Bool VRMState = True;
 U32 *VVRM;
 U8 *VRM = (U8*)0x300000+(WIDTH*HEIGHT)*0;
 U8 *VRM1 = (U8*)0x300000+(WIDTH*HEIGHT)*1;
+U32 VRMColors[] = {
+    0x000000,
+    0x000055,
+    0x005500,
+    0x005555,
+    0x550000,
+    0x550055,
+    0x554400,
+
+    0x565656,
+
+    0x444444,
+
+    0x0000FF,
+    0x00FF00,
+    0x00FFFF,
+    0xFF0000,
+    0xFF00FF,
+    0xF5D400,
+    0xFFFFFF,
+};
 U8 GCursor[] = {
-    0,0,2,2,2,2,
-    0,1,0,2,2,2,
-    0,1,1,0,2,2,
-    0,1,1,1,0,2,
-    0,1,1,0,2,2,
-    0,1,0,0,2,2,
-    0,0,2,2,0,2,
-    2,2,2,2,2,0,
+    1,1,2,2,2, 2,2,2,2,2,
+    1,0,1,2,2, 2,2,2,2,2,
+    1,0,0,1,2, 2,2,2,2,2,
+    1,0,0,0,1, 2,2,2,2,2,
+    1,0,0,0,1, 2,2,2,2,2,
+
+    1,0,0,1,2, 2,2,2,2,2,
+    1,0,1,1,2, 2,2,2,2,2,
+    1,1,2,2,1, 2,2,2,2,2,
+    2,2,2,2,2, 1,2,2,2,2,
+    2,2,2,2,2, 2,1,2,2,2,
 };
 Vec2 vec2(I32 x, I32 y)
 {
@@ -26,33 +50,12 @@ U0 VRMClear(U8 c) {
     MemSet(VRM, c, WIDTH*HEIGHT);
 }
 U0 VRMFlush() {
-    static const U32 colors[] = {
-        0x000000,
-        0x000055,
-        0x005500,
-        0x005555,
-        0x550000,
-        0x550055,
-        0x554400,
-
-        0x565656,
-
-        0x444444,
-
-        0x0000FF,
-        0x00FF00,
-        0x00FFFF,
-        0xFF0000,
-        0xFF00FF,
-        0xF5D400,
-        0xFFFFFF,
-    };
     for (U32 i = 0; i < WIDTH * HEIGHT; ++i) {
         U8 c = VRM1[i] != 0xFF ? VRM1[i] : VRM[i];
-        if (c > sizeof(colors) / sizeof(colors[0])) {
+        if (c > sizeof(VRMColors) / sizeof(VRMColors[0])) {
             continue;
         }
-        VVRM[i] = colors[c];
+        VVRM[i] = VRMColors[c];
     }
 }
 

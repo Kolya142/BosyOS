@@ -11,6 +11,7 @@ extern U32 *VVRM;
 extern U8 *VRM;
 extern U8 *VRM1;
 extern U8 GCursor[]; // Graphics Cursor
+extern U32 VRMColors[];
 
 // Vga gRaphics Mode
 

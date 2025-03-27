@@ -28,9 +28,9 @@ else:
     print("invalid brach")
     sys.exit(1)
 
-os.system(f"cp drive release/{branch}/{name}")
-os.system(f"cp drive release/current")
-os.system(f"mv drive release/all/{name}")
+os.system(f"cp grub/bosyos.iso release/{branch}/{name}")
+os.system(f"cp grub/bosyos.iso release/current")
+os.system(f"mv grub/bosyos.iso release/all/{name}")
 os.system("rm kernel.bin kernel/kernel.b initrom kernel/kernel.elf")
 
 import tarfile

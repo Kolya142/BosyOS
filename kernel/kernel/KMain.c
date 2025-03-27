@@ -11,6 +11,7 @@
 #include <drivers/input/keyboard.h>
 #include <drivers/network/rtl8139.h>
 #include <drivers/controllers/usb.h>
+#include <drivers/controllers/ps2.h>
 #include <drivers/serial/serial.h>
 #include <drivers/input/mouse.h>
 #include <drivers/misc/random.h>
@@ -18,7 +19,6 @@
 #include <drivers/video/vga.h>
 #include <drivers/disk/ide.h>
 #include <drivers/time/pit.h>
-#include <drivers/controllers/ps2.h>
 #include <drivers/sys/beep.h>
 #include <drivers/sys/pci.h>
 
@@ -50,6 +50,7 @@
 #include <lib/net/IP.h>
 
 // FileSystem
+#include <fs/eifs/eifs.h>
 #include <fs/iso9660.h>
 #include <fs/minix.h>
 #include <fs/ramfs.h>
@@ -112,10 +113,10 @@ U0 KernelMain(struct MultiBoot *mbi) {
     KDogWatchLog("Initialized \x9Bserial\x9C", False);
 
     U32 ptys = PTYNew(2048, 1, 1);
-    U32 ptyg1 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
-    U32 ptyg2 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
-    U32 ptyg3 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
-    U32 ptyg4 = PTYNew(WIDTH/8*HEIGHT/8*3, WIDTH/8, HEIGHT/8);
+    U32 ptyg1 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
+    U32 ptyg2 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
+    U32 ptyg3 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
+    U32 ptyg4 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
     TTYNew(TTYRenderS, ptys);
     TTYNew(TTYRenderG, ptyg1);
     TTYNew(TTYRenderG, ptyg2);
@@ -211,8 +212,8 @@ U0 KernelMain(struct MultiBoot *mbi) {
     RFSInit();
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
-    // MXInit();
-    // KDogWatchLog("Initialized \"minix fs\"", False);
+    EIFInit();
+    KDogWatchLog("Initialized \"eifs\"", False);
     // DATInit();
     // KDogWatchLog("Initialized \"dat\"", False);
     // BOTFSInit();

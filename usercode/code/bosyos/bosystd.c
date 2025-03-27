@@ -140,6 +140,9 @@ uint32_t strlen(const char *str) {
     }
     return i;
 }
+void memset(void *ptr, int v, int c) {
+    for (;c;--c,++ptr) *((byte_t*)ptr) = v;
+}
 uint32_t strcmp(const char *a, const char *b) {
     while (*b && (*a == *b)) {++a; ++b;}
 

@@ -1,3 +1,4 @@
+#pragma once
 #include "drivers.h"
 #include <stdint.h>
 
@@ -11,36 +12,36 @@ struct time_spec {
     uint32_t sec;
     uint32_t nsec;
 };
-typedef struct piel_canvas {
-    uint8_t *arr;
-    uint32_t rwidth;
-    uint32_t width;
-    uint32_t height;
-} piel_canvas;
+// typedef struct piel_canvas {
+//     uint8_t *arr;
+//     uint32_t rwidth;
+//     uint32_t width;
+//     uint32_t height;
+// } piel_canvas;
 
-typedef struct kws_input {
-    int mousex;
-    int mousey;
-    char mouse_left;
-    char mouse_right;
-    char mouse_middle;
-    char mouse_down[3];
-    char key_down[256];
-    char key_pressed[256];
-} kws_input;
+// typedef struct kws_input {
+//     int mousex;
+//     int mousey;
+//     char mouse_left;
+//     char mouse_right;
+//     char mouse_middle;
+//     char mouse_down[3];
+//     char key_down[256];
+//     char key_pressed[256];
+// } kws_input;
 
-typedef struct win
-{
-    char title[16];
-    uint32_t x;
-    uint32_t y;
-    uint32_t w;
-    uint32_t h;
-    uint16_t flags;
-    piel_canvas canvas;
-    void(*update)(void *this);
-    kws_input inp;
-} win;
+// typedef struct win
+// {
+//     char title[16];
+//     uint32_t x;
+//     uint32_t y;
+//     uint32_t w;
+//     uint32_t h;
+//     uint16_t flags;
+//     piel_canvas canvas;
+//     void(*update)(void *this);
+//     kws_input inp;
+// } win;
 
 #define FS_DEV 0x40000000
 #define FS_REG 0x20000000
@@ -74,6 +75,7 @@ void draw_win(int x, int y, int w, int h, const char *title, char *buf);
 uint32_t syscall(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f, uint32_t g);
 
 uint32_t strlen(const char *str);
+void memset(void *ptr, int v, int c);
 uint32_t strcmp(const char *a, const char *b);
 void printf(const char *fmt, ...);
 

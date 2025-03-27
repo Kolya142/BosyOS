@@ -1,5 +1,6 @@
 #include <drivers/misc/random.h>
 #include <lib/graphics/Graphics.h>
+#include <drivers/input/keyboard.h>
 #include <drivers/sys/beep.h>
 #include <lib/IO/TTY.h>
 #include <fs/vfs.h>
@@ -62,6 +63,22 @@ static U32 SPCWrite(String, Ptr buf, U32 offset, U32 count) {
     return 4;
 }
 
+static U32 COLWrite(String, Ptr buf, U32 offset, U32 count) {
+    if (count != 4*16) {
+        return 0;
+    }
+    MemCpy(VRMColors, buf, 4*16);
+    return 4*16;
+}
+
+static U32 KBDRead(String, Ptr buf, U32 offset, U32 count) {
+    if (count != 256) {
+        return 0;
+    }
+    MemCpy(buf, KBState.keys, 256);
+    return 256;
+}
+
 U0 VFilesInit() {
     VFSDirMk("/dev", Null);
     VFSMount("/dev/urandom", URandom, NullF, Null);
@@ -70,4 +87,6 @@ U0 VFilesInit() {
     VFSMount("/dev/zeros", Zeros, NullF, Null);
     VFSMount("/dev/mem", MemRead, MemWrite, Null);
     VFSMount("/dev/spc", NullF, SPCWrite, Null);
+    VFSMount("/dev/color", NullF, COLWrite, Null);
+    VFSMount("/dev/keyboard", KBDRead, NullF, Null);
 }

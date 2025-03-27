@@ -161,11 +161,11 @@ void shell(char *buf) {
                 tone += (rand % 40) - 20;
                 fuzz += (rand % 40) - 20;
                 tone = (tone * 7 + fuzz) / 8;
-                if (tone < 30) {
-                    tone = 30;
+                if (tone < 20) {
+                    tone = 20;
                 }
-                if (tone > 100) {
-                    tone = 100;
+                if (tone > 60) {
+                    tone = 60;
                 }
                 {
                     short t[] = {tone, (rand % 30) + 50};
@@ -174,21 +174,21 @@ void shell(char *buf) {
                 if (!((rand + t) % 6) && (tempi+1) < sizeof(temp) / 4) {
                     read(rand, (byte_t*)&r, 4);
                     {
-                        short t[] = {tone + 10, (rand % 30) + 50};
+                        short t[] = {tone += 10, (rand % 30) + 50};
                         temp[tempi++] = (t[0] << 16) | t[1];
                     }
                 }
                 if (((rand + t) % 10 < 3) && (tempi+1) < sizeof(temp) / 4) {
                     read(rand, (byte_t*)&r, 4);
                     {
-                        short t[] = {tone - 10, (rand % 30) + 50};
+                        short t[] = {tone -= 10, (rand % 30) + 50};
                         temp[tempi++] = (t[0] << 16) | t[1];
                     }
                 }
                 if (((rand + t) % 10 < 7) && (tempi+1) < sizeof(temp) / 4) {
                     read(rand, (byte_t*)&r, 4);
                     {
-                        short t[] = {tone + 5, (rand % 30) + 50};
+                        short t[] = {tone += 5, (rand % 30) + 50};
                         temp[tempi++] = (t[0] << 16) | t[1];
                     }
                 }
@@ -200,7 +200,7 @@ void shell(char *buf) {
                 printf("%c%c ", 'A' + (tone / 4), ".,#%"[tone % 4]);
                 printf("%d %d\n", temp[i] & 0xFFFF);
                 write(speaker, (byte_t*)&temp[i], 4);
-                sleep((r % 50) + 30);
+                sleep((r % 50) + 50);
             }
             close(speaker);
         }

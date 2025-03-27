@@ -8,7 +8,7 @@ typedef struct IDEAsk {
     U8 end;
 } IDEAsk;
 
-U0 ATARead(Ptr buf, U32 start, U8 count);
-U0 ATAWrite(Ptr buf, U32 start, U8 count);
+U0 ATARead(Bool slave, Ptr buf, U32 start, U8 count);
+U0 ATAWrite(Bool slave, Ptr buf, U32 start, U8 count);
 
 U0 IDEInit();

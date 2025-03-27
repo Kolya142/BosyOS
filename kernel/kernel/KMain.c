@@ -52,7 +52,6 @@
 // FileSystem
 #include <fs/eifs/eifs.h>
 #include <fs/iso9660.h>
-#include <fs/minix.h>
 #include <fs/ramfs.h>
 #include <fs/romfs.h>
 #include <fs/vfs.h>
@@ -206,7 +205,7 @@ U0 KernelMain(struct MultiBoot *mbi) {
         KPanic("Cannot get initrom.", False);
     }
     // return;
-    ATARead((Ptr)0x200000, initrom->extent_lba_le * 4, (initrom->data_length_le + 511) / 512);
+    ATARead(0, (Ptr)0x200000, initrom->extent_lba_le * 4, (initrom->data_length_le + 511) / 512);
     ROFSInit((Ptr)0x200000);
     KDogWatchLog("Initialized \x9Bromfs\x9C", False);
     RFSInit();

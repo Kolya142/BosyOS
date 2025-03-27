@@ -4,8 +4,8 @@
 #include <lib/time/Time.h>
 #include <lib/IO/TTY.h>
 
-U0 ATARead(Ptr buf, U32 start, U8 count) {
-    POut(0x01F6, 0xE0 | ((start >> 24) & 15));
+U0 ATARead(Bool slave, Ptr buf, U32 start, U8 count) {
+    POut(0x01F6, (slave ? 0xF0 : 0xE0) | ((start >> 24) & 15));
     POut(0x01F2, count);
     POut(0x01F3, start & 0xff);
     POut(0x01F4, (start >> 8) & 0xff);
@@ -36,8 +36,8 @@ U0 ATARead(Ptr buf, U32 start, U8 count) {
         }
     }
 }
-U0 ATAWrite(Ptr buf, U32 start, U8 count) {
-    POut(0x01F6, 0xE0 | ((start >> 24) & 15));
+U0 ATAWrite(Bool slave, Ptr buf, U32 start, U8 count) {
+    POut(0x01F6, (slave ? 0xF0 : 0xE0) | ((start >> 24) & 15));
     POut(0x01F2, count);
     POut(0x01F3, start & 0xFF);
     POut(0x01F4, (start >> 8) & 0xFF);
@@ -69,10 +69,10 @@ U0 ATAWrite(Ptr buf, U32 start, U8 count) {
 static U0 IDEDriverHandler(U32 id, U32 *value) {
     IDEAsk *ask = (IDEAsk*)(value);
     if (id == 0) {
-        ATARead(ask->buf, ask->start, ask->end);
+        ATARead(0, ask->buf, ask->start, ask->end);
     }
     else if (id == 1) {
-        ATAWrite(ask->buf, ask->start, ask->end);
+        ATAWrite(0, ask->buf, ask->start, ask->end);
     }
 }
 

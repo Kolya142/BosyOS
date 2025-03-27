@@ -34,9 +34,9 @@ compile:
 	# dd if=initrom of=drive bs=512 seek=291 conv=notrunc
 
 make_drive:
-	rm drive
-	truncate -s 8192 drive
-	cp drive grub/iso/drive
+	rm /tmp/bosyos.drive || echo Creating new drive 
+	truncate -s 2M /tmp/bosyos.drive
+	cp /tmp/bosyos.drive grub/iso/drive
 
 QEMU=qemu-system-i386
 QEMU_DRIVE=-hda grub/bosyos.iso

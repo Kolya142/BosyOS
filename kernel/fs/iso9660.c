@@ -9,10 +9,10 @@ static U8 dir[2048];
 
 U0 ISO9660Init() {
     U8 iso[2048];
-    ATARead(iso, 16 * 4, 4);
+    ATARead(0, iso, 16 * 4, 4);
     root_dir_lba = *(U32*)(iso + 156 + 2);
     root_dir_size = *(U32*)(iso + 156 + 10);
-    ATARead(dir, root_dir_lba * 4, 4);
+    ATARead(0, dir, root_dir_lba * 4, 4);
 }
 ISO9660DirEntry *ISO9660Get(String name) {
     U32 s = StrLen(name);

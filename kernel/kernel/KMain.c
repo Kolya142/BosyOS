@@ -294,10 +294,12 @@ U0 mainloop() {
         MemSet(inp, 0, 512);
         KBRead(inp, 512);
         List compiled = Compiler(inp);
-        U32(*entry)() = compiled.arr;
-        U32 res = entry();
-        ListDestroy(&compiled);
-        PrintF("Result: %p\n", res);
+        if (compiled.count) {
+            U32(*entry)() = compiled.arr;
+            U32 res = entry();
+            ListDestroy(&compiled);
+            PrintF("Result: %p\n", res);
+        }
         PrintF("$!A\\$$!F ");
     }
     // {

@@ -7,7 +7,36 @@ List CompilerFunctions;
 U0 CompilerEmit(U8 code) {
     ListAppend(&CompilerOutput, &code);
 }
-static U8 reg_from_name(String name) {
+String RegName(U8 reg) {
+    switch (reg) {
+        case ASM_REG_EAX: {
+            return "EAX";
+        } break;
+        case ASM_REG_EBX: {
+            return "EBX";
+        } break;
+        case ASM_REG_ECX: {
+            return "ECX";
+        } break;
+        case ASM_REG_EDX: {
+            return "EDX";
+        } break;
+        case ASM_REG_ESI: {
+            return "ESI";
+        } break;
+        case ASM_REG_EDI: {
+            return "EDI";
+        } break;
+        case ASM_REG_ESP: {
+            return "ESP";
+        } break;
+        case ASM_REG_EBP: {
+            return "EBP";
+        } break;
+    }
+    return "INV";
+}
+U8 RegFromName(String name) {
     if (!StrCmp(name, "eax")) {
         return ASM_REG_EAX;
     }
@@ -48,10 +77,10 @@ List Compiler(String code) {
     U32 s = 0;
     U32 sym = 0;
     U32 enter = 0;
-    PrintF("Compiling at %p...\n", eip);
+    PrintF("$!BCompiling at %p...$!F\n", eip);
     NEXTTOK
     for (;a;) {
-        PrintF("Tok (%s); EIP (%p)\n\n", tok.str, eip + CompilerOutput.count);
+        PrintF("$!ATok (%s); EIP (%p)$!F\n\n", tok.str, eip + CompilerOutput.count);
         if (!StrCmp(tok.str, "def")) {
             NEXTTOK
             CompilerFunction *funcs = CompilerFunctions.arr;
@@ -70,7 +99,7 @@ List Compiler(String code) {
                 MemSet(func.name, 0, 32);
                 StrCpy(func.name, tok.str);
                 ListAppend(&CompilerFunctions, &func);
-                PrintF("Function %s at %p\n", tok.str, funcs[CompilerFunctions.count - 1].code.arr);
+                PrintF("$!CFunction %s at %p$!F\n", tok.str, funcs[CompilerFunctions.count - 1].code.arr);
             }
             U32 enter1 = 0;
             do {
@@ -103,7 +132,7 @@ List Compiler(String code) {
                     founded = True;
                     break;
                 }
-                PrintF("function \"%s\"\n", funcs[i].name);
+                PrintF("$!Cfunction \"%s\"$!F\n", funcs[i].name);
             }
             if (!founded) {
                 PrintF("Failed to found function \"%s\"\n", tok.str);
@@ -115,7 +144,7 @@ List Compiler(String code) {
         }
         else if (!StrCmp(tok.str, "let")) {
             NEXTTOK
-            U8 r1 = reg_from_name(tok.str);
+            U8 r1 = RegFromName(tok.str);
             if (r1 == 0xFF) {
                 PrintF("Invalid Register Name %s\n", tok.str);
                 ListDestroy(&CompilerOutput);
@@ -124,7 +153,7 @@ List Compiler(String code) {
                 };
             }
             NEXTTOK
-            U8 r2 = reg_from_name(tok.str);
+            U8 r2 = RegFromName(tok.str);
             if (r2 == 0xFF) {
                 ASMInstMovIMM2Reg32(r1, Atoi(tok.str));
             }
@@ -132,15 +161,16 @@ List Compiler(String code) {
                 ASMInstMovReg2Reg32(r1, r2);
             }
         }
+        else if (!StrCmp(tok.str, "expr")) {
+            code += CompilerExpr(code);
+        }
         else if (!StrCmp(tok.str, "uf")) {
             NEXTTOK
             CompilerFunction *funcs = CompilerFunctions.arr;
             for (U32 i = 0; i < CompilerFunctions.count; ++i) {
                 if (!StrCmp(funcs[i].name, tok.str)) {
-                    PrintF("UF %s at %p:\n    ", tok.str, funcs[i].code.arr);
-                    for (U32 i = 0; i < funcs->code.count; ++i) {
-                        PrintF("%1X ", ((U8*)funcs->code.arr)[i]);
-                    }
+                    PrintF("UF %s at %p:\n", tok.str, funcs[i].code.arr);
+                    ASMDis(funcs[i].code.arr, funcs[i].code.count);
                     PrintF("\n");
                     break;
                 }
@@ -148,7 +178,7 @@ List Compiler(String code) {
         }
         else if (!StrCmp(tok.str, "return")) {
             NEXTTOK
-            U8 reg = reg_from_name(tok.str);
+            U8 reg = RegFromName(tok.str);
             if (reg == 0xFF) {
                 ASMInstMovIMM2Reg32(ASM_REG_EAX, Atoi(tok.str));
             }
@@ -168,9 +198,6 @@ List Compiler(String code) {
     }
     
     CompilerEmit(0xC3);
-    for (U32 i = 0; i < CompilerOutput.count; ++i) {
-        PrintF("%1X ", ((U8*)CompilerOutput.arr)[i]);
-    }
     PrintF("\n");
     List curr_output = CompilerOutput;
     CompilerOutput = prev_output;

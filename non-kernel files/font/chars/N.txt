@@ -1,8 +1,8 @@
+........
+........
 aa....aa
 aaaa..aa
 aaaa..aa
-aaaa..aa
-aa..aaaa
 aa..aaaa
 aa..aaaa
 aa....aa

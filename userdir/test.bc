@@ -1,5 +1,5 @@
 def Main {
-    return 9
+    expr 5 + 5
 }
 uf Main
 run Main

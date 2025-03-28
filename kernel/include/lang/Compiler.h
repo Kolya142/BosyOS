@@ -5,19 +5,25 @@
 
 #define NEXTTOK {    do { a = TokenNext(code, &tok); code += a; sym += a;} while (!*tok.str && a);}
 
+// Read more: https://github.com/cia-foundation/TempleOS/blob/archive/Compiler/OpCodes.DD#L215
 typedef enum ASMInst {
-    ASM_ADD  = 0x00,
-    ASM_OR   = 0x08,
-    ASM_AND  = 0x20,
-    ASM_MOV  = 0x22,
-    ASM_SUB  = 0x28,
-    ASM_XOR  = 0x30,
-    ASM_CMP  = 0x3C,
-    ASM_IMUL = 0xAF,
-    ASM_IN   = 0xE4,
-    ASM_OUT  = 0xE6,
-    ASM_NOT  = 0xF6,
-    ASM_IDIV = 0xF7,
+    ASM_ADD  = 0x01, // /R RM R
+    ASM_OR   = 0x09, // /R RM R
+    ASM_AND  = 0x21, // /R RM R
+    ASM_SUB  = 0x29, // /R RM R
+    ASM_XOR  = 0x31, // /R RM R
+    ASM_CMP  = 0x39, // /R RM R
+
+    ASM_MOV_R2R = 0x89, // /R RM R
+    ASM_MOV_RR  = 0x8B, // /R IMM
+    ASM_MOV_IMM = 0xB8, // +R IMM
+
+    // ASM_IMUL = 0xAF,
+    ASM_NOT  = 0xF7, // /2 RM
+    // ASM_IDIV = 0xF7,
+
+    ASM_IN   = 0xE4, // AL IMM8
+    ASM_OUT  = 0xE6, // IMM8 AL
 } ASMInst;
 
 #define ASM_REG_AL  0
@@ -56,14 +62,20 @@ U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 pref, U8 modrm, U8 sib, U32 d
 U0 CompilerEmit(U8 code);
 
 U0 CompilerInit();
-
 List Compiler(String code);
 
+U32 CompilerExpr(String code);
+
+String RegName(U8 reg);
+U8 RegFromName(String name);
+
+U0 ASMDis(U8* code, U32 count);
 
 
 U0 ASMInstMovReg2Reg32(U8 dst, U8 src);
 U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm);
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src);
+U0 ASMInstSubReg2Reg32(U8 dst, U8 src);
 U0 ASMInstXorReg2Reg32(U8 dst, U8 src);
 U0 ASMInstOrReg2Reg32(U8 dst, U8 src);
 U0 ASMInstAndReg2Reg32(U8 dst, U8 src);

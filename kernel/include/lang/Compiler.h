@@ -3,7 +3,7 @@
 #include <lang/Tokenizer.h>
 #include <lib/Types.h>
 
-#define NEXTTOK {    do { a = TokenNext(code, &tok); code += a; sym += a;} while (!*tok.str && a);}
+#define NEXTTOK {do { a = TokenNext(code, &tok); code += a; sym += a;} while (!*tok.str && a);}
 
 // Read more: https://github.com/cia-foundation/TempleOS/blob/archive/Compiler/OpCodes.DD#L215
 typedef enum ASMInst {
@@ -18,12 +18,20 @@ typedef enum ASMInst {
     ASM_MOV_RR  = 0x8B, // /R IMM
     ASM_MOV_IMM = 0xB8, // +R IMM
 
-    // ASM_IMUL = 0xAF,
+    ASM_IMUL = 0xAF, // /R R RM
     ASM_NOT  = 0xF7, // /2 RM
-    // ASM_IDIV = 0xF7,
+    ASM_IDIV = 0xF7, // /7 32 RM
 
     ASM_IN   = 0xE4, // AL IMM8
     ASM_OUT  = 0xE6, // IMM8 AL
+
+    ASM_JE   = 0x84,
+    ASM_JNE  = 0x85,
+    ASM_JBE  = 0x86,
+    ASM_JP   = 0x8A,
+    ASM_JNP  = 0x8B,
+    ASM_JL   = 0x8C,
+    ASM_JLE  = 0x8E,
 } ASMInst;
 
 #define ASM_REG_AL  0
@@ -57,7 +65,7 @@ typedef struct CompilerFunction {
 } CompilerFunction;
 
 // (1<<0) - modrm, (1<<1) - sib, (1<<2) - disp, (1<<3) - imm
-U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 pref, U8 modrm, U8 sib, U32 disp, U32 imm);
+U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 modrm, U8 sib, U32 disp, U32 imm);
 
 U0 CompilerEmit(U8 code);
 
@@ -71,10 +79,21 @@ U8 RegFromName(String name);
 
 U0 ASMDis(U8* code, U32 count);
 
+#define ASMInstJeIMM32(offset)  ASMInstJccIMM32(ASM_JE,  offset)
+#define ASMInstJneIMM32(offset) ASMInstJccIMM32(ASM_JNE, offset)
+#define ASMInstJbeIMM32(offset) ASMInstJccIMM32(ASM_JBE, offset)
+#define ASMInstJpIMM32(offset)  ASMInstJccIMM32(ASM_JP,  offset)
+#define ASMInstJnpIMM32(offset) ASMInstJccIMM32(ASM_JNP, offset)
+#define ASMInstJlIMM32(offset)  ASMInstJccIMM32(ASM_JL,  offset)
+#define ASMInstJleIMM32(offset) ASMInstJccIMM32(ASM_JLE, offset)
 
 U0 ASMInstMovReg2Reg32(U8 dst, U8 src);
 U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm);
+U0 ASMInstMovReg2Mem32(U8 dst, U8 src);
+
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src);
+U0 ASMInstIMulReg2Reg32(U8 dst, U8 src);
+U0 ASMInstJccIMM32(U8 opcode, I32 offset);
 U0 ASMInstSubReg2Reg32(U8 dst, U8 src);
 U0 ASMInstXorReg2Reg32(U8 dst, U8 src);
 U0 ASMInstOrReg2Reg32(U8 dst, U8 src);

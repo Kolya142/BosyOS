@@ -25,7 +25,7 @@ U32 CompilerExpr(String code) {
             case 1: {
                 e = tok.str[0];
                 s = 2;
-                if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|') {
+                if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*') {
                     sym -= StrLen(tok.str);
                     cont = False;
                 }
@@ -45,6 +45,9 @@ U32 CompilerExpr(String code) {
                     case '+': {
                         ASMInstAddReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
                     } break;
+                    case '*': {
+                        ASMInstIMulReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
+                    } break;
                     case '&': {
                         ASMInstAndReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
                     } break;
@@ -62,6 +65,5 @@ U32 CompilerExpr(String code) {
             NEXTTOK
         }
     }
-    ASMInstMovReg2Reg32(ASM_REG_EAX, ASM_REG_EBX);
     return sym;
 }

@@ -1,5 +1,13 @@
-def Main {
-    expr 5 + 5
+fn Stmt {
+    eax 0;
+    if esi > edi {
+        eax 1;
+    }
 }
-uf Main
-run Main
+fn Mem {
+    Comment "FIXME"
+    ecx 35000;
+    @ecx 825373492;
+}
+Uf Stmt
+Uf Mem

@@ -1,11 +1,11 @@
 #include <lang/Compiler.h>
 #include <lib/IO/TTY.h>
 
-U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 pref, U8 modrm, U8 sib, U32 disp, U32 imm) {
+U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 modrm, U8 sib, U32 disp, U32 imm) {
     if (stmode) {
         CompilerEmit(0x66);
     }
-    CompilerEmit(inst | pref);
+    CompilerEmit(inst);
     if (uses & 1) {
         CompilerEmit(modrm);
     }
@@ -27,6 +27,11 @@ U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 pref, U8 modrm, U8 sib, U32 d
 }
 
 U0 ASMDis(U8* code, U32 count) {
+    for (U32 i = 0; i < count; ++i) {
+        U8 byte = code[i];
+        PrintF("$!E0x%1X$!F ", byte);
+    }
+    PrintF("\n");
     for (U32 i = 0; i < count;) {
         U8 byte = code[i];
         PrintF("$!7%p$!F: $!E0x%1X$!F ", code + i, byte);
@@ -70,7 +75,7 @@ U0 ASMDis(U8* code, U32 count) {
                 i += 5;
             } break;
 
-            case 0xFF: {
+            case 0xFF: { // call r32
                 U8 modrm = code[i + 1];
                 U8 reg = (modrm >> 3) & 7;
                 U8 rm = modrm & 7;
@@ -96,7 +101,7 @@ U0 ASMDis(U8* code, U32 count) {
 }
 
 U0 ASMInstMovReg2Reg32(U8 dst, U8 src) {
-    ASMInstMake32(0, 1, ASM_MOV_R2R, 0b00, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+    ASMInstMake32(0, 1, ASM_MOV_R2R, 0b11000000 | (src << 3) | dst, 0, 0, 0);
 }
 U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm) {
     CompilerEmit(ASM_MOV_IMM + dst);
@@ -105,31 +110,46 @@ U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm) {
     CompilerEmit((imm >> 16) & 0xFF);
     CompilerEmit((imm >> 24) & 0xFF);
 }
+U0 ASMInstMovReg2Mem32(U8 dst, U8 src) {
+    ASMInstMake32(0, 1, ASM_MOV_R2R, 0b00000000 | (src << 3) | dst, 0, 0, 0);
+}
 
 
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src) {
-    ASMInstMake32(0, 1, ASM_ADD, 0b00, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+    ASMInstMake32(0, 1, ASM_ADD, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+}
+U0 ASMInstIMulReg2Reg32(U8 dst, U8 src) {
+    CompilerEmit(0x0F);
+    ASMInstMake32(0, 1, ASM_IMUL, 0b11000000 | (dst << 3) | src, 0, 0, 0);
 }
 U0 ASMInstSubReg2Reg32(U8 dst, U8 src) {
-    ASMInstMake32(0, 1, ASM_SUB, 0b00, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+    ASMInstMake32(0, 1, ASM_SUB, 0b11000000 | (src << 3) | dst, 0, 0, 0);
 }
 U0 ASMInstXorReg2Reg32(U8 dst, U8 src) {
-    ASMInstMake32(0, 1, ASM_XOR, 0b00, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+    ASMInstMake32(0, 1, ASM_XOR, 0b11000000 | (src << 3) | dst, 0, 0, 0);
 }
 U0 ASMInstOrReg2Reg32(U8 dst, U8 src) {
-    ASMInstMake32(0, 1, ASM_OR, 0b00, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+    ASMInstMake32(0, 1, ASM_OR, 0b11000000 | (src << 3) | dst, 0, 0, 0);
 }
 U0 ASMInstAndReg2Reg32(U8 dst, U8 src) {
-    ASMInstMake32(0, 1, ASM_AND, 0b00, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+    ASMInstMake32(0, 1, ASM_AND, 0b11000000 | (src << 3) | dst, 0, 0, 0);
 }
 U0 ASMInstNotReg2Reg32(U8 reg) {
-    ASMInstMake32(0, 1, ASM_NOT, 0b00, 0b11010000 | reg, 0, 0, 0);
+    ASMInstMake32(0, 1, ASM_NOT, 0b11010000 | reg, 0, 0, 0);
+}
+U0 ASMInstJccIMM32(U8 opcode, I32 offset) {
+    CompilerEmit(0x0F);
+    CompilerEmit(opcode);
+    CompilerEmit((offset >> 0) & 0xFF);
+    CompilerEmit((offset >> 8) & 0xFF);
+    CompilerEmit((offset >> 16) & 0xFF);
+    CompilerEmit((offset >> 24) & 0xFF);
 }
 U0 ASMInstCmpReg2Reg32(U8 r1, U8 r2) {
-    ASMInstMake32(0, 1, 0x3B, 0b00, 0b11000000 | (r2 << 3) | r1, 0, 0, 0);
+    ASMInstMake32(0, 1, 0x3B, 0b11000000 | (r2 << 3) | r1, 0, 0, 0);
 }
 U0 ASMInstCmpImm2Reg32(U8 reg, U32 imm) {
-    ASMInstMake32(0, 1 | 8, 0x81, 0b00, 0b11111000 | reg, 0, 0, imm);
+    ASMInstMake32(0, 1 | 8, 0x81, 0b11111000 | reg, 0, 0, imm);
 }
 U0 ASMInstCallIMM32(I32 offset) {
     CompilerEmit(0xE8);

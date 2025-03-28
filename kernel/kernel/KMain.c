@@ -32,6 +32,7 @@
 
 // Lang
 #include <lang/Tokenizer.h>
+#include <lang/Compiler.h>
 
 // KWS
 #include <kws/win.h>
@@ -110,6 +111,8 @@ U0 KernelMain(struct MultiBoot *mbi) {
 
     SerialInit();
     KDogWatchLog("Initialized \x9Bserial\x9C", False);
+    CompilerInit();
+    KDogWatchLog("Initialized \x9Bcompiler\x9C", False);
 
     U32 ptys = PTYNew(2048, 1, 1);
     U32 ptyg1 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
@@ -265,41 +268,64 @@ static U0 ring3() {
 }
 
 U0 mainloop() {
-    for (U32 t = 0; t < TTYs.count; ++t) {
-        TTYCurrent = t;
-        PrintF("Terminal %d\n", t);
-    }
     TTYSwitch(0);
     // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
     // win.update = TimeUpd;
     // WinSpawn(&win);
-
-    {
-        // VFSReadDir("/", lsfn);
-        U8 buf[16] = {0};
-        U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
-        
-        SerialPrintF("Readed %d entropy bytes: ", readed);
-        for (U32 i = 0; i < readed; ++i) {
-            SerialPrintF("%1X ", buf[i]);
-        }
-        SerialPrintF("");
-    }
-
-    VFSReadDir("/", lsfn);
-    PrintF("\n");
-    VFSReadDir("/etc", lsfn);
-
     VFSStat stat = {0};
-    VFSLStat("/bin/init.elf", &stat);
+    VFSLStat("test.bc", &stat);
     U8 *buf = MAlloc(stat.size);
-    VFSRead("/bin/init.elf", buf, 0, stat.size);
-    SerialPrintF("Starting program %x %d\n", *(U32*)(buf), stat.size);
+    VFSRead("test.bc", buf, 0, stat.size);
 
-    TTYCurrent = 1;
-    ELFLoad(buf);
-    // BsfExec(&app, 0, 1);
+    List compiled = Compiler(buf);
+    U32(*entry)() = compiled.arr;
+    PrintF("Compiled\n");
+    PrintF("\nRunning\n");
+    U32 res = entry();
+    PrintF("Result: %p\n", res);
     MFree(buf);
+    ListDestroy(&compiled);
 
-    RingSwitch(ring3, (Ptr)0x3000);
+    // MFree(buf);
+
+    U8 inp[512];
+    PrintF("$!A\\$$!F ");
+    for (;;) {
+        MemSet(inp, 0, 512);
+        KBRead(inp, 512);
+        List compiled = Compiler(inp);
+        U32(*entry)() = compiled.arr;
+        U32 res = entry();
+        ListDestroy(&compiled);
+        PrintF("Result: %p\n", res);
+        PrintF("$!A\\$$!F ");
+    }
+    // {
+    //     // VFSReadDir("/", lsfn);
+    //     U8 buf[16] = {0};
+    //     U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
+        
+    //     SerialPrintF("Readed %d entropy bytes: ", readed);
+    //     for (U32 i = 0; i < readed; ++i) {
+    //         SerialPrintF("%1X ", buf[i]);
+    //     }
+    //     SerialPrintF("");
+    // }
+
+    // VFSReadDir("/", lsfn);
+    // PrintF("\n");
+    // VFSReadDir("/etc", lsfn);
+
+    // VFSStat stat = {0};
+    // VFSLStat("/bin/init.elf", &stat);
+    // U8 *buf = MAlloc(stat.size);
+    // VFSRead("/bin/init.elf", buf, 0, stat.size);
+    // SerialPrintF("Starting program %x %d\n", *(U32*)(buf), stat.size);
+
+    // TTYCurrent = 1;
+    // ELFLoad(buf);
+    // // BsfExec(&app, 0, 1);
+    // MFree(buf);
+
+    // RingSwitch(ring3, (Ptr)0x3000);
 }

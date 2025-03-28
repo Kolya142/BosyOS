@@ -81,7 +81,7 @@ U32 Atoi(String a) {
     while (*a) {
         if (*a >= '0' && *a <= '9') {
             U8 n = *a-'0';
-            v = (v+n)/10;
+            v = (v * 10) + n;
         }
         ++a;
     }

@@ -1,0 +1,5 @@
+def Main {
+    return 9
+}
+uf Main
+run Main

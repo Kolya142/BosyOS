@@ -29,6 +29,10 @@ U32 TokenNext(String str, Token *tok) {
                 ++pos;
                 break;
             }
+            else if (*str == '\n') {
+                ++pos;
+                break;
+            }
             else {
                 tok->type = TOK_WORD;
             }
@@ -39,7 +43,7 @@ U32 TokenNext(String str, Token *tok) {
         else {
             if ((*str == ' ') || (*str == '\n') || (*str == '\r') || (*str == '\t')) {
                 ++pos;
-                break; 
+                break;
             }
             if ((tok->type == TOK_NUMBER) && (*str < '0' || *str > '9')) {
                 break;

@@ -272,6 +272,7 @@ U0 mainloop() {
     // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
     // win.update = TimeUpd;
     // WinSpawn(&win);
+
     VFSStat stat = {0};
     VFSLStat("test.bc", &stat);
     U8 *buf = MAlloc(stat.size);
@@ -302,17 +303,17 @@ U0 mainloop() {
         }
         PrintF("$!A\\$$!F ");
     }
-    // {
-    //     // VFSReadDir("/", lsfn);
-    //     U8 buf[16] = {0};
-    //     U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
+    {
+        // VFSReadDir("/", lsfn);
+        U8 buf[16] = {0};
+        U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
         
-    //     SerialPrintF("Readed %d entropy bytes: ", readed);
-    //     for (U32 i = 0; i < readed; ++i) {
-    //         SerialPrintF("%1X ", buf[i]);
-    //     }
-    //     SerialPrintF("");
-    // }
+        SerialPrintF("Readed %d entropy bytes: ", readed);
+        for (U32 i = 0; i < readed; ++i) {
+            SerialPrintF("%1X ", buf[i]);
+        }
+        SerialPrintF("");
+    }
 
     // VFSReadDir("/", lsfn);
     // PrintF("\n");

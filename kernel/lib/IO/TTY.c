@@ -250,6 +250,6 @@ U0 SerialPrintF(String format, ...) {
     va_list args;
     va_start(args, format);
     VPrintF(0, format, args);
-    TTYUPrintC(0, '\n');
+    // TTYUPrintC(0, '\n');
     va_end(args);
 }

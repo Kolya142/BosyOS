@@ -29,19 +29,19 @@ U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 modrm, U8 sib, U32 disp, U32 
 U0 ASMDis(U8* code, U32 count) {
     for (U32 i = 0; i < count; ++i) {
         U8 byte = code[i];
-        PrintF("$!E0x%1X$!F ", byte);
+        SerialPrintF("%1X ", byte);
     }
-    PrintF("\n");
+    SerialPrintF("\n");
     for (U32 i = 0; i < count;) {
         U8 byte = code[i];
-        PrintF("$!7%p$!F: $!E0x%1X$!F ", code + i, byte);
+        SerialPrintF("$!7%p$!F: $!E0x%1X$!F ", code + i, byte);
 
         switch (byte) {
             case 0x01: { // ADD r/m32, r32
                 U8 modrm = code[i + 1];
                 U8 dst = modrm & 7;
                 U8 src = (modrm >> 3) & 7;
-                PrintF("ADD   $!A%s$!F, $!B%s$!F\n", RegName(dst), RegName(src));
+                SerialPrintF("ADD   $!A%s$!F, $!B%s$!F\n", RegName(dst), RegName(src));
                 i += 2;
             } break;
 
@@ -49,7 +49,7 @@ U0 ASMDis(U8* code, U32 count) {
                 U8 modrm = code[i + 1];
                 U8 dst = modrm & 7;
                 U8 src = (modrm >> 3) & 7;
-                PrintF("SUB   $!A%s$!F, $!B%s$!F\n", RegName(dst), RegName(src));
+                SerialPrintF("SUB   $!A%s$!F, $!B%s$!F\n", RegName(dst), RegName(src));
                 i += 2;
             } break;
 
@@ -58,7 +58,7 @@ U0 ASMDis(U8* code, U32 count) {
                 U8 dst = (modrm >> 3) & 7;
                 U8 src = modrm & 7;
                 if (src != 0b100 || code[i + 2] == 0x24) {
-                    PrintF("MOV   $!A%s$!F, $!B[%s]$!F\n", RegName(dst), RegName(src));
+                    SerialPrintF("MOV   $!A%s$!F, $!B[%s]$!F\n", RegName(dst), RegName(src));
                     if (code[i + 2] == 0x24) {
                         ++i;
                     }
@@ -68,7 +68,7 @@ U0 ASMDis(U8* code, U32 count) {
                     U8 scale = (sib >> 6) & 3;
                     U8 index = (sib >> 3) & 7;
                     U8 base  = sib & 7;
-                    PrintF("MOV   $!A%s$!F, $!B[%s+%s*%d]\n", RegName(dst), RegName(base), RegName(index), 1 << scale);
+                    SerialPrintF("MOV   $!A%s$!F, $!B[%s+%s*%d]\n", RegName(dst), RegName(base), RegName(index), 1 << scale);
                     ++i;
                 }
                 i += 2;
@@ -77,7 +77,7 @@ U0 ASMDis(U8* code, U32 count) {
             case 0xB8 ... 0xBF: { // mov r32, imm32
                 U8 reg = byte - 0xB8;
                 U32 imm = *(U32*)&code[i + 1];
-                PrintF("MOV   $!A%s$!F, $!B0x%X$!F\n", RegName(reg), imm);
+                SerialPrintF("MOV   $!A%s$!F, $!B0x%X$!F\n", RegName(reg), imm);
                 i += 5;
             } break;
 
@@ -85,14 +85,14 @@ U0 ASMDis(U8* code, U32 count) {
                 U8 modrm = code[i + 1];
                 U8 dst = modrm & 7;
                 U8 src = (modrm >> 3) & 7;
-                PrintF("MOV   $!A%s$!F, $!B%s$!F\n", RegName(dst), RegName(src));
+                SerialPrintF("MOV   $!A%s$!F, $!B%s$!F\n", RegName(dst), RegName(src));
                 i += 2;
             } break;
 
             case 0xE8: { // call rel32
                 I32 rel = *(I32*)&code[i + 1];
                 U8* target = code + i + 5 + rel;
-                PrintF("CALL  $!A%p$!F\n", target);
+                SerialPrintF("CALL  $!A%p$!F\n", target);
                 i += 5;
             } break;
 
@@ -101,20 +101,20 @@ U0 ASMDis(U8* code, U32 count) {
                 U8 reg = (modrm >> 3) & 7;
                 U8 rm = modrm & 7;
                 if (reg == 2) {
-                    PrintF("CALL  $!A%s$!F\n", RegName(rm));
+                    SerialPrintF("CALL  $!A%s$!F\n", RegName(rm));
                 } else {
-                    PrintF("FF    ModRM=0x%1X (unhandled)\n", modrm);
+                    SerialPrintF("FF    ModRM=0x%1X (unhandled)\n", modrm);
                 }
                 i += 2;
             } break;
 
             case 0xC3: {
-                PrintF("RET\n");
+                SerialPrintF("RET\n");
                 i += 1;
             } break;
 
             default: {
-                PrintF("DB    $!A0x%1X$!F\n", byte);
+                SerialPrintF("DB    $!A0x%1X$!F\n", byte);
                 i += 1;
             } break;
         }

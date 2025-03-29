@@ -118,6 +118,9 @@ INT_DEF(PITHandler) {
         //     }
         // }
     }
+    else {
+        TTYFlush(TTYCurrent);
+    }
     Alarm *a = AlarmGet();
     if (a) {
         if (a->time >= PITTime) {

@@ -67,8 +67,8 @@ run:
 		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-reboot --no-shutdown;\
 	fi
 
-all: kernel prog compile run
-allr: kernel prog compile
+all: kernel compile run
+allr: kernel compile
 progc: prog compile
 progrun: progc run
 kernelc: kernel compile

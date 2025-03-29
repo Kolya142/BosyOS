@@ -92,6 +92,19 @@ static CompilerFunction *get_func(String name) {
     return NULL;
 }
 
+U32 CompilerRoDataAdd(String text) {
+    for (U32 i = 0; i < CompilerRoData.count; ++i) {
+        if (!StrCmp(text, ((String*)CompilerRoData.arr)[i])) {
+            return (U32)((String*)CompilerRoData.arr)[i];
+        }
+    }
+    U32 size = StrLen(text);
+    String str = MAlloc(size);
+    MemCpy(str, text, size);
+    ListAppend(&CompilerRoData, &str);
+    return (U32)str;
+}
+
 List Compiler(String code) {
     List prev_output = CompilerOutput;
     CompilerOutput = ListInit(1);
@@ -212,6 +225,16 @@ List Compiler(String code) {
             }
             ASMInstJmpIMM32(-(CompilerOutput.count - start + 5));
             ListDestroy(&block);
+            U32 enter1 = 0;
+            do {
+                NEXTTOK
+                if (!StrCmp(tok.str, "{")) {
+                    ++enter1;
+                }
+                else if (!StrCmp(tok.str, "}")) {
+                    --enter1;
+                }
+            } while (a && enter1);
         }
         else if (!StrCmp(tok.str, "{")) {
             ++enter;

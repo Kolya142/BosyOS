@@ -24,13 +24,9 @@ U32 CompilerExpr(String code) {
                         }
                         ASMInstMovMem2Reg32(ASM_REG_EBX, reg);
                     }
-                    else if (!StrCmp(tok.str, "\"")) { // TODO: check for existing string
+                    else if (!StrCmp(tok.str, "\"")) {
                         NEXTTOK
-                        U32 size = StrLen(tok.str);
-                        String str = MAlloc(size);
-                        MemCpy(str, tok.str, size);
-                        ListAppend(&CompilerRoData, &str);
-                        ASMInstMovIMM2Reg32(ASM_REG_EBX, (U32)str);
+                        ASMInstMovIMM2Reg32(ASM_REG_EBX, CompilerRoDataAdd(tok.str));
                     }
                     else {
                         ASMInstMovIMM2Reg32(ASM_REG_EBX, Atoi(tok.str));
@@ -61,13 +57,9 @@ U32 CompilerExpr(String code) {
                         }
                         ASMInstMovMem2Reg32(ASM_REG_EDX, reg);
                     }
-                    else if (!StrCmp(tok.str, "\"")) { // TODO: check for existing string
+                    else if (!StrCmp(tok.str, "\"")) {
                         NEXTTOK
-                        U32 size = StrLen(tok.str);
-                        String str = MAlloc(size);
-                        MemCpy(str, tok.str, size);
-                        ListAppend(&CompilerRoData, &str);
-                        ASMInstMovIMM2Reg32(ASM_REG_EDX, (U32)str);
+                        ASMInstMovIMM2Reg32(ASM_REG_EDX, CompilerRoDataAdd(tok.str));
                     }
                     else {
                         ASMInstMovIMM2Reg32(ASM_REG_EDX, Atoi(tok.str));

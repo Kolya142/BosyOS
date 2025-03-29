@@ -30,11 +30,15 @@ typedef enum ASMInst {
     ASM_JE   = 0x84,
     ASM_JNE  = 0x85,
     ASM_JBE  = 0x86,
+    ASM_JA   = 0x87,
+    ASM_JL   = 0x8C,
+    ASM_JGE  = 0x8D,
+    ASM_JLE  = 0x8E,
+    ASM_JG   = 0x8F,
     ASM_JP   = 0x8A,
     ASM_JNP  = 0x8B,
-    ASM_JL   = 0x8C,
-    ASM_JLE  = 0x8E,
-    ASM_JMP  = 0xE9
+    ASM_JMP  = 0xE9,
+    
 } ASMInst;
 
 #define ASM_REG_AL  0
@@ -71,6 +75,8 @@ typedef struct CompilerFunction {
 U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 modrm, U8 sib, U32 disp, U32 imm);
 
 U0 CompilerEmit(U8 code);
+
+U32 CompilerRoDataAdd(String text);
 
 U0 CompilerInit();
 List Compiler(String code);

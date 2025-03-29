@@ -15,7 +15,26 @@ U32 CompilerExpr(String code) {
             case 0: {
                 U8 reg = RegFromName(tok.str);
                 if (reg == 0xFF) {
-                    ASMInstMovIMM2Reg32(ASM_REG_EBX, Atoi(tok.str));
+                    if (!StrCmp(tok.str, "@")) {
+                        NEXTTOK
+                        U8 reg = RegFromName(tok.str);
+                        if (reg == 0xFF) {
+                            PrintF("Invalid register in memory access: \"%s\"\n", tok.str);
+                            return 0;
+                        }
+                        ASMInstMovMem2Reg32(ASM_REG_EBX, reg);
+                    }
+                    else if (!StrCmp(tok.str, "\"")) { // TODO: check for existing string
+                        NEXTTOK
+                        U32 size = StrLen(tok.str);
+                        String str = MAlloc(size);
+                        MemCpy(str, tok.str, size);
+                        ListAppend(&CompilerRoData, &str);
+                        ASMInstMovIMM2Reg32(ASM_REG_EBX, (U32)str);
+                    }
+                    else {
+                        ASMInstMovIMM2Reg32(ASM_REG_EBX, Atoi(tok.str));
+                    }
                 }
                 else {
                     ASMInstMovReg2Reg32(ASM_REG_EBX, reg);
@@ -26,14 +45,33 @@ U32 CompilerExpr(String code) {
                 e = tok.str[0];
                 s = 2;
                 if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*') {
-                    sym -= StrLen(tok.str);
+                    // sym -= StrLen(tok.str);
                     cont = False;
                 }
             } break;
             case 2: {
                 U8 reg = RegFromName(tok.str);
                 if (reg == 0xFF) {
-                    ASMInstMovIMM2Reg32(ASM_REG_EDX, Atoi(tok.str));
+                    if (!StrCmp(tok.str, "@")) {
+                        NEXTTOK
+                        U8 reg = RegFromName(tok.str);
+                        if (reg == 0xFF) {
+                            PrintF("Invalid register in memory access: \"%s\"\n", tok.str);
+                            return 0;
+                        }
+                        ASMInstMovMem2Reg32(ASM_REG_EDX, reg);
+                    }
+                    else if (!StrCmp(tok.str, "\"")) { // TODO: check for existing string
+                        NEXTTOK
+                        U32 size = StrLen(tok.str);
+                        String str = MAlloc(size);
+                        MemCpy(str, tok.str, size);
+                        ListAppend(&CompilerRoData, &str);
+                        ASMInstMovIMM2Reg32(ASM_REG_EDX, (U32)str);
+                    }
+                    else {
+                        ASMInstMovIMM2Reg32(ASM_REG_EDX, Atoi(tok.str));
+                    }
                 }
                 else {
                     ASMInstMovReg2Reg32(ASM_REG_EDX, reg);

@@ -3,24 +3,26 @@
 #include <lang/Tokenizer.h>
 #include <lib/Types.h>
 
-#define NEXTTOK {do { a = TokenNext(code, &tok); code += a; sym += a;} while (!*tok.str && a);}
+#define NEXTTOK {do { a = TokenNext(code, &tok); a = tok.type == TOK_STR ? a + 2 : a; code += a; sym += a;} while (!*tok.str && a);}
+
+extern List CompilerRoData;
 
 // Read more: https://github.com/cia-foundation/TempleOS/blob/archive/Compiler/OpCodes.DD#L215
 typedef enum ASMInst {
-    ASM_ADD  = 0x01, // /R RM R
-    ASM_OR   = 0x09, // /R RM R
-    ASM_AND  = 0x21, // /R RM R
-    ASM_SUB  = 0x29, // /R RM R
-    ASM_XOR  = 0x31, // /R RM R
-    ASM_CMP  = 0x39, // /R RM R
+    ASM_ADD  = 0x01, // R/M R
+    ASM_OR   = 0x09, // R/M R
+    ASM_AND  = 0x21, // R/M R
+    ASM_SUB  = 0x29, // R/M R
+    ASM_XOR  = 0x31, // R/M R
+    ASM_CMP  = 0x39, // R/M R
 
-    ASM_MOV_R2R = 0x89, // /R RM R
-    ASM_MOV_RR  = 0x8B, // /R IMM
-    ASM_MOV_IMM = 0xB8, // +R IMM
+    ASM_MOV_R2R = 0x89, // R32 RM R32
+    ASM_MOV_RR  = 0x8B, // R32 R/M32
+    ASM_MOV_IMM = 0xB8, // R32 IMM32
 
-    ASM_IMUL = 0xAF, // /R R RM
-    ASM_NOT  = 0xF7, // /2 RM
-    ASM_IDIV = 0xF7, // /7 32 RM
+    ASM_IMUL = 0xAF, // R32 R/M32
+    ASM_NOT  = 0xF7, // R/M32
+    ASM_IDIV = 0xF7, // EDX R/M32
 
     ASM_IN   = 0xE4, // AL IMM8
     ASM_OUT  = 0xE6, // IMM8 AL
@@ -32,6 +34,7 @@ typedef enum ASMInst {
     ASM_JNP  = 0x8B,
     ASM_JL   = 0x8C,
     ASM_JLE  = 0x8E,
+    ASM_JMP  = 0xE9
 } ASMInst;
 
 #define ASM_REG_AL  0
@@ -90,10 +93,12 @@ U0 ASMDis(U8* code, U32 count);
 U0 ASMInstMovReg2Reg32(U8 dst, U8 src);
 U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm);
 U0 ASMInstMovReg2Mem32(U8 dst, U8 src);
+U0 ASMInstMovMem2Reg32(U8 dst, U8 src);
 
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src);
 U0 ASMInstIMulReg2Reg32(U8 dst, U8 src);
 U0 ASMInstJccIMM32(U8 opcode, I32 offset);
+U0 ASMInstJmpIMM32(I32 offset);
 U0 ASMInstSubReg2Reg32(U8 dst, U8 src);
 U0 ASMInstXorReg2Reg32(U8 dst, U8 src);
 U0 ASMInstOrReg2Reg32(U8 dst, U8 src);

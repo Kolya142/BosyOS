@@ -53,6 +53,27 @@ U0 ASMDis(U8* code, U32 count) {
                 i += 2;
             } break;
 
+            case 0x8B: { // mov r/m32
+                U8 modrm = code[i + 1];
+                U8 dst = (modrm >> 3) & 7;
+                U8 src = modrm & 7;
+                if (src != 0b100 || code[i + 2] == 0x24) {
+                    PrintF("MOV   $!A%s$!F, $!B[%s]$!F\n", RegName(dst), RegName(src));
+                    if (code[i + 2] == 0x24) {
+                        ++i;
+                    }
+                }
+                else {
+                    U8 sib = code[i];
+                    U8 scale = (sib >> 6) & 3;
+                    U8 index = (sib >> 3) & 7;
+                    U8 base  = sib & 7;
+                    PrintF("MOV   $!A%s$!F, $!B[%s+%s*%d]\n", RegName(dst), RegName(base), RegName(index), 1 << scale);
+                    ++i;
+                }
+                i += 2;
+            } break;
+
             case 0xB8 ... 0xBF: { // mov r32, imm32
                 U8 reg = byte - 0xB8;
                 U32 imm = *(U32*)&code[i + 1];
@@ -113,7 +134,16 @@ U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm) {
 U0 ASMInstMovReg2Mem32(U8 dst, U8 src) {
     ASMInstMake32(0, 1, ASM_MOV_R2R, 0b00000000 | (src << 3) | dst, 0, 0, 0);
 }
-
+U0 ASMInstMovMem2Reg32(U8 dst, U8 src) {
+    if (src == 0b100) {
+        CompilerEmit(ASM_MOV_RR);
+        CompilerEmit(0b00000000 | (dst << 3) | src);
+        CompilerEmit(0x24);
+    }
+    else {
+        ASMInstMake32(0, 1, ASM_MOV_RR, 0b00000000 | (dst << 3) | src, 0, 0, 0);
+    }
+}
 
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src) {
     ASMInstMake32(0, 1, ASM_ADD, 0b11000000 | (src << 3) | dst, 0, 0, 0);
@@ -140,6 +170,13 @@ U0 ASMInstNotReg2Reg32(U8 reg) {
 U0 ASMInstJccIMM32(U8 opcode, I32 offset) {
     CompilerEmit(0x0F);
     CompilerEmit(opcode);
+    CompilerEmit((offset >> 0) & 0xFF);
+    CompilerEmit((offset >> 8) & 0xFF);
+    CompilerEmit((offset >> 16) & 0xFF);
+    CompilerEmit((offset >> 24) & 0xFF);
+}
+U0 ASMInstJmpIMM32(I32 offset) {
+    CompilerEmit(ASM_JMP);
     CompilerEmit((offset >> 0) & 0xFF);
     CompilerEmit((offset >> 8) & 0xFF);
     CompilerEmit((offset >> 16) & 0xFF);

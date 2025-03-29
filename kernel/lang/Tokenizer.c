@@ -45,7 +45,7 @@ U32 TokenNext(String str, Token *tok) {
                 ++pos;
                 break;
             }
-            if ((tok->type == TOK_NUMBER) && (*str < '0' || *str > '9')) {
+            if ((tok->type == TOK_NUMBER) && (*str < '0' || *str > '9') && *str != 'x') {
                 break;
             }
             if ((*str >= '!' && *str <= '/') || (*str >= ':' && *str <= '@') || (*str >= '[' && *str <= '`') || (*str >= '{' && *str <= '~')) {

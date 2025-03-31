@@ -71,6 +71,12 @@ typedef struct CompilerFunction {
     List code;
 } CompilerFunction;
 
+typedef struct CompilerVariable {
+    Char name[32];
+    U8 type;
+    U32 rel;
+} CompilerVariable;
+
 // (1<<0) - modrm, (1<<1) - sib, (1<<2) - disp, (1<<3) - imm
 U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 modrm, U8 sib, U32 disp, U32 imm);
 

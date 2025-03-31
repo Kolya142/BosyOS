@@ -214,8 +214,8 @@ U0 KernelMain(struct MultiBoot *mbi) {
     RFSInit();
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
-    EIFInit();
-    KDogWatchLog("Initialized \"eifs\"", False);
+    // EIFInit();
+    // KDogWatchLog("Initialized \"eifs\"", False);
     // DATInit();
     // KDogWatchLog("Initialized \"dat\"", False);
     // BOTFSInit();

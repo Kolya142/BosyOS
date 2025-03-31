@@ -1,18 +1,9 @@
-fn Print {
-    esi "Hello";
+fn Main {
+    esi "BosyOS";
     MOV eax 4
     MOV ebx 1
     MOV ecx esi
-    MOV edx 5
-    INT 0x80
-}
-fn Main {
-    ebp 0;
-    edi 3;
-    loop ebp ! edi {
-        Print
-        ebp ebp + 1;
-    }
+    MOV edx 6
+    INT 128
 }
 Uf Main
-Main

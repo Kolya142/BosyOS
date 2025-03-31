@@ -138,6 +138,11 @@ U0 KernelMain(struct MultiBoot *mbi) {
     GDTInit();
     IDTInit();
     PICMap();
+    RTCUpdate();
+    U32 t = SystemTime.second;
+    while (SystemTime.second == t) {
+        RTCUpdate();
+    }
     PITInit();
     TaskInit();
     KDogWatchInit();
@@ -289,30 +294,31 @@ U0 mainloop() {
 
     // MFree(buf);
 
-    U8 inp[512];
-    PrintF("$!A\\$$!F ");
     for (;;) {
-        MemSet(inp, 0, 512);
-        KBRead(inp, 512);
-        List compiled = Compiler(inp);
-        if (compiled.count) {
-            U32(*entry)() = compiled.arr;
-            U32 res = entry();
-            ListDestroy(&compiled);
-            PrintF("Result: %p\n", res);
+        static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        U32 days = 0;
+
+        for (U32 y = 2025; y < SystemTime.year; y++) {
+            days += (y % 4 == 0) ? 366 : 365;
         }
-        PrintF("$!A\\$$!F ");
-    }
-    {
-        // VFSReadDir("/", lsfn);
-        U8 buf[16] = {0};
-        U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
-        
-        SerialPrintF("Readed %d entropy bytes: ", readed);
-        for (U32 i = 0; i < readed; ++i) {
-            SerialPrintF("%1X ", buf[i]);
+        for (U32 m = 1; m < SystemTime.month; m++) {
+            days += days_in_months[m - 1];
+            if (m == 2 && (SystemTime.year % 4 == 0)) {
+                days++;
+            }
         }
-        SerialPrintF("");
+        days += SystemTime.day - 1;
+        String day_names[] = {
+            "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+        };
+        TTYFlush(TTYCurrent);
+        U32 c = ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor;
+        ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
+        PrintF("$*1%s %d:%d:%d.%d %c    $*0", day_names[(days + 2) % 7], SystemTime.hour, SystemTime.minute, SystemTime.second, PITTime % 1000, KBState.Key);
+        ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = max(80, c);
+        TTYFlush(TTYCurrent);
+
+        Sleep(10);
     }
 
     // VFSReadDir("/", lsfn);

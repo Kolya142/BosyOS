@@ -6,6 +6,7 @@
 #define NEXTTOK {do { a = TokenNext(code, &tok); code += a; sym += a;} while (!*tok.str && a);}
 
 extern List CompilerRoData;
+extern List CompilerFunctions;
 
 // Read more: https://github.com/cia-foundation/TempleOS/blob/archive/Compiler/OpCodes.DD#L215
 typedef enum ASMInst {

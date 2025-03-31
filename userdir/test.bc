@@ -1,11 +1,13 @@
 U0 Main {
     U32 str = "Hello, world\n";
     U32 length = 13;
-    eax 4;
-    ecx str;
-    edx length;
-    ebx 1;
-    INT 128;
+    if 1; {
+        eax 4;
+        ecx str;
+        edx length;
+        ebx 1;
+        INT 128;
+    }
 }
 Uf Main;
-Main;
+Main

@@ -181,6 +181,7 @@ List Compiler(String code, List parvars) {
                     };
                 }
                 CompilerVariable var;
+                MemSet(var.name, 0, 32);
                 StrCpy(var.name, name);
                 var.rel = parvars.count ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
                 PrintF("Let %s; [ESP - %x]\n", name, var.rel);
@@ -216,36 +217,50 @@ List Compiler(String code, List parvars) {
             }
         }
         else if (!StrCmp(tok.str, "if")) {
-            NEXTTOK
-            a = CompilerExpr(tok.str, &parvars);
+            a = CompilerExpr(code, &parvars);
             sym += a;
             code += a;
-            ASMInstMovReg2Reg32(ASM_REG_EDX, ASM_REG_EBX);
-            NEXTTOK
-            Char e = tok.str[0];
-            NEXTTOK
-            a = CompilerExpr(tok.str, &parvars);
-            sym += a;
-            code += a;
-            ASMInstMovReg2Reg32(ASM_REG_ECX, ASM_REG_EBX);
-            ASMInstCmpReg2Reg32(ASM_REG_ECX, ASM_REG_EDX);
-            PrintF("if %s %c %s\n", RegName(ASM_REG_EDX), e, RegName(ASM_REG_ECX));
+            PrintF("if %d\n", a);
             List block = Compiler(code, parvars);
             block.count -= 1;
-            
-            // if (e == '>') {
-            //     ASMInstJleIMM32(block.count);
-            // }
-            // else if (e == '<') {
-            //     ASMInstJaeIMM32(block.count);
-            // }
-            // else if (e == '=') {
-            //     ASMInstJneIMM32(block.count);
-            // }
-            // else if (e == '!') {
-            //     ASMInstJeIMM32(block.count);
-            // }
-            // ListDestroy(&block);
+
+            ASMInstCmpImm2Reg32(ASM_REG_EBX, 0);
+
+            ASMInstJeIMM32(block.count);
+            ListDestroy(&block);
+        }
+        else if (!StrCmp(tok.str, "while")) {
+            a = CompilerExpr(code, &parvars);
+            sym += a;
+            code += a;
+            PrintF("if %d\n", a);
+            List block = Compiler(code, parvars);
+            block.count -= 1;
+
+            ASMInstCmpImm2Reg32(ASM_REG_EBX, 0);
+            ASMInstJeIMM32(block.count + 5);
+
+            for (U32 i = 0; i < block.count; ++i) {
+                CompilerEmit(((U8*)block.arr)[i]);
+            }
+
+            U32 enter1 = 0;
+            do {
+                if (!StrCmp(tok.str, "{")) {
+                    ++enter1;
+                }
+                if (!StrCmp(tok.str, "}")) {
+                    --enter1;
+                    if (!enter1) {
+                        break;
+                    }
+                }
+                NEXTTOK
+            } while (a);
+
+            ASMInstJmpIMM32(-(I32)block.count - 11);
+
+            ListDestroy(&block);
         }
         else if (!StrCmp(tok.str, "{")) {
             ++enter;

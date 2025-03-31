@@ -277,25 +277,30 @@ U0 mainloop() {
     // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
     // win.update = TimeUpd;
     // WinSpawn(&win);
-
-    VFSStat stat = {0};
-    VFSLStat("test.bc", &stat);
-    U8 *buf = MAlloc(stat.size);
-    VFSRead("test.bc", buf, 0, stat.size);
-    List vars = ListInit(sizeof(CompilerVariable));
-    List compiled = Compiler(buf, vars);
-    if (compiled.count) {
+    {
+        VFSStat stat = {0};
+        VFSLStat("test.bc", &stat);
+        U8 *buf = MAlloc(stat.size);
+        VFSRead("test.bc", buf, 0, stat.size);
+        List vars = ListInit(sizeof(CompilerVariable));
+        List compiled = Compiler(buf, vars);
         ListDestroy(&vars);
-        U32(*entry)() = compiled.arr;
-        PrintF("Compiled\n");
-        PrintF("\nRunning\n");
-        U32 res = entry();
-        PrintF("Result: %p\n", res);
+        if (compiled.count) {
+            U32(*entry)() = compiled.arr;
+            PrintF("Compiled\n");
+            PrintF("\nRunning\n");
+            U32 res = entry();
+            PrintF("Result: %p\n", res);
+            ListDestroy(&compiled);
+        }
         MFree(buf);
-        ListDestroy(&compiled);
     }
 
     // MFree(buf);
+
+    Char inp[512];
+
+    PrintF("$!A\\$ $!F");
 
     for (;;) {
         static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -321,6 +326,20 @@ U0 mainloop() {
         ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = max(80, c);
         TTYFlush(TTYCurrent);
 
+        if (TTYRead(TTYCurrent, 0, inp, 512)) {
+            List vars = ListInit(sizeof(CompilerVariable));
+            List compiled = Compiler(inp, vars);
+            ListDestroy(&vars);
+            if (compiled.count) {
+                U32(*entry)() = compiled.arr;
+                PrintF("Compiled\n");
+                PrintF("\nRunning\n");
+                U32 res = entry();
+                PrintF("Result: %p\n", res);
+                ListDestroy(&compiled);
+            }
+            PrintF("$!A\\$ $!F");
+        }
         Sleep(10);
     }
 

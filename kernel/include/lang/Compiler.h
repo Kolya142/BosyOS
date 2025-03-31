@@ -3,7 +3,7 @@
 #include <lang/Tokenizer.h>
 #include <lib/Types.h>
 
-#define NEXTTOK {do { a = TokenNext(code, &tok); a = tok.type == TOK_STR ? a + 2 : a; code += a; sym += a;} while (!*tok.str && a);}
+#define NEXTTOK {do { a = TokenNext(code, &tok); code += a; sym += a;} while (!*tok.str && a);}
 
 extern List CompilerRoData;
 
@@ -85,11 +85,12 @@ U32 CompilerRoDataAdd(String text);
 extern List globvars;
 
 CompilerVariable *CompilerFindVar(List *vars, String name);
+U8 CompilerTypeFromName(String name);
 
 U0 CompilerInit();
 List Compiler(String code, List parvars);
 
-U32 CompilerExpr(String code);
+U32 CompilerExpr(String code, List *vars);
 
 String RegName(U8 reg);
 U8 RegFromName(String name);
@@ -112,6 +113,8 @@ U0 ASMInstMovReg2Reg32(U8 dst, U8 src);
 U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm);
 U0 ASMInstMovReg2Mem32(U8 dst, U8 src);
 U0 ASMInstMovMem2Reg32(U8 dst, U8 src);
+U0 ASMInstMovReg2Disp32(U8 dst, U8 src, I32 rel, U8 bytes);
+U0 ASMInstMovDisp2Reg32(U8 dst, U8 src, I32 rel, U8 bytes);
 
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src);
 U0 ASMInstIMulReg2Reg32(U8 dst, U8 src);

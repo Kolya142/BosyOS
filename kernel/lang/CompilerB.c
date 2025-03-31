@@ -1,7 +1,8 @@
+#include <kernel/KPanic.h>
 #include <lang/Compiler.h>
 #include <lib/IO/TTY.h>
 
-U32 CompilerExpr(String code) {
+U32 CompilerExpr(String code, List *vars) {
     U32 s = 0;
     Token tok;
     U32 a = 0;
@@ -9,6 +10,7 @@ U32 CompilerExpr(String code) {
     U32 sym = 0;
     NEXTTOK
     Bool cont = True;
+    CompilerVariable *var;
     for (;a && cont;) {
         PrintF("Tok %s\n", tok.str);
         switch (s) {
@@ -24,9 +26,11 @@ U32 CompilerExpr(String code) {
                         }
                         ASMInstMovMem2Reg32(ASM_REG_EBX, reg);
                     }
-                    else if (!StrCmp(tok.str, "\"")) {
-                        NEXTTOK
+                    else if (tok.type == TOK_STR) {
                         ASMInstMovIMM2Reg32(ASM_REG_EBX, CompilerRoDataAdd(tok.str));
+                    }
+                    else if (var = CompilerFindVar(vars, tok.str)) {
+                        ASMInstMovDisp2Reg32(ASM_REG_EBX, ASM_REG_ESP, -((I32)var->rel), var->type / 8);
                     }
                     else {
                         ASMInstMovIMM2Reg32(ASM_REG_EBX, Atoi(tok.str));
@@ -41,7 +45,6 @@ U32 CompilerExpr(String code) {
                 e = tok.str[0];
                 s = 2;
                 if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*') {
-                    // sym -= StrLen(tok.str);
                     cont = False;
                 }
             } break;
@@ -60,6 +63,9 @@ U32 CompilerExpr(String code) {
                     else if (!StrCmp(tok.str, "\"")) {
                         NEXTTOK
                         ASMInstMovIMM2Reg32(ASM_REG_EDX, CompilerRoDataAdd(tok.str));
+                    }
+                    else if (var = CompilerFindVar(vars, tok.str)) {
+                        ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_ESP, -((I32)var->rel), var->type / 8);
                     }
                     else {
                         ASMInstMovIMM2Reg32(ASM_REG_EDX, Atoi(tok.str));
@@ -90,6 +96,10 @@ U32 CompilerExpr(String code) {
                 }
                 s = 1;
             } break;
+            default: {
+                PrintF("Stange Activity Detected\nDO PANIC\n");
+                KPanic("Strange Compiler Activity", False);
+            }
         }
         if (cont) {
             NEXTTOK

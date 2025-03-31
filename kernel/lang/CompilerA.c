@@ -85,6 +85,23 @@ CompilerVariable *CompilerFindVar(List *vars, String name) {
     }
     return NULL;
 }
+U8 CompilerTypeFromName(String name) {
+    if (name[0] == 'U') {
+        U8 type = Atoi(name + 1);
+        if (type != 0 && type != 8 && type != 16 && type != 32) {
+            return 0xFF;
+        }
+        return type;
+    }
+    if (name[0] == 'I') {
+        U8 type = Atoi(name + 1);
+        if (type != 0 && type != 8 && type != 16 && type != 32) {
+            return 0xFF;
+        }
+        return type | 0x80;
+    }
+    return 0xFF;
+}
 
 U0 CompilerInit() {
     CompilerFunctions = ListInit(sizeof(CompilerFunction));
@@ -128,7 +145,12 @@ List Compiler(String code, List parvars) {
     NEXTTOK
     CompilerFunction *cfunc;
     for (;a;) {
-        PrintF("$!ATok (%s); EIP (%p)$!F\n\n", tok.str, eip + CompilerOutput.count);
+        PrintF("$!ATok (%s) %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput.count);
+        // NEXTTOK
+        // continue;
+        CompilerVariable *cvar = CompilerFindVar(&parvars, tok.str);
+        U8 ctype = CompilerTypeFromName(tok.str);
+        U8 creg = RegFromName(tok.str);
         if (!StrCmp(tok.str, "Uf")) {
             NEXTTOK
             CompilerFunction *func = get_func(tok.str);
@@ -137,114 +159,93 @@ List Compiler(String code, List parvars) {
                 ASMDis(func->code.arr, func->code.count);
             }
             else {
-                PrintF("Failed to Disassembly %s: No such function\n", tok.str);
+                PrintF("Failed to Disassembly \"%s\": No such function\n", tok.str);
             }
         }
-        else if (RegFromName(tok.str) != 0xFF) {
-            U8 reg = RegFromName(tok.str);
-            a = CompilerExpr(code);
-            sym += a;
-            code += a;
-            if (reg != ASM_REG_EBX) {
-                ASMInstMovReg2Reg32(reg, ASM_REG_EBX);
-            }
-        }
-        else if (!StrCmp(tok.str, "fn")) {
+        else if (!StrCmp(tok.str, "INT")) {
             NEXTTOK
-            CompilerFunction *func = get_func(tok.str);
-            if (func) {
-                ListDestroy(&func->code);
-                func->code = Compiler(code, parvars);
+            CompilerEmit(0xCD);
+            CompilerEmit(Atoi(tok.str));
+        }
+        else if (ctype != 0xFF) {
+            NEXTTOK
+            Char name[32];
+            MemSet(name, 0, 32);
+            StrCpy(name, tok.str);
+            NEXTTOK
+            if (!StrCmp(tok.str, "=")) {
+                if (CompilerFindVar(&parvars, name)) {
+                    PrintF("Variable %s already exists\n", name);
+                    return (List) {
+                        .count = 0
+                    };
+                }
+                CompilerVariable var;
+                StrCpy(var.name, name);
+                var.rel = parvars.count ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
+                PrintF("Let %s; [ESP - %x]\n", name, var.rel);
+                var.type = ctype;
+                ListAppend(&parvars, &var);
+                a = CompilerExpr(code, &parvars);
+                sym += a;
+                code += a;
+                ASMInstMovReg2Disp32(ASM_REG_ESP, ASM_REG_EBX, -((I32)var.rel), ctype / 8);
             }
             else {
-                CompilerFunction f;
-                MemSet(f.name, 0, 32);
-                StrCpy(f.name, tok.str);
-                f.code = Compiler(code, parvars);
-                ListAppend(&CompilerFunctions, &f);
-                CompilerFunction *funcs = CompilerFunctions.arr;
-                func = &funcs[CompilerFunctions.count - 1];
+                List childvars = ListInit(sizeof(CompilerVariable));
+                CompilerFunction func;
+                MemSet(func.name, 0, 32);
+                StrCpy(func.name, name);
+                func.code = Compiler(code - StrLen(tok.str), childvars);
+                PrintF("$!dFunction \"%s\"$!F\n", name);
+                ListAppend(&CompilerFunctions, &func);
+                ListDestroy(&childvars);
+                U32 enter1 = 0;
+                do {
+                    if (!StrCmp(tok.str, "{")) {
+                        ++enter1;
+                    }
+                    if (!StrCmp(tok.str, "}")) {
+                        --enter1;
+                        if (!enter1) {
+                            break;
+                        }
+                    }
+                    NEXTTOK
+                } while (a);
             }
-
-            PrintF("function %s\n", tok.str);
-
-            U32 enter1 = 0;
-            do {
-                NEXTTOK
-                if (!StrCmp(tok.str, "{")) {
-                    ++enter1;
-                }
-                else if (!StrCmp(tok.str, "}")) {
-                    --enter1;
-                }
-            } while (a && enter1);
         }
         else if (!StrCmp(tok.str, "if")) {
             NEXTTOK
-            U8 r1 = RegFromName(tok.str);
+            a = CompilerExpr(tok.str, &parvars);
+            sym += a;
+            code += a;
+            ASMInstMovReg2Reg32(ASM_REG_EDX, ASM_REG_EBX);
             NEXTTOK
             Char e = tok.str[0];
             NEXTTOK
-            U8 r2 = RegFromName(tok.str);
-            ASMInstCmpReg2Reg32(r2, r1);
+            a = CompilerExpr(tok.str, &parvars);
+            sym += a;
+            code += a;
+            ASMInstMovReg2Reg32(ASM_REG_ECX, ASM_REG_EBX);
+            ASMInstCmpReg2Reg32(ASM_REG_ECX, ASM_REG_EDX);
+            PrintF("if %s %c %s\n", RegName(ASM_REG_EDX), e, RegName(ASM_REG_ECX));
             List block = Compiler(code, parvars);
             block.count -= 1;
             
-            if (e == '>') {
-                ASMInstJleIMM32(block.count);
-            }
-            else if (e == '<') {
-                ASMInstJaeIMM32(block.count);
-            }
-            else if (e == '=') {
-                ASMInstJneIMM32(block.count);
-            }
-            else if (e == '!') {
-                ASMInstJeIMM32(block.count);
-            }
-            PrintF("if %s %c %s\n", RegName(r1), e, RegName(r2));
-            ListDestroy(&block);
-        }
-        else if (!StrCmp(tok.str, "loop")) {
-            NEXTTOK
-            U8 r1 = RegFromName(tok.str);
-            NEXTTOK
-            Char e = tok.str[0];
-            NEXTTOK
-            U8 r2 = RegFromName(tok.str);
-            U32 start = CompilerOutput.count;
-            ASMInstCmpReg2Reg32(r2, r1);
-            List block = Compiler(code, parvars);
-            block.count -= 1;
-            
-            if (e == '>') {
-                ASMInstJleIMM32(block.count + 5);
-            }
-            else if (e == '<') {
-                ASMInstJaeIMM32(block.count + 5);
-            }
-            else if (e == '=') {
-                ASMInstJneIMM32(block.count + 5);
-            }
-            else if (e == '!') {
-                ASMInstJeIMM32(block.count + 5);
-            }
-            PrintF("loop %s %c %s\n", RegName(r1), e, RegName(r2));
-            for (U32 i = 0; i < block.count; ++i) {
-                CompilerEmit(((U8*)block.arr)[i]);
-            }
-            ASMInstJmpIMM32(-(CompilerOutput.count - start + 5));
-            ListDestroy(&block);
-            U32 enter1 = 0;
-            do {
-                NEXTTOK
-                if (!StrCmp(tok.str, "{")) {
-                    ++enter1;
-                }
-                else if (!StrCmp(tok.str, "}")) {
-                    --enter1;
-                }
-            } while (a && enter1);
+            // if (e == '>') {
+            //     ASMInstJleIMM32(block.count);
+            // }
+            // else if (e == '<') {
+            //     ASMInstJaeIMM32(block.count);
+            // }
+            // else if (e == '=') {
+            //     ASMInstJneIMM32(block.count);
+            // }
+            // else if (e == '!') {
+            //     ASMInstJeIMM32(block.count);
+            // }
+            // ListDestroy(&block);
         }
         else if (!StrCmp(tok.str, "{")) {
             ++enter;
@@ -255,42 +256,29 @@ List Compiler(String code, List parvars) {
                 break;
             }
         }
-        else if (!StrCmp(tok.str, ";")) {
-            NEXTTOK
-        }
-        else if (!StrCmp(tok.str, "MOV")) {
-            NEXTTOK
-            U8 r1 = RegFromName(tok.str);
-            NEXTTOK
-            U8 r2 = RegFromName(tok.str);
-            if (r2 == 0xFF) {
-                ASMInstMovIMM2Reg32(r1, Atoi(tok.str));
-            }
-            else {
-                ASMInstMovReg2Reg32(r1, r2);
-            }
-        }
-        else if (!StrCmp(tok.str, "@")) {
-            NEXTTOK
-            U8 reg = RegFromName(tok.str);
-            a = CompilerExpr(code);
+        else if (cvar) {
+            a = CompilerExpr(code, &parvars);
             sym += a;
             code += a;
-            ASMInstMovReg2Mem32(reg, ASM_REG_EBX);
+            ASMInstMovReg2Disp32(ASM_REG_ESP, ASM_REG_EBX, -((I32)cvar->rel), cvar->type / 8);
         }
-        else if (!StrCmp(tok.str, "INT"))
-        {
-            NEXTTOK
-            CompilerEmit(0xCD);
-            CompilerEmit(Atoi(tok.str));
+        else if (creg != 0xFF) {
+            a = CompilerExpr(code, &parvars);
+            sym += a;
+            code += a;
+            if (creg != ASM_REG_EBX) {
+                ASMInstMovReg2Reg32(creg, ASM_REG_EBX);
+            }
         }
-        
+        else if (!StrCmp(tok.str, ";")) {
+            
+        }
         else if (cfunc = get_func(tok.str)) {
             ASMInstMovIMM2Reg32(ASM_REG_EDX, (U32)cfunc->code.arr);
             ASMInstCallReg32(ASM_REG_EDX);
         }
         else {
-            PrintF("Invalid OpCode %s\n", tok.str);
+            PrintF("Invalid OpCode \"%s\"\n", tok.str);
             return (List) {
                 .count = 0
             };

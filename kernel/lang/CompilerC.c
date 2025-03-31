@@ -134,6 +134,42 @@ U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm) {
 U0 ASMInstMovReg2Mem32(U8 dst, U8 src) {
     ASMInstMake32(0, 1, ASM_MOV_R2R, 0b00000000 | (src << 3) | dst, 0, 0, 0);
 }
+U0 ASMInstMovReg2Disp32(U8 dst, U8 src, I32 rel, U8 bytes) {
+    U8 opcode;
+    Bool pref = 0;
+
+    switch (bytes) {
+        case 1:  opcode = 0x88; break; // mov [mem], r8
+        case 2: opcode = ASM_MOV_R2R; pref = 1; break; // mov [mem], r16
+        case 4: opcode = ASM_MOV_R2R; break; // mov [mem], r32
+        default: return;
+    }
+
+    if (dst == ASM_REG_ESP) {
+        ASMInstMake32(pref, 1|2|4, opcode, 0b10000000 | (src << 3) | dst, 0x24, rel, 0);
+    }
+    else {
+        ASMInstMake32(pref, 1|4, opcode, 0b10000000 | (src << 3) | dst, 0, rel, 0);
+    }
+}
+U0 ASMInstMovDisp2Reg32(U8 dst, U8 src, I32 rel, U8 bytes) {
+    U8 opcode;
+    Bool pref = 0;
+
+    switch (bytes) {
+        case 1:  opcode = 0x8A; break; // mov [mem], r8
+        case 2: opcode = ASM_MOV_RR; pref = 1; break; // mov [mem], r16
+        case 4: opcode = ASM_MOV_RR; break; // mov [mem], r32
+        default: return;
+    }
+
+    if (src == ASM_REG_ESP) {
+        ASMInstMake32(pref, 1|2|4, opcode, 0b10000000 | (dst << 3) | src, 0x24, rel, 0);
+    }
+    else {
+        ASMInstMake32(pref, 1|4, opcode, 0b10000000 | (dst << 3) | src, 0, rel, 0);
+    }
+}
 U0 ASMInstMovMem2Reg32(U8 dst, U8 src) {
     if (src == 0b100) {
         CompilerEmit(ASM_MOV_RR);

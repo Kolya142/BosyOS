@@ -284,14 +284,16 @@ U0 mainloop() {
     VFSRead("test.bc", buf, 0, stat.size);
     List vars = ListInit(sizeof(CompilerVariable));
     List compiled = Compiler(buf, vars);
-    ListDestroy(&vars);
-    U32(*entry)() = compiled.arr;
-    PrintF("Compiled\n");
-    PrintF("\nRunning\n");
-    U32 res = entry();
-    PrintF("Result: %p\n", res);
-    MFree(buf);
-    ListDestroy(&compiled);
+    if (compiled.count) {
+        ListDestroy(&vars);
+        U32(*entry)() = compiled.arr;
+        PrintF("Compiled\n");
+        PrintF("\nRunning\n");
+        U32 res = entry();
+        PrintF("Result: %p\n", res);
+        MFree(buf);
+        ListDestroy(&compiled);
+    }
 
     // MFree(buf);
 

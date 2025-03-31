@@ -31,6 +31,7 @@ typedef enum ASMInst {
     ASM_JNE  = 0x85,
     ASM_JBE  = 0x86,
     ASM_JA   = 0x87,
+    ASM_JAE  = 0x83,
     ASM_JL   = 0x8C,
     ASM_JGE  = 0x8D,
     ASM_JLE  = 0x8E,
@@ -77,20 +78,24 @@ typedef struct CompilerVariable {
     U32 rel;
 } CompilerVariable;
 
-// (1<<0) - modrm, (1<<1) - sib, (1<<2) - disp, (1<<3) - imm
-U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 modrm, U8 sib, U32 disp, U32 imm);
-
 U0 CompilerEmit(U8 code);
 
 U32 CompilerRoDataAdd(String text);
 
+extern List globvars;
+
+CompilerVariable *CompilerFindVar(List *vars, String name);
+
 U0 CompilerInit();
-List Compiler(String code);
+List Compiler(String code, List parvars);
 
 U32 CompilerExpr(String code);
 
 String RegName(U8 reg);
 U8 RegFromName(String name);
+
+// (1<<0) - modrm, (1<<1) - sib, (1<<2) - disp, (1<<3) - imm
+U0 ASMInstMake32(Bool stmode, U8 uses, U8 inst, U8 modrm, U8 sib, U32 disp, U32 imm);
 
 U0 ASMDis(U8* code, U32 count);
 
@@ -101,6 +106,7 @@ U0 ASMDis(U8* code, U32 count);
 #define ASMInstJnpIMM32(offset) ASMInstJccIMM32(ASM_JNP, offset)
 #define ASMInstJlIMM32(offset)  ASMInstJccIMM32(ASM_JL,  offset)
 #define ASMInstJleIMM32(offset) ASMInstJccIMM32(ASM_JLE, offset)
+#define ASMInstJaeIMM32(offset) ASMInstJccIMM32(ASM_JAE, offset)
 
 U0 ASMInstMovReg2Reg32(U8 dst, U8 src);
 U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm);

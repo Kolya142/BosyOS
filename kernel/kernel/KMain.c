@@ -282,8 +282,9 @@ U0 mainloop() {
     VFSLStat("test.bc", &stat);
     U8 *buf = MAlloc(stat.size);
     VFSRead("test.bc", buf, 0, stat.size);
-
-    List compiled = Compiler(buf);
+    List vars = ListInit(sizeof(CompilerVariable));
+    List compiled = Compiler(buf, vars);
+    ListDestroy(&vars);
     U32(*entry)() = compiled.arr;
     PrintF("Compiled\n");
     PrintF("\nRunning\n");

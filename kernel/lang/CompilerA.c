@@ -75,6 +75,16 @@ U8 RegFromName(String name) {
     }
     return 0xFF;
 }
+CompilerVariable *CompilerFindVar(List *vars, String name) {
+    CompilerVariable *varsd = vars->arr;
+    for (U32 i = 0; i < vars->count; ++i) {
+        CompilerVariable *var = &varsd[i];
+        if (!StrCmp(var->name, name)) {
+            return var;
+        }
+    }
+    return NULL;
+}
 
 U0 CompilerInit() {
     CompilerFunctions = ListInit(sizeof(CompilerFunction));
@@ -98,14 +108,14 @@ U32 CompilerRoDataAdd(String text) {
             return (U32)((String*)CompilerRoData.arr)[i];
         }
     }
-    U32 size = StrLen(text);
+    U32 size = StrLen(text) + 1;
     String str = MAlloc(size);
     MemCpy(str, text, size);
     ListAppend(&CompilerRoData, &str);
     return (U32)str;
 }
 
-List Compiler(String code) {
+List Compiler(String code, List parvars) {
     List prev_output = CompilerOutput;
     CompilerOutput = ListInit(1);
     U32 eip = (U32)CompilerOutput.arr;
@@ -144,13 +154,13 @@ List Compiler(String code) {
             CompilerFunction *func = get_func(tok.str);
             if (func) {
                 ListDestroy(&func->code);
-                func->code = Compiler(code);
+                func->code = Compiler(code, parvars);
             }
             else {
                 CompilerFunction f;
                 MemSet(f.name, 0, 32);
                 StrCpy(f.name, tok.str);
-                f.code = Compiler(code);
+                f.code = Compiler(code, parvars);
                 ListAppend(&CompilerFunctions, &f);
                 CompilerFunction *funcs = CompilerFunctions.arr;
                 func = &funcs[CompilerFunctions.count - 1];
@@ -177,14 +187,14 @@ List Compiler(String code) {
             NEXTTOK
             U8 r2 = RegFromName(tok.str);
             ASMInstCmpReg2Reg32(r2, r1);
-            List block = Compiler(code);
+            List block = Compiler(code, parvars);
             block.count -= 1;
             
             if (e == '>') {
                 ASMInstJleIMM32(block.count);
             }
             else if (e == '<') {
-                ASMInstJbeIMM32(block.count);
+                ASMInstJaeIMM32(block.count);
             }
             else if (e == '=') {
                 ASMInstJneIMM32(block.count);
@@ -204,14 +214,14 @@ List Compiler(String code) {
             U8 r2 = RegFromName(tok.str);
             U32 start = CompilerOutput.count;
             ASMInstCmpReg2Reg32(r2, r1);
-            List block = Compiler(code);
+            List block = Compiler(code, parvars);
             block.count -= 1;
             
             if (e == '>') {
                 ASMInstJleIMM32(block.count + 5);
             }
             else if (e == '<') {
-                ASMInstJbeIMM32(block.count + 5);
+                ASMInstJaeIMM32(block.count + 5);
             }
             else if (e == '=') {
                 ASMInstJneIMM32(block.count + 5);

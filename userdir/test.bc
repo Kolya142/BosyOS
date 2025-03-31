@@ -1,9 +1,19 @@
 fn Main {
-    esi "BosyOS";
-    MOV eax 4
-    MOV ebx 1
-    MOV ecx esi
-    MOV edx 6
-    INT 128
+    esi 0;
+    edi 5;
+    ecx 100;
+    loop esi < edi {
+        MOV eax 3
+        MOV ebx 0
+        MOV edx 64
+        INT 128
+        if eax ! esi {
+            MOV edx eax
+            MOV eax 4
+            MOV ebx 1
+            INT 128
+        }
+    }
 }
 Uf Main
+Main

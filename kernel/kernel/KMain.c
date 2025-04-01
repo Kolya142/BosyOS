@@ -329,6 +329,44 @@ U0 mainloop() {
     PrintF("$!A\\$ $!F");
 
     for (;;) {
+        String keynames[256] = {
+            "NUL",
+            "SOH",
+            "STX",
+            "ETX",
+            "EOT",
+            "ENQ",
+            "ACK",
+            "BEL",
+            "BACKSPACE",
+            "TAB",
+            "ENTER",
+            "VT",
+            "FF",
+            "ENTER",
+            "SO",
+            "SI",
+            
+            "DLE",
+            "DC1",
+            "DC2",
+            "DC3",
+            "DC4",
+            "NAK",
+            "SYN",
+            "ETB",
+            "CAN",
+            "EM",
+            "SUB",
+            "ESC",
+            "FS",
+            "GS",
+            "RS",
+            "US",
+        
+            [0x7F] = "DELETE",
+        };
+    
         static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
         U32 days = 0;
 
@@ -348,7 +386,7 @@ U0 mainloop() {
         TTYFlush(TTYCurrent);
         U32 c = ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor;
         ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
-        PrintF("$*1%s %d:%d:%d.%d %c    $*0", day_names[(days + 2) % 7], SystemTime.hour, SystemTime.minute, SystemTime.second, PITTime % 1000, KBState.Key);
+        PrintF("$*1%s %d:%d:%d.%d %s %p    $*0", day_names[(days + 2) % 7], SystemTime.hour, SystemTime.minute, SystemTime.second, PITTime % 1000, keynames[KBState.Key] ? keynames[KBState.Key] : (Char[]) {KBState.Key, 0}, HeapUsed);
         ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = max(80, c);
         TTYFlush(TTYCurrent);
 

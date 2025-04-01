@@ -269,12 +269,14 @@ List Compiler(String code, List parvars) {
             ListDestroy(&block);
         }
         else if (!StrCmp(tok.str, "while")) {
+            U32 start = CompilerOutput->count;
             a = CompilerExpr(code, &parvars);
             sym += a;
             code += a;
-            PrintF("if %d\n", a);
+            PrintF("while %d\n", a);
             List block = Compiler(code, parvars);
-            block.count -= 1;
+            block.arr += 9;
+            block.count -= 9+4;
 
             ASMInstCmpImm2Reg32(ASM_REG_EBX, 0);
             ASMInstJeIMM32(block.count + 5);
@@ -297,7 +299,9 @@ List Compiler(String code, List parvars) {
                 NEXTTOK
             } while (a);
 
-            ASMInstJmpIMM32(-(I32)block.count - 11);
+            ASMInstJmpIMM32(-(I32)(CompilerOutput->count - start) - 5);
+            
+            block.arr -= 9;
 
             ListDestroy(&block);
         }
@@ -349,6 +353,7 @@ List Compiler(String code, List parvars) {
     if (*esp_patchv != 0xBEEF55AA) {
         SerialPrintF("ERROR: ESP PATCH INVALID %p\n", *esp_patchv);
     }
+    PrintF("Compilation for %p bytes\n", CompilerOutput->count);
     *esp_patchv = (parvars.count ? (4 - (((CompilerVariable*)parvars.arr)[parvars.count - 1].rel % 4)) + 4 : 4);
     CompilerOutput = prev_output;
     return my_output;

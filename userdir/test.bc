@@ -6,11 +6,14 @@ U0 Print {
     INT 128;
 }
 U0 Demo {
-    U32 c = 0x44434241;
-    esi &c;
-    edi 4;
-    Print;
-    Dump;
+    U32 count = 6;
+    while count; {
+        U32 c = 0x20434241;
+        esi &c;
+        edi 4;
+        Print;
+        count count - 1;
+    }
 }
 U0 Main {
     U32 str = "Hello, world\n";
@@ -20,6 +23,9 @@ U0 Main {
     Print;
     Dump;
 }
+U0 Reboot {
+    eax 0xFE;
+    OUT 0x64;
+}
 Uf Demo;
-Uf Main;
 Main

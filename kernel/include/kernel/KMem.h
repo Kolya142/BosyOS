@@ -13,6 +13,7 @@ typedef struct HeapMemBlock {
 
 extern U8 *Heap; // HEAP_START + sizeof(HeapMemBlock)
 extern HeapMemBlock *HeapFree; // NULL
+extern U32 HeapUsed; // 0
 U0 HeapInit();
 Ptr HeapAlloc(U32 size);
 U0 HeapFreePtr(Ptr ptr);

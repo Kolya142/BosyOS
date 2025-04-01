@@ -272,12 +272,37 @@ static U0 ring3() {
     for (;;);
 }
 
+static U0 CompilerExtern() {
+    U32 esi;
+    asmV (
+        "mov %%esi, %0"
+        : "=m"(esi)
+    );
+    List vars = ListInit(sizeof(CompilerVariable));
+    List compiled = Compiler((String)esi, vars);
+    ListDestroy(&vars);
+    if (compiled.count) {
+        ASMDis(compiled.arr, compiled.count);
+        U32(*entry)() = compiled.arr;
+        PrintF("Compiled\n");
+        PrintF("\nRunning\n");
+        U32 res = entry();
+        PrintF("Result: %p\n", res);
+        ListDestroy(&compiled);
+    }
+}
+
 U0 mainloop() {
     TTYSwitch(0);
     // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
     // win.update = TimeUpd;
     // WinSpawn(&win);
     {
+        CompilerFunction func;
+        func.code.arr = CompilerExtern;
+        MemSet(func.name, 0, 32);
+        StrCpy(func.name, "Compiler");
+        ListAppend(&CompilerFunctions, &func);
         VFSStat stat = {0};
         VFSLStat("test.bc", &stat);
         U8 *buf = MAlloc(stat.size);
@@ -286,6 +311,7 @@ U0 mainloop() {
         List compiled = Compiler(buf, vars);
         ListDestroy(&vars);
         if (compiled.count) {
+            ASMDis(compiled.arr, compiled.count);
             U32(*entry)() = compiled.arr;
             PrintF("Compiled\n");
             PrintF("\nRunning\n");

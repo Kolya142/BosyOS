@@ -45,12 +45,33 @@ U0 ASMDis(U8* code, U32 count) {
                 i += 2;
             } break;
 
+            case 0x81: { // SUB r/m32, imm
+                U8 modrm = code[i + 1];
+                U8 dst = modrm & 7;
+                U8 src = (modrm >> 3) & 7;
+                U32 imm = *(U32*)&code[i + 2];
+                SerialPrintF("SUB   $!A%s$!F, $!B%p$!F\n", RegName(dst), imm);
+                i += 6;
+            } break;
+
             case 0x29: { // SUB r/m32, r32
                 U8 modrm = code[i + 1];
                 U8 dst = modrm & 7;
                 U8 src = (modrm >> 3) & 7;
                 SerialPrintF("SUB   $!A%s$!F, $!B%s$!F\n", RegName(dst), RegName(src));
                 i += 2;
+            } break;
+
+            case 0x50 ... 0x57: { // push r32
+                U8 reg = byte - 0x50;
+                SerialPrintF("PUSH  $!A%s$!F\n", RegName(reg));
+                i += 1;
+            } break;
+
+            case 0x58 ... 0x5F: { // pop r32
+                U8 reg = byte - 0x58;
+                SerialPrintF("POP   $!A%s$!F\n", RegName(reg));
+                i += 1;
             } break;
 
             case 0x8B: { // mov r/m32
@@ -77,7 +98,7 @@ U0 ASMDis(U8* code, U32 count) {
             case 0xB8 ... 0xBF: { // mov r32, imm32
                 U8 reg = byte - 0xB8;
                 U32 imm = *(U32*)&code[i + 1];
-                SerialPrintF("MOV   $!A%s$!F, $!B0x%X$!F\n", RegName(reg), imm);
+                SerialPrintF("MOV   $!A%s$!F, $!B%p$!F\n", RegName(reg), imm);
                 i += 5;
             } break;
 

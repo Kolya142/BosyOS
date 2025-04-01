@@ -48,9 +48,9 @@ U8 TypeFromName(String name) {
     if (name[0] == 'U') {
         return Atoi(&name[1]);
     }
-    if (name[0] == 'I') {
-        return Atoi(&name[1]) | 0x80;
-    }
+    // if (name[0] == 'I') {
+    //     return Atoi(&name[1]) | 0x80;
+    // }
     return 0xFF;
 }
 U8 RegFromName(String name) {
@@ -163,6 +163,12 @@ List Compiler(String code, List parvars) {
     PrintF("$!BCompiling at %p %p...$!F\n", eip, CompilerOutput);
     NEXTTOK
     CompilerFunction *cfunc;
+    CompilerEmit(0x50 + ASM_REG_EBP);
+    ASMInstMovReg2Reg32(ASM_REG_EBP, ASM_REG_ESP);
+    CompilerEmit(0x81);
+    CompilerEmit(0xEC);
+    U32 esp_patch = CompilerOutput->count;
+    CompilerEmit(0xAA);CompilerEmit(0x55);CompilerEmit(0xEF);CompilerEmit(0xBE);
     for (;a;) {
         PrintF("$!ATok (%s) %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count);
         // NEXTTOK
@@ -217,13 +223,13 @@ List Compiler(String code, List parvars) {
                 MemSet(var.name, 0, 32);
                 StrCpy(var.name, name);
                 var.rel = parvars.count ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
-                PrintF("Let %s; [ESP - %x]\n", name, var.rel);
+                PrintF("Let %s; [EBP - %x]\n", name, var.rel);
                 var.type = ctype;
                 ListAppend(&parvars, &var);
                 a = CompilerExpr(code, &parvars);
                 sym += a;
                 code += a;
-                ASMInstMovReg2Disp32(ASM_REG_ESP, ASM_REG_EBX, -((I32)var.rel), ctype / 8);
+                ASMInstMovReg2Disp32(ASM_REG_EBP, ASM_REG_EBX, -((I32)var.rel), ctype / 8);
             }
             else {
                 List childvars = ListInit(sizeof(CompilerVariable));
@@ -308,7 +314,7 @@ List Compiler(String code, List parvars) {
             a = CompilerExpr(code, &parvars);
             sym += a;
             code += a;
-            ASMInstMovReg2Disp32(ASM_REG_ESP, ASM_REG_EBX, -((I32)cvar->rel), cvar->type / 8);
+            ASMInstMovReg2Disp32(ASM_REG_EBP, ASM_REG_EBX, -((I32)cvar->rel), cvar->type / 8);
         }
         else if (creg != 0xFF) {
             a = CompilerExpr(code, &parvars);
@@ -334,8 +340,16 @@ List Compiler(String code, List parvars) {
         NEXTTOK
     }
     
+    ASMInstMovReg2Reg32(ASM_REG_ESP, ASM_REG_EBP);
+    CompilerEmit(0x58 + ASM_REG_EBP);
     CompilerEmit(0xC3);
     PrintF("\n");
+    SerialPrintF("Patching ESP\n");
+    U32 *esp_patchv = (CompilerOutput->arr + esp_patch);
+    if (*esp_patchv != 0xBEEF55AA) {
+        SerialPrintF("ERROR: ESP PATCH INVALID %p\n", *esp_patchv);
+    }
+    *esp_patchv = (parvars.count ? (4 - (((CompilerVariable*)parvars.arr)[parvars.count - 1].rel % 4)) + 4 : 4);
     CompilerOutput = prev_output;
     return my_output;
 }

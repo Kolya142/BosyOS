@@ -32,21 +32,21 @@ U32 CompilerExpr(String code, List *vars) {
                     else if (!StrCmp(tok.str, "&")) {
                         NEXTTOK
                         if (var = CompilerFindVar(vars, tok.str)) {
-                            ASMInstMovReg2Reg32(ASM_REG_EBX, ASM_REG_ESP);
+                            ASMInstMovReg2Reg32(ASM_REG_EBX, ASM_REG_EBP);
                             ASMInstAddIMM2Reg32(ASM_REG_EBX, -(I32)var->rel);
                         }
                     }
                     else if (!StrCmp(tok.str, "*")) {
                         NEXTTOK
                         if (var = CompilerFindVar(vars, tok.str)) {
-                            ASMInstMovDisp2Reg32(ASM_REG_EBX, ASM_REG_ESP, -(I32)var->rel, var->type / 8);
+                            ASMInstMovDisp2Reg32(ASM_REG_EBX, ASM_REG_EBP, -(I32)var->rel, var->type / 8);
                         }
                         else if (reg = RegFromName(tok.str)) {
                             ASMInstMovMem2Reg32(ASM_REG_EBX, reg);
                         }
                     }
                     else if (var = CompilerFindVar(vars, tok.str)) {
-                        ASMInstMovDisp2Reg32(ASM_REG_EBX, ASM_REG_ESP, -((I32)var->rel), var->type / 8);
+                        ASMInstMovDisp2Reg32(ASM_REG_EBX, ASM_REG_EBP, -((I32)var->rel), var->type / 8);
                     }
                     else {
                         // PrintF("1");
@@ -83,14 +83,14 @@ U32 CompilerExpr(String code, List *vars) {
                     else if (!StrCmp(tok.str, "&")) {
                         NEXTTOK
                         if (var = CompilerFindVar(vars, tok.str)) {
-                            ASMInstMovReg2Reg32(ASM_REG_EDX, ASM_REG_ESP);
+                            ASMInstMovReg2Reg32(ASM_REG_EDX, ASM_REG_EBP);
                             ASMInstAddIMM2Reg32(ASM_REG_EDX, -(I32)var->rel);
                         }
                     }
                     else if (!StrCmp(tok.str, "*")) {
                         NEXTTOK
                         if (var = CompilerFindVar(vars, tok.str)) {
-                            ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_ESP, -(I32)var->rel, var->type / 8);
+                            ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_EBP, -(I32)var->rel, var->type / 8);
                         }
                         else if (reg = RegFromName(tok.str)) {
                             ASMInstMovMem2Reg32(ASM_REG_EDX, reg);
@@ -100,7 +100,7 @@ U32 CompilerExpr(String code, List *vars) {
                         ASMInstMovIMM2Reg32(ASM_REG_EBX, CompilerRoDataAdd(tok.str));
                     }
                     else if (var = CompilerFindVar(vars, tok.str)) {
-                        ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_ESP, -((I32)var->rel), var->type / 8);
+                        ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_EBP, -((I32)var->rel), var->type / 8);
                     }
                     else {
                         ASMInstMovIMM2Reg32(ASM_REG_EDX, Atoi(tok.str));

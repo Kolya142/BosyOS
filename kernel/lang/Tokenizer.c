@@ -9,12 +9,10 @@ U32 TokenNext(String str, Token *tok) {
     for (;*str && (pos < sizeof(tok->str) - 1);) {
         if (!tok->type) {
             if ((*str >= '0' && *str <= '9') || (*str == '-' && (str[1] >= '0' && str[1] <= '9'))) {
-                pos = 0;
                 tok->type = TOK_NUMBER;
             }
             else if (*str == '"') {
                 tok->type = TOK_STR;
-                pos = 0;
                 ++str;
                 while (*str && pos < sizeof(tok->str) - 1) {
                     if (*str == '"') {
@@ -52,7 +50,6 @@ U32 TokenNext(String str, Token *tok) {
                 return pos + 2;
             }
             else if ((*str >= '!' && *str <= '/') || (*str >= ':' && *str <= '@') || (*str >= '[' && *str <= '`') || (*str >= '{' && *str <= '~')) {
-                pos = 0;
                 tok->type = TOK_SPEC;
                 tok->str[pos++] = *str++;
                 if ((*str == '!' || *str == '=' || *str == '<' || *str == '>') && str[1] == '=') {
@@ -65,7 +62,6 @@ U32 TokenNext(String str, Token *tok) {
                 break;
             }
             else {
-                pos = 0;
                 tok->type = TOK_WORD;
             }
         }

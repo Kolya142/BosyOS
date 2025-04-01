@@ -1,12 +1,19 @@
+U0 Print {
+    Dump
+    eax 4;
+    ecx esi;
+    edx edi;
+    ebx 1;
+    INT 128;
+}
 U0 Main {
     U32 str = "Hello, world\n";
     U32 length = 13;
     if 1; {
-        eax 4;
-        ecx str;
-        edx length;
-        ebx 1;
-        INT 128;
+        esi str;
+        edi length;
+        Print;
+        Dump;
     }
 }
 Uf Main;

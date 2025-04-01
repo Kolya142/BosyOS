@@ -1,14 +1,19 @@
 #include <lang/Compiler.h>
 #include <lib/IO/TTY.h>
 
+/*
+Bugs:
+String eats semicolon
+*/
+
 #define TOK_CHECK(t) {if (!StrCmp(tok.str, t)) {PrintF("Invalid token. Excepted \""t"\" but got \"%s\"");}}
 
-static List CompilerOutput;
+static List *CompilerOutput;
 List CompilerRoData;
 List CompilerFunctions;
 
 U0 CompilerEmit(U8 code) {
-    ListAppend(&CompilerOutput, &code);
+    ListAppend(CompilerOutput, &code);
 }
 String RegName(U8 reg) {
     switch (reg) {
@@ -75,6 +80,19 @@ U8 RegFromName(String name) {
     }
     return 0xFF;
 }
+U0 CompilerRegsDump() {
+    U32 eax, ebx, ecx, edx, esi, edi;
+    asmV(
+        "mov %%eax, %0\n"
+        "mov %%ebx, %1\n"
+        "mov %%ecx, %2\n"
+        "mov %%edx, %3\n"
+        "mov %%esi, %4\n"
+        "mov %%edi, %5\n"
+        : "=m"(eax), "=m"(ebx), "=m"(ecx), "=m"(edx), "=m"(esi), "=m"(edi)
+    );
+    PrintF("Regs:\nEAX - %X\nEBX - %X\nECX - %X\nEDX - %X\nESI - %X\nEDI - %X\n", eax, ebx, ecx, edx, esi, edi);
+}
 CompilerVariable *CompilerFindVar(List *vars, String name) {
     CompilerVariable *varsd = vars->arr;
     for (U32 i = 0; i < vars->count; ++i) {
@@ -133,19 +151,20 @@ U32 CompilerRoDataAdd(String text) {
 }
 
 List Compiler(String code, List parvars) {
-    List prev_output = CompilerOutput;
-    CompilerOutput = ListInit(1);
-    U32 eip = (U32)CompilerOutput.arr;
+    List *prev_output = CompilerOutput;
+    List my_output = ListInit(1);
+    CompilerOutput = &my_output;
+    U32 eip = (U32)CompilerOutput->arr;
     Token tok;
     U32 a = 0;
     U32 s = 0;
     U32 sym = 0;
     U32 enter = 0;
-    PrintF("$!BCompiling at %p...$!F\n", eip);
+    PrintF("$!BCompiling at %p %p...$!F\n", eip, CompilerOutput);
     NEXTTOK
     CompilerFunction *cfunc;
     for (;a;) {
-        PrintF("$!ATok (%s) %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput.count);
+        PrintF("$!ATok (%s) %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count);
         // NEXTTOK
         // continue;
         CompilerVariable *cvar = CompilerFindVar(&parvars, tok.str);
@@ -162,9 +181,23 @@ List Compiler(String code, List parvars) {
                 PrintF("Failed to Disassembly \"%s\": No such function\n", tok.str);
             }
         }
+        else if (!StrCmp(tok.str, "Dump")) {
+            ASMInstMovIMM2Reg32(ASM_REG_EDX, (U32)CompilerRegsDump);
+            ASMInstCallReg32(ASM_REG_EDX);
+        }
         else if (!StrCmp(tok.str, "INT")) {
             NEXTTOK
             CompilerEmit(0xCD);
+            CompilerEmit(Atoi(tok.str));
+        }
+        else if (!StrCmp(tok.str, "IN")) {
+            NEXTTOK
+            CompilerEmit(ASM_IN);
+            CompilerEmit(Atoi(tok.str));
+        }
+        else if (!StrCmp(tok.str, "OUT")) {
+            NEXTTOK
+            CompilerEmit(ASM_OUT);
             CompilerEmit(Atoi(tok.str));
         }
         else if (ctype != 0xFF) {
@@ -303,7 +336,6 @@ List Compiler(String code, List parvars) {
     
     CompilerEmit(0xC3);
     PrintF("\n");
-    List curr_output = CompilerOutput;
     CompilerOutput = prev_output;
-    return curr_output;
+    return my_output;
 }

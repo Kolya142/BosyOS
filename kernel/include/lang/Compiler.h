@@ -17,6 +17,8 @@ typedef enum ASMInst {
     ASM_XOR  = 0x31, // R/M R
     ASM_CMP  = 0x39, // R/M R
 
+    ASM_ADD_IMM = 0x81, // R/M, IMM32
+
     ASM_MOV_R2R = 0x89, // R32 RM R32
     ASM_MOV_RR  = 0x8B, // R32 R/M32
     ASM_MOV_IMM = 0xB8, // R32 IMM32
@@ -118,6 +120,7 @@ U0 ASMInstMovReg2Disp32(U8 dst, U8 src, I32 rel, U8 bytes);
 U0 ASMInstMovDisp2Reg32(U8 dst, U8 src, I32 rel, U8 bytes);
 
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src);
+U0 ASMInstAddIMM2Reg32(U8 reg, U32 imm);
 U0 ASMInstIMulReg2Reg32(U8 dst, U8 src);
 U0 ASMInstJccIMM32(U8 opcode, I32 offset);
 U0 ASMInstJmpIMM32(I32 offset);

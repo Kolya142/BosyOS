@@ -51,15 +51,19 @@ U0 HeapFreePtr(Ptr ptr) {
     if ((ptr < Heap) || (ptr > Heap + HEAP_SIZE)) return;
 
     HeapMemBlock *block = (HeapMemBlock *)((U8*)ptr - sizeof(HeapMemBlock));
+    // PrintF("freeing block %p with size %p\n", block, block->size);
     block->free = 1;
+    
+    HeapMemBlock *curr = HeapFree;
 
-    HeapMemBlock *heap_free = HeapFree;
-    while (heap_free && heap_free->next) {
-        if (heap_free->free && heap_free->next->free) {
-            heap_free->size += sizeof(HeapMemBlock) + heap_free->next->size;
-            heap_free->next = heap_free->next->next;
-        } else {
-            heap_free = heap_free->next;
+    while (curr && curr->next) {
+        if (curr->next == block) {
+            curr->next = block->next;
+            break;
         }
+        else if (curr == block) {
+            break;
+        }
+        curr = curr->next;
     }
 }

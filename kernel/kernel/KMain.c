@@ -298,7 +298,7 @@ U0 mainloop() {
 
     // MFree(buf);
 
-    Char inp[512];
+    Char inp[512] = {0};
 
     PrintF("$!A\\$ $!F");
 
@@ -339,6 +339,7 @@ U0 mainloop() {
                 ListDestroy(&compiled);
             }
             PrintF("$!A\\$ $!F");
+            MemSet(inp, 0, 512);
         }
         Sleep(10);
     }

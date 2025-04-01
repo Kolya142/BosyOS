@@ -125,11 +125,7 @@ U0 ASMInstMovReg2Reg32(U8 dst, U8 src) {
     ASMInstMake32(0, 1, ASM_MOV_R2R, 0b11000000 | (src << 3) | dst, 0, 0, 0);
 }
 U0 ASMInstMovIMM2Reg32(U8 dst, U32 imm) {
-    CompilerEmit(ASM_MOV_IMM + dst);
-    CompilerEmit((imm >> 0) & 0xFF);
-    CompilerEmit((imm >> 8) & 0xFF);
-    CompilerEmit((imm >> 16) & 0xFF);
-    CompilerEmit((imm >> 24) & 0xFF);
+    ASMInstMake32(0, 8, ASM_MOV_IMM + dst, 0, 0, 0, imm);
 }
 U0 ASMInstMovReg2Mem32(U8 dst, U8 src) {
     ASMInstMake32(0, 1, ASM_MOV_R2R, 0b00000000 | (src << 3) | dst, 0, 0, 0);
@@ -183,6 +179,9 @@ U0 ASMInstMovMem2Reg32(U8 dst, U8 src) {
 
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src) {
     ASMInstMake32(0, 1, ASM_ADD, 0b11000000 | (src << 3) | dst, 0, 0, 0);
+}
+U0 ASMInstAddIMM2Reg32(U8 reg, U32 imm) {
+    ASMInstMake32(0, 1|8, ASM_ADD_IMM, 0b11000000 | reg, 0, 0, imm);
 }
 U0 ASMInstIMulReg2Reg32(U8 dst, U8 src) {
     CompilerEmit(0x0F);

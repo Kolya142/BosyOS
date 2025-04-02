@@ -100,6 +100,10 @@ U0 TTYUPrintC(U32 tty, Char c) {
                         TTYPrintC(tty, (AsciiP)ASCIIPF3);
                         TTYPrintC(tty, d+(AsciiP)ASCIIPCBlack);
                     break;
+                    default:
+                        TTYPrintC(tty, '$');
+                        TTYPrintC(tty, c);
+                    break;
                 }
             }
             ldv = 0;

@@ -1,0 +1,7 @@
+U32 Print {
+    eax 4;
+    ecx esi;
+    edx edi;
+    ebx 1;
+    INT 128;
+}

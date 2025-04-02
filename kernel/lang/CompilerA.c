@@ -1,5 +1,6 @@
 #include <lang/Compiler.h>
 #include <lib/IO/TTY.h>
+#include <fs/vfs.h>
 
 /*
 Bugs:
@@ -160,7 +161,7 @@ List Compiler(String code, List parvars) {
     U32 s = 0;
     U32 sym = 0;
     U32 enter = 0;
-    PrintF("$!BCompiling at %p %p...$!F\n", eip, CompilerOutput);
+    SerialPrintF("$!BCompiling at %p %p %p...$!F\n%s\n", eip, CompilerOutput->arr, code, code);
     NEXTTOK
     CompilerFunction *cfunc;
     CompilerEmit(0x50 + ASM_REG_EBP);
@@ -170,7 +171,7 @@ List Compiler(String code, List parvars) {
     U32 esp_patch = CompilerOutput->count;
     CompilerEmit(0xAA);CompilerEmit(0x55);CompilerEmit(0xEF);CompilerEmit(0xBE);
     for (;a;) {
-        PrintF("$!ATok (%s) %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count);
+        SerialPrintF("$!ATok \"%s\" %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count);
         // NEXTTOK
         // continue;
         CompilerVariable *cvar = CompilerFindVar(&parvars, tok.str);
@@ -268,6 +269,29 @@ List Compiler(String code, List parvars) {
             ASMInstJeIMM32(block.count);
             ListDestroy(&block);
         }
+        else if (!StrCmp(tok.str, "include")) {
+            SerialPrintF("Importing\n");
+            NEXTTOK
+            VFSStat stat = {0};
+            VFSLStat(tok.str, &stat);
+            U8 *buf = MAlloc(stat.size + 1);
+            buf[stat.size] = 0;
+            VFSRead(tok.str, buf, 0, stat.size);
+            SerialPrintF("Including:\n%s\n", buf);
+            List vars = ListInit(sizeof(CompilerVariable));
+            List compiled = Compiler(buf, vars);
+            ListDestroy(&vars);
+            if (compiled.count) {
+                ASMDis(compiled.arr, compiled.count);
+                U32(*entry)() = compiled.arr;
+                SerialPrintF("Compiled\n");
+                SerialPrintF("\nRunning\n");
+                U32 res = entry();
+                SerialPrintF("Result: %p\n", res);
+                ListDestroy(&compiled);
+            }
+            MFree(buf);
+        }
         else if (!StrCmp(tok.str, "while")) {
             U32 start = CompilerOutput->count;
             a = CompilerExpr(code, &parvars);
@@ -336,7 +360,11 @@ List Compiler(String code, List parvars) {
             ASMInstCallReg32(ASM_REG_EDX);
         }
         else {
-            PrintF("Invalid OpCode \"%s\"\n", tok.str);
+            SerialPrintF("Invalid OpCode \"%s\"\n", tok.str);
+            for (U32 i = 0; tok.str[i]; ++i) {
+                SerialPrintF("%1X ", tok.str[i]);
+            }
+            SerialPrintF("\n");
             return (List) {
                 .count = 0
             };

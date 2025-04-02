@@ -1,0 +1,11 @@
+include "/std.ux";
+
+U32 Main {
+    U32 str = "Hello, world!\n";
+    esi str;
+    edi 14;
+    Print;
+}
+
+Uf Main;
+Main;

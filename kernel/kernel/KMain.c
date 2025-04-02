@@ -297,29 +297,15 @@ U0 mainloop() {
     // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
     // win.update = TimeUpd;
     // WinSpawn(&win);
+    ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 80;
     {
-        CompilerFunction func;
-        func.code.arr = CompilerExtern;
-        MemSet(func.name, 0, 32);
-        StrCpy(func.name, "Compiler");
-        ListAppend(&CompilerFunctions, &func);
-        VFSStat stat = {0};
-        VFSLStat("test.bc", &stat);
-        U8 *buf = MAlloc(stat.size);
-        VFSRead("test.bc", buf, 0, stat.size);
         List vars = ListInit(sizeof(CompilerVariable));
-        List compiled = Compiler(buf, vars);
+        List compiled = Compiler("include \"/start.ux\"", vars);
         ListDestroy(&vars);
         if (compiled.count) {
-            ASMDis(compiled.arr, compiled.count);
-            U32(*entry)() = compiled.arr;
-            PrintF("Compiled\n");
-            PrintF("\nRunning\n");
-            U32 res = entry();
-            PrintF("Result: %p\n", res);
+            ((U0(*)())compiled.arr)();
             ListDestroy(&compiled);
         }
-        MFree(buf);
     }
 
     // MFree(buf);
@@ -386,7 +372,7 @@ U0 mainloop() {
         TTYFlush(TTYCurrent);
         U32 c = ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor;
         ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
-        PrintF("$*1%s %d:%d:%d.%d %s %p    $*0", day_names[(days + 2) % 7], SystemTime.hour, SystemTime.minute, SystemTime.second, PITTime % 1000, keynames[KBState.Key] ? keynames[KBState.Key] : (Char[]) {KBState.Key, 0}, HeapUsed);
+        PrintF("$*1%s %d:%d:%d.%d %d:%d %s %p    $*0", day_names[(days + 2) % 7], SystemTime.hour, SystemTime.minute, SystemTime.second, PITTime % 1000, (PITTime / 1000) / 60, (PITTime / 1000) % 60, keynames[KBState.Key] ? keynames[KBState.Key] : (Char[]) {KBState.Key, 0}, HeapUsed);
         ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = max(80, c);
         TTYFlush(TTYCurrent);
 

@@ -299,6 +299,12 @@ U0 mainloop() {
     // WinSpawn(&win);
     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 80;
     {
+        CompilerFunction func;
+        func.code.arr = CompilerExtern;
+        MemSet(func.name, 0, 32);
+        StrCpy(func.name, "Compiler");
+        ListAppend(&CompilerFunctions, &func);
+
         List vars = ListInit(sizeof(CompilerVariable));
         List compiled = Compiler("include \"/start.ux\"", vars);
         ListDestroy(&vars);

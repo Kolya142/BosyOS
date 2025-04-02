@@ -262,7 +262,7 @@ List Compiler(String code, List parvars) {
             code += a;
             PrintF("if %d\n", a);
             List block = Compiler(code, parvars);
-            block.count -= 1;
+            block.count -= 9+4;
 
             ASMInstCmpImm2Reg32(ASM_REG_EBX, 0);
 

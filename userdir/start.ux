@@ -1,11 +1,30 @@
 include "/std.ux";
 
-U32 Main {
-    U32 str = "Hello, world!\n";
+U32 Start {
+    U32 str = "Simple Shell!\n$ ";
     esi str;
-    edi 14;
+    edi 15;
     Print;
+    while 1; {
+        eax 3;
+        ecx 0x1000;
+        edx 100;
+        ebx 0;
+        INT 0x80;
+
+        if eax; {
+            edx eax;
+            eax 4;
+            ecx 0x1000;
+            ebx 1;
+            INT 0x80;
+
+            esi "\n$ ";
+            edi 3;
+            Print;
+        }
+    }
 }
 
-Uf Main;
-Main;
+Uf Start;
+Start;

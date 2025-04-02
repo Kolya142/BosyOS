@@ -36,6 +36,7 @@ Ptr HeapAlloc(U32 size) {
                 curr->next = new_block;
 
                 curr->size = aligned;
+                curr->orig = size;
             }
             curr->free = False;
             HeapUsed += size;
@@ -53,7 +54,7 @@ U0 HeapFreePtr(Ptr ptr) {
     if ((ptr < Heap) || (ptr > Heap + HEAP_SIZE)) return;
 
     HeapMemBlock *block = (HeapMemBlock *)((U8*)ptr - sizeof(HeapMemBlock));
-    HeapUsed -= block->size;
+    HeapUsed -= block->orig;
     // PrintF("freeing block %p with size %p\n", block, block->size);
     block->free = 1;
     

@@ -232,14 +232,12 @@ List Compiler(String code, List parvars) {
                 ASMInstMovReg2Disp32(ASM_REG_EBP, ASM_REG_EBX, -((I32)var.rel), ctype / 8);
             }
             else {
-                List childvars = ListInit(sizeof(CompilerVariable));
                 CompilerFunction func;
                 MemSet(func.name, 0, 32);
                 StrCpy(func.name, name);
-                func.code = Compiler(code - StrLen(tok.str), childvars);
+                func.code = Compiler(code - StrLen(tok.str), parvars);
                 PrintF("$!dFunction \"%s\"$!F\n", name);
                 ListAppend(&CompilerFunctions, &func);
-                ListDestroy(&childvars);
                 U32 enter1 = 0;
                 do {
                     if (!StrCmp(tok.str, "{")) {

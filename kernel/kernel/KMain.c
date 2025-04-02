@@ -152,11 +152,11 @@ U0 KernelMain(struct MultiBoot *mbi) {
     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
     KDogWatchLog("System initializing start", False);
 
-    U16 mem = MemorySize();
-    PrintF("$!EDetected Memory size $!C- $!B0x%2xKB$!F\n\n", mem);
-    if (mem < 64000) {
-        KDogWatchLog("$!CWarning: Memory size < $!B64MB$!F", False);
-    }
+    // U16 mem = MemorySize();
+    // PrintF("$!EDetected Memory size $!C- $!B0x%2xKB$!F\n\n", mem);
+    // if (mem < 94000) {
+    //     KDogWatchLog("$!CWarning: Memory size < $!B94MB$!F", False);
+    // }
     VgaBlinkingSet(False);
     VgaCursorDisable();
     VgaCursorEnable();
@@ -168,12 +168,12 @@ U0 KernelMain(struct MultiBoot *mbi) {
     
     KDogWatchLog("SysCalls Initialized", False);
     
-    PagingInit();
+    // PagingInit();
 
-    KDogWatchLog("Initialized \x9Bpaging\x9C", False);
+    // KDogWatchLog("Initialized \x9Bpaging\x9C", False);
 
-    KDogWatchLog("Setuping fpu", False);
-    FPUBox();
+    // KDogWatchLog("Setuping fpu", False);
+    // FPUBox();
     
     // Drivers
     KDogWatchLog("Setuping drivers", False);
@@ -306,7 +306,7 @@ U0 mainloop() {
         ListAppend(&CompilerFunctions, &func);
 
         List vars = ListInit(sizeof(CompilerVariable));
-        List compiled = Compiler("include \"/start.ux\"", vars);
+        List compiled = Compiler("include \"/etc/start.ux\"", vars);
         ListDestroy(&vars);
         if (compiled.count) {
             ((U0(*)())compiled.arr)();
@@ -383,18 +383,26 @@ U0 mainloop() {
         TTYFlush(TTYCurrent);
 
         if (TTYRead(TTYCurrent, 0, inp, 512)) {
-            List vars = ListInit(sizeof(CompilerVariable));
-            List compiled = Compiler(inp, vars);
-            ListDestroy(&vars);
-            if (compiled.count) {
-                U32(*entry)() = compiled.arr;
-                PrintF("Compiled\n");
-                PrintF("\nRunning\n");
-                U32 res = entry();
-                PrintF("Result: %p\n", res);
-                ListDestroy(&compiled);
+            if (!StrCmp(inp, "RepairDisk")) {
+                for (U32 i = 0;;++i) {
+                    PrintF("Writing block %p\n", i);
+                    ATAWrite(True, NULL, 0, 1);
+                }
             }
-            PrintF("$!A\\$ $!F");
+            else {
+                List vars = ListInit(sizeof(CompilerVariable));
+                List compiled = Compiler(inp, vars);
+                ListDestroy(&vars);
+                if (compiled.count) {
+                    U32(*entry)() = compiled.arr;
+                    PrintF("Compiled\n");
+                    PrintF("\nRunning\n");
+                    U32 res = entry();
+                    PrintF("Result: %p\n", res);
+                    ListDestroy(&compiled);
+                }
+                PrintF("$!A\\$ $!F");
+            }
             MemSet(inp, 0, 512);
         }
         Sleep(10);

@@ -1,0 +1,18 @@
+include "/std.ux";
+
+U32 OSStart {
+    U32 str = "Simple Shell!\n$ ";
+    esi str;
+    edi 15;
+    Print;
+}
+
+U0 Clear {
+    U8 c = 0x80;
+    esi &c;
+    edi 1;
+    Print;
+}
+
+Uf OSStart;
+OSStart;

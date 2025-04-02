@@ -168,7 +168,6 @@ List Compiler(String code, List parvars) {
     ASMInstMovReg2Reg32(ASM_REG_EBP, ASM_REG_ESP);
     CompilerEmit(0x81);
     CompilerEmit(0xEC);
-    U32 esp_patch = CompilerOutput->count;
     CompilerEmit(0xAA);CompilerEmit(0x55);CompilerEmit(0xEF);CompilerEmit(0xBE);
     for (;a;) {
         SerialPrintF("$!ATok \"%s\" %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count);
@@ -387,7 +386,7 @@ List Compiler(String code, List parvars) {
     CompilerEmit(0xC3);
     PrintF("\n");
     SerialPrintF("Patching ESP\n");
-    U32 *esp_patchv = (CompilerOutput->arr + esp_patch);
+    U32 *esp_patchv = (CompilerOutput->arr + 5);
     if (*esp_patchv != 0xBEEF55AA) {
         SerialPrintF("ERROR: ESP PATCH INVALID %p\n", *esp_patchv);
     }

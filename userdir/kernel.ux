@@ -1,0 +1,25 @@
+U32 Print {
+    eax 4;
+    ecx esi;
+    edx edi;
+    ebx 1;
+    INT 128;
+}
+
+U32 Read {
+    eax 3;
+    ecx esi;
+    edx edi;
+    ebx 0;
+    INT 128;
+}
+
+U32 StrLen {
+    eax 0;
+    U32 str = esi;
+    while *str {
+        eax eax + 1;
+        str str + 1;
+    }
+}
+Uf StrLen;

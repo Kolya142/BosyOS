@@ -52,7 +52,7 @@ U0 KDogWatchLog(const String str, Bool panic) {
     TTYCurrent = 4;
     PrintF("$!A[DogWatch]$!F:$!E%s$!C at $!B%X$!F\n", str, PITTime);
     TTYCurrent = t;
-    SerialPrintF("[DogWatch]:%s at %X", str, PITTime);
+    SerialPrintF("[DogWatch]:%s at %X\n", str, PITTime);
     if (panic) {
         KPanic("KDogWatchLog panic", True);
     }

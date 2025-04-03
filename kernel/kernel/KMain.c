@@ -109,11 +109,6 @@ U0 KernelMain(struct MultiBoot *mbi) {
 
     TTYInit();
 
-    SerialInit();
-    KDogWatchLog("Initialized \x9Bserial\x9C", False);
-    CompilerInit();
-    KDogWatchLog("Initialized \x9Bcompiler\x9C", False);
-
     U32 ptys = PTYNew(2048, 1, 1);
     U32 ptyg1 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
     U32 ptyg2 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
@@ -151,6 +146,11 @@ U0 KernelMain(struct MultiBoot *mbi) {
     // VESAInit();
     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
     KDogWatchLog("System initializing start", False);
+
+    SerialInit();
+    KDogWatchLog("Initialized \x9Bserial\x9C", False);
+    CompilerInit();
+    KDogWatchLog("Initialized \"compiler\"", False);
 
     // U16 mem = MemorySize();
     // PrintF("$!EDetected Memory size $!C- $!B0x%2xKB$!F\n\n", mem);
@@ -322,41 +322,7 @@ U0 mainloop() {
 
     for (;;) {
         String keynames[256] = {
-            "NUL",
-            "SOH",
-            "STX",
-            "ETX",
-            "EOT",
-            "ENQ",
-            "ACK",
-            "BEL",
-            "BACKSPACE",
-            "TAB",
-            "ENTER",
-            "VT",
-            "FF",
-            "ENTER",
-            "SO",
-            "SI",
-            
-            "DLE",
-            "DC1",
-            "DC2",
-            "DC3",
-            "DC4",
-            "NAK",
-            "SYN",
-            "ETB",
-            "CAN",
-            "EM",
-            "SUB",
-            "ESC",
-            "FS",
-            "GS",
-            "RS",
-            "US",
-        
-            [0x7F] = "DELETE",
+            "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BACKSPACE", "TAB", "ENTER", "VT", "FF", "ENTER", "SO", "SI", "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US", [0x7F] = "DELETE",
         };
     
         static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};

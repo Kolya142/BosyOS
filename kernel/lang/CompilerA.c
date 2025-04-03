@@ -180,11 +180,11 @@ List Compiler(String code, List parvars) {
             NEXTTOK
             CompilerFunction *func = get_func(tok.str);
             if (func) {
-                PrintF("Disassembling %s:", func->name);
+                SerialPrintF("Disassembling %s:", func->name);
                 ASMDis(func->code.arr, func->code.count);
             }
             else {
-                PrintF("Failed to Disassembly \"%s\": No such function\n", tok.str);
+                SerialPrintF("Failed to Disassembly \"%s\": No such function\n", tok.str);
             }
         }
         else if (!StrCmp(tok.str, "Dump")) {
@@ -351,16 +351,14 @@ List Compiler(String code, List parvars) {
         }
         else if (!StrCmp(tok.str, ";")) {
         }
-        else if (!StrCmp(tok.str, "*")) {
+        else if (!StrCmp(tok.str, "*")) { // FIXME
             NEXTTOK
             cvar = CompilerFindVar(&parvars, tok.str);
             a = CompilerExpr(code, &parvars);
             sym += a;
             code += a;
-            ASMInstMovReg2Reg32(ASM_REG_EDX, ASM_REG_EBP);
-            ASMInstAddIMM2Reg32(ASM_REG_EDX, -(I32)cvar->rel);
-            ASMInstMovReg2Disp32(ASM_REG_EBX, ASM_REG_EBX, 0, 4);
-            ASMInstMovReg2Disp32(ASM_REG_EDX, ASM_REG_EBX, 0, 1);
+            ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_EBP, -(I32)cvar->rel, 4); // MOV EDX, [EBP - rel]
+            ASMInstMovReg2Disp32(ASM_REG_EDX, ASM_REG_EBX, 0, 1);               // MOV [EDX], EBX
         }
         else if (cfunc = get_func(tok.str)) {
             ASMInstMovIMM2Reg32(ASM_REG_EDX, (U32)cfunc->code.arr);

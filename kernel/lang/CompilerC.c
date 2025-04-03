@@ -179,7 +179,9 @@ U0 ASMInstMovDisp2Reg32(U8 dst, U8 src, I32 rel, U8 bytes) {
         case 4: opcode = ASM_MOV_RR; break; // mov [mem], r32
         default: return;
     }
-
+    if (bytes != 4) {
+        ASMInstXorReg2Reg32(dst, dst);
+    }
     if (src == ASM_REG_ESP) {
         ASMInstMake32(pref, 1|2|4, opcode, 0b10000000 | (dst << 3) | src, 0x24, rel, 0);
     }

@@ -1,9 +1,10 @@
-include "/std.ux";
+include "/kernel.ux";
 
 U32 OSStart {
-    U32 str = "Simple Shell!\n$ ";
+    U32 str = "Simple BOSC REPL!\n";
     esi str;
-    edi 15;
+    StrLen;
+    edi eax;
     Print;
 }
 

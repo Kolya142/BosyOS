@@ -2,8 +2,7 @@
 0x8000  (real) - kernel bootloader
 0x0100000(real) - kernel
 0x0600000(real) - kernel stack
-0x0700000(real) - kernel heap
-0x0D00000(real) - pages
-0x0F00000(real) - page table
-0x1000000(real) - palloc
-0xC000000(virt) - user data(application & stack)
+0x0700000(real) - pages
+0x0D00000(real) - page table
+0x1300000(real) - kernel heap
+0x5000000(real) - kernel heap end

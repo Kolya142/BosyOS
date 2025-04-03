@@ -1,4 +1,5 @@
 #include <lib/memory/Collects.h>
+#include <lib/IO/TTY.h>
 List ListInit(U32 elem_size) {
     List list;
     list.arr = MCAlloc(elem_size, 8);
@@ -9,7 +10,9 @@ List ListInit(U32 elem_size) {
 }
 U0 ListAppend(List *this, Ptr elem) {
     if (this->count == this->length) {
+        // PrintF("Reallocing\n");
         this->arr = MReAlloc(this->arr, this->length * this->elem, (this->length << 1) * this->elem);
+        // PrintF("Reallocing\n");
         this->length <<= 1;
     }
     MemCpy(this->arr + this->count * this->elem, elem, this->elem);

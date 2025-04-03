@@ -6,7 +6,7 @@ ROFSSB *ROFS;
 
 static U32 ROFSReadV(String name, Ptr buf, U32 offset, U32 count) {
     while (*name == '/') ++name;
-    SerialPrintF("reading: \"%s\"\n", name);
+    // SerialPrintF("reading: \"%s\"\n", name);
     ROFSNode *node = (ROFSNode*)((U8*)ROFS+sizeof(ROFSSB));
     for (U32 i = 0; i < ROFS->count; ++i) {
         if (!StrCmp(node->name, name)) {

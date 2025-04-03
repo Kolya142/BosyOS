@@ -34,9 +34,9 @@ compile:
 	# dd if=initrom of=drive bs=512 seek=291 conv=notrunc
 
 make_drive:
-	rm drive
-	truncate -s 8192 drive
-	cp drive grub/iso/drive
+	rm /tmp/bosyos.drive || echo Creating new drive 
+	truncate -s 2M /tmp/bosyos.drive
+	cp /tmp/bosyos.drive grub/iso/drive
 
 QEMU=qemu-system-i386
 QEMU_DRIVE=-hda grub/bosyos.iso
@@ -67,8 +67,8 @@ run:
 		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-reboot --no-shutdown;\
 	fi
 
-all: kernel prog compile run
-allr: kernel prog compile
+all: kernel compile run
+allr: kernel compile
 progc: prog compile
 progrun: progc run
 kernelc: kernel compile

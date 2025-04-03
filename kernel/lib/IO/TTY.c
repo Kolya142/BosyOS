@@ -100,6 +100,10 @@ U0 TTYUPrintC(U32 tty, Char c) {
                         TTYPrintC(tty, (AsciiP)ASCIIPF3);
                         TTYPrintC(tty, d+(AsciiP)ASCIIPCBlack);
                     break;
+                    default:
+                        TTYPrintC(tty, '$');
+                        TTYPrintC(tty, c);
+                    break;
                 }
             }
             ldv = 0;
@@ -250,6 +254,6 @@ U0 SerialPrintF(String format, ...) {
     va_list args;
     va_start(args, format);
     VPrintF(0, format, args);
-    TTYUPrintC(0, '\n');
+    // TTYUPrintC(0, '\n');
     va_end(args);
 }

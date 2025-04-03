@@ -38,12 +38,12 @@ INT_DEF(DWErr0E) {
     else KPanic("x86 exception", False);
 }
 U0 KDogWatchInit() {
-    // IDTSet(0x00, DWErr00, 0x08, 0x8E);
-    // IDTSet(0x0D, DWErr0D, 0x08, 0x8E);
-    // IDTSet(0x0E, DWErr0E, 0x08, 0x8E);
-    // IDTSet(0x05, DWErr05, 0x08, 0x8E);
-    // IDTSet(0x08, DWErr08, 0x08, 0x8E);
-    // IDTSet(0x0C, DWErr0C, 0x08, 0x8E);
+    IDTSet(0x00, DWErr00, 0x08, 0x8E);
+    IDTSet(0x0D, DWErr0D, 0x08, 0x8E);
+    IDTSet(0x0E, DWErr0E, 0x08, 0x8E);
+    IDTSet(0x05, DWErr05, 0x08, 0x8E);
+    IDTSet(0x08, DWErr08, 0x08, 0x8E);
+    IDTSet(0x0C, DWErr0C, 0x08, 0x8E);
     KDogWatchLog("Init", False);
 }
 
@@ -52,7 +52,7 @@ U0 KDogWatchLog(const String str, Bool panic) {
     TTYCurrent = 4;
     PrintF("$!A[DogWatch]$!F:$!E%s$!C at $!B%X$!F\n", str, PITTime);
     TTYCurrent = t;
-    SerialPrintF("[DogWatch]:%s at %X", str, PITTime);
+    SerialPrintF("[DogWatch]:%s at %X\n", str, PITTime);
     if (panic) {
         KPanic("KDogWatchLog panic", True);
     }

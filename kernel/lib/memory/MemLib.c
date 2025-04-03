@@ -1,4 +1,5 @@
 #include <lib/memory/MemLib.h>
+#include <lib/IO/TTY.h>
 #include <kernel/KMem.h>
 
 Ptr MAlloc(U32 size) {
@@ -8,9 +9,13 @@ U0 MFree(Ptr ptr) {
     HeapFreePtr(ptr);
 }
 Ptr MReAlloc(Ptr ptr, U32 olds, U32 news) {
+    // PrintF("Reallocing\n");
     Ptr new = MAlloc(news);
+    // PrintF("Reallocing\n");
     MemCpy(new, ptr, olds < news ? olds : news);
+    // PrintF("Reallocing\n");
     MFree(ptr);
+    // PrintF("Reallocing\n");
     return new;
 }
 Ptr MCAlloc(U32 elem, U32 count) {

@@ -10,13 +10,13 @@ static EIFSuperBlock sb;
 U32 EIFIAlloc() {
     U8 buf[512];
     for (U32 i = sb.iblock_alloc_start; i < sb.iblock_alloc_end; ++i) {
-        ATARead(buf, start + i, 1);
+        ATARead(0, buf, start + i, 1);
         for (U32 j = 0; j < 512; ++j) {
             if (buf[j] != 0xFF) {
                 for (U32 k = 0; k < 8; ++k) {
                     if (!(buf[j] & (1 << k))) {
                         buf[j] |= 1 << k;
-                        ATAWrite(buf, start + i, 1);
+                        ATAWrite(0, buf, start + i, 1);
                         return ((i - sb.iblock_alloc_start) * 512 * 8) + (j * 8) + k;
                     }
                 }
@@ -28,13 +28,13 @@ U32 EIFIAlloc() {
 U32 EIFBAlloc() {
     U8 buf[512];
     for (U32 i = sb.block_alloc_start; i < sb.block_alloc_end; ++i) {
-        ATARead(buf, start + i, 1);
+        ATARead(0, buf, start + i, 1);
         for (U32 j = 0; j < 512; ++j) {
             if (buf[j] != 0xFF) {
                 for (U32 k = 0; k < 8; ++k) {
                     if (!(buf[j] & (1 << k))) {
                         buf[j] |= 1 << k;
-                        ATAWrite(buf, start + i, 1);
+                        ATAWrite(0, buf, start + i, 1);
                         return ((i - sb.block_alloc_start) * 512 * 8) + (j * 8) + k;
                     }
                 }
@@ -46,15 +46,13 @@ U32 EIFBAlloc() {
 
 EIFINode EIFIGet(U32 i) {
     U8 dbuf[512];
-    ATARead(dbuf, start + sb.iblock_start + (i / sizeof(EIFINode)) / 512, 1);
+    ATARead(0, dbuf, start + sb.iblock_start + (i / sizeof(EIFINode)) / 512, 1);
     EIFINode ind;
     MemCpy(&ind, dbuf + (i / sizeof(EIFINode)) % 512, sizeof(EIFINode));
+    return ind;
 }
 U0 EIFBGet(U32 i, U8 *buf) {
-    U8 dbuf[512];
-    ATARead(dbuf, start + sb.block_start + (i / sizeof(EIFINode)) / 512, 1);
-    EIFINode ind;
-    MemCpy(&ind, dbuf + (i / sizeof(EIFINode)) % 512, sizeof(EIFINode));
+    ATARead(0, buf, start + sb.block_start + (i / sizeof(EIFINode)) / 512, 1);
 }
 
 U0 EIFInit() {
@@ -62,7 +60,7 @@ U0 EIFInit() {
     start = de->extent_lba_le * 4;
     size = (de->data_length_le + 511) / 512;
     U8 buf[512];
-    ATARead(buf, start, 1);
+    ATARead(0, buf, start, 1);
     MemCpy(&sb, buf, sizeof(EIFSuperBlock));
     if (sb.magic != 'SFIE') {
         sb.magic = 'SFIE';
@@ -77,7 +75,7 @@ U0 EIFInit() {
         sb.iblock_alloc_end = 80;
 
         MemCpy(buf, &sb, sizeof(EIFSuperBlock));
-        ATAWrite(buf, start, 1);
+        ATAWrite(0, buf, start, 1);
     }
     PrintF("IAlloc: %p\n", EIFIAlloc());
 }

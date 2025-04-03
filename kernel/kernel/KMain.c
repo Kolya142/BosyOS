@@ -32,6 +32,7 @@
 
 // Lang
 #include <lang/Tokenizer.h>
+#include <lang/Compiler.h>
 
 // KWS
 #include <kws/win.h>
@@ -52,7 +53,6 @@
 // FileSystem
 #include <fs/eifs/eifs.h>
 #include <fs/iso9660.h>
-#include <fs/minix.h>
 #include <fs/ramfs.h>
 #include <fs/romfs.h>
 #include <fs/vfs.h>
@@ -109,9 +109,6 @@ U0 KernelMain(struct MultiBoot *mbi) {
 
     TTYInit();
 
-    SerialInit();
-    KDogWatchLog("Initialized \x9Bserial\x9C", False);
-
     U32 ptys = PTYNew(2048, 1, 1);
     U32 ptyg1 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
     U32 ptyg2 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
@@ -136,6 +133,11 @@ U0 KernelMain(struct MultiBoot *mbi) {
     GDTInit();
     IDTInit();
     PICMap();
+    RTCUpdate();
+    U32 t = SystemTime.second;
+    while (SystemTime.second == t) {
+        RTCUpdate();
+    }
     PITInit();
     TaskInit();
     KDogWatchInit();
@@ -145,11 +147,16 @@ U0 KernelMain(struct MultiBoot *mbi) {
     ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
     KDogWatchLog("System initializing start", False);
 
-    U16 mem = MemorySize();
-    PrintF("$!EDetected Memory size $!C- $!B0x%2xKB$!F\n\n", mem);
-    if (mem < 64000) {
-        KDogWatchLog("$!CWarning: Memory size < $!B64MB$!F", False);
-    }
+    SerialInit();
+    KDogWatchLog("Initialized \x9Bserial\x9C", False);
+    CompilerInit();
+    KDogWatchLog("Initialized \"compiler\"", False);
+
+    // U16 mem = MemorySize();
+    // PrintF("$!EDetected Memory size $!C- $!B0x%2xKB$!F\n\n", mem);
+    // if (mem < 94000) {
+    //     KDogWatchLog("$!CWarning: Memory size < $!B94MB$!F", False);
+    // }
     VgaBlinkingSet(False);
     VgaCursorDisable();
     VgaCursorEnable();
@@ -161,12 +168,12 @@ U0 KernelMain(struct MultiBoot *mbi) {
     
     KDogWatchLog("SysCalls Initialized", False);
     
-    PagingInit();
+    // PagingInit();
 
-    KDogWatchLog("Initialized \x9Bpaging\x9C", False);
+    // KDogWatchLog("Initialized \x9Bpaging\x9C", False);
 
-    KDogWatchLog("Setuping fpu", False);
-    FPUBox();
+    // KDogWatchLog("Setuping fpu", False);
+    // FPUBox();
     
     // Drivers
     KDogWatchLog("Setuping drivers", False);
@@ -206,14 +213,14 @@ U0 KernelMain(struct MultiBoot *mbi) {
         KPanic("Cannot get initrom.", False);
     }
     // return;
-    ATARead((Ptr)0x200000, initrom->extent_lba_le * 4, (initrom->data_length_le + 511) / 512);
+    ATARead(0, (Ptr)0x200000, initrom->extent_lba_le * 4, (initrom->data_length_le + 511) / 512);
     ROFSInit((Ptr)0x200000);
     KDogWatchLog("Initialized \x9Bromfs\x9C", False);
     RFSInit();
     KDogWatchLog("Initialized \x9Bramfs\x9C", False);
 
-    EIFInit();
-    KDogWatchLog("Initialized \"eifs\"", False);
+    // EIFInit();
+    // KDogWatchLog("Initialized \"eifs\"", False);
     // DATInit();
     // KDogWatchLog("Initialized \"dat\"", False);
     // BOTFSInit();
@@ -265,42 +272,122 @@ static U0 ring3() {
     for (;;);
 }
 
-U0 mainloop() {
-    for (U32 t = 0; t < TTYs.count; ++t) {
-        TTYCurrent = t;
-        PrintF("Terminal %d\n", t);
+static U0 CompilerExtern() {
+    U32 esi;
+    asmV (
+        "mov %%esi, %0"
+        : "=m"(esi)
+    );
+    List vars = ListInit(sizeof(CompilerVariable));
+    List compiled = Compiler((String)esi, vars);
+    ListDestroy(&vars);
+    if (compiled.count) {
+        ASMDis(compiled.arr, compiled.count);
+        U32(*entry)() = compiled.arr;
+        PrintF("Compiled\n");
+        PrintF("\nRunning\n");
+        U32 res = entry();
+        PrintF("Result: %p\n", res);
+        ListDestroy(&compiled);
     }
+}
+
+U0 mainloop() {
     TTYSwitch(0);
     // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
     // win.update = TimeUpd;
     // WinSpawn(&win);
-
+    ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 80;
     {
-        // VFSReadDir("/", lsfn);
-        U8 buf[16] = {0};
-        U32 readed = VFSRead("/dev/urandom", buf, 0, 16);
-        
-        SerialPrintF("Readed %d entropy bytes: ", readed);
-        for (U32 i = 0; i < readed; ++i) {
-            SerialPrintF("%1X ", buf[i]);
+        CompilerFunction func;
+        func.code.arr = CompilerExtern;
+        MemSet(func.name, 0, 32);
+        StrCpy(func.name, "Compiler");
+        ListAppend(&CompilerFunctions, &func);
+
+        List vars = ListInit(sizeof(CompilerVariable));
+        List compiled = Compiler("include \"/etc/start.ux\"", vars);
+        ListDestroy(&vars);
+        if (compiled.count) {
+            ((U0(*)())compiled.arr)();
+            ListDestroy(&compiled);
         }
-        SerialPrintF("");
     }
 
-    VFSReadDir("/", lsfn);
-    PrintF("\n");
-    VFSReadDir("/etc", lsfn);
+    // MFree(buf);
 
-    VFSStat stat = {0};
-    VFSLStat("/bin/init.elf", &stat);
-    U8 *buf = MAlloc(stat.size);
-    VFSRead("/bin/init.elf", buf, 0, stat.size);
-    SerialPrintF("Starting program %x %d\n", *(U32*)(buf), stat.size);
+    Char inp[512] = {0};
 
-    TTYCurrent = 1;
-    ELFLoad(buf);
-    // BsfExec(&app, 0, 1);
-    MFree(buf);
+    PrintF("$!A\\$ $!F");
 
-    RingSwitch(ring3, (Ptr)0x3000);
+    for (;;) {
+        String keynames[256] = {
+            "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BACKSPACE", "TAB", "ENTER", "VT", "FF", "ENTER", "SO", "SI", "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US", [0x7F] = "DELETE",
+        };
+    
+        static const U32 days_in_months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        U32 days = 0;
+
+        for (U32 y = 2025; y < SystemTime.year; y++) {
+            days += (y % 4 == 0) ? 366 : 365;
+        }
+        for (U32 m = 1; m < SystemTime.month; m++) {
+            days += days_in_months[m - 1];
+            if (m == 2 && (SystemTime.year % 4 == 0)) {
+                days++;
+            }
+        }
+        days += SystemTime.day - 1;
+        String day_names[] = {
+            "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+        };
+        TTYFlush(TTYCurrent);
+        U32 c = ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor;
+        ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
+        PrintF("$*1%s %d:%d:%d.%d %d:%d %s %p    $*0", day_names[(days + 2) % 7], SystemTime.hour, SystemTime.minute, SystemTime.second, PITTime % 1000, (PITTime / 1000) / 60, (PITTime / 1000) % 60, keynames[KBState.Key] ? keynames[KBState.Key] : (Char[]) {KBState.Key, 0}, HeapUsed);
+        ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = max(80, c);
+        TTYFlush(TTYCurrent);
+
+        if (TTYRead(TTYCurrent, 0, inp, 512)) {
+            if (!StrCmp(inp, "RepairDisk")) {
+                for (U32 i = 0;;++i) {
+                    PrintF("Writing block %p\n", i);
+                    ATAWrite(True, NULL, 0, 1);
+                }
+            }
+            else {
+                List vars = ListInit(sizeof(CompilerVariable));
+                List compiled = Compiler(inp, vars);
+                ListDestroy(&vars);
+                if (compiled.count) {
+                    U32(*entry)() = compiled.arr;
+                    PrintF("Compiled\n");
+                    PrintF("\nRunning\n");
+                    U32 res = entry();
+                    PrintF("Result: %p\n", res);
+                    ListDestroy(&compiled);
+                }
+                PrintF("$!A\\$ $!F");
+            }
+            MemSet(inp, 0, 512);
+        }
+        Sleep(10);
+    }
+
+    // VFSReadDir("/", lsfn);
+    // PrintF("\n");
+    // VFSReadDir("/etc", lsfn);
+
+    // VFSStat stat = {0};
+    // VFSLStat("/bin/init.elf", &stat);
+    // U8 *buf = MAlloc(stat.size);
+    // VFSRead("/bin/init.elf", buf, 0, stat.size);
+    // SerialPrintF("Starting program %x %d\n", *(U32*)(buf), stat.size);
+
+    // TTYCurrent = 1;
+    // ELFLoad(buf);
+    // // BsfExec(&app, 0, 1);
+    // MFree(buf);
+
+    // RingSwitch(ring3, (Ptr)0x3000);
 }

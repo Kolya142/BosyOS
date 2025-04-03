@@ -78,10 +78,31 @@ U0 StrCpy(String dst, String src) {
 
 U32 Atoi(String a) {
     U32 v = 0;
+    U8 mode = 0;
+    if (a[0] == '0' && a[1] == 'x') {
+        mode = 1;
+        a += 2;
+    }
     while (*a) {
-        if (*a >= '0' && *a <= '9') {
-            U8 n = *a-'0';
-            v = (v+n)/10;
+        if (mode == 0) {
+            if (*a >= '0' && *a <= '9') {
+                U8 n = *a-'0';
+                v = (v * 10) + n;
+            }
+        }
+        else if (mode == 1) {
+            if (*a >= '0' && *a <= '9') {
+                U8 n = *a-'0';
+                v = (v * 16) + n;
+            }
+            else if (*a >= 'A' && *a <= 'F') {
+                U8 n = *a-'A';
+                v = (v * 16) + n + 10;
+            }
+            else if (*a >= 'a' && *a <= 'f') {
+                U8 n = *a-'a';
+                v = (v * 16) + n + 10;
+            }
         }
         ++a;
     }

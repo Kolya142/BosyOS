@@ -40,7 +40,7 @@ U0 SCRead(INTRegs3 *regs) {
     U32 buf = regs->ecx;
     U32 count = regs->edx;
     if (fd <= 2) {
-        regs->eax = TTYRead(TaskTail->ttyid, fd, (Ptr)buf, count);
+        regs->eax = TTYRead(TaskTail ? TaskTail->ttyid : TTYCurrent, fd, (Ptr)buf, count);
     }
     else if (fd >= 3) {
         regs->eax = VFSReadV(fd, (Ptr)buf, count);
@@ -55,7 +55,7 @@ U0 SCWrite(INTRegs3 *regs) {
     U32 buf = regs->ecx;
     U32 count = regs->edx;
     if (fd <= 2) {
-        regs->eax = TTYWrite(TaskTail->ttyid, fd, (Ptr)buf, count);
+        regs->eax = TTYWrite(TaskTail ? TaskTail->ttyid : TTYCurrent, fd, (Ptr)buf, count);
     }
     else if (fd >= 3) {
         regs->eax = VFSWriteV(fd, (Ptr)buf, count);

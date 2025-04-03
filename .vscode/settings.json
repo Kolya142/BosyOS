@@ -1,5 +1,7 @@
 {
     "files.associations": {
+        "*.HH": "holyc",
+        "*.ZC": "holyc",
         "*.h": "c",
         "*.c": "c",
         "cstdlib": "c",
@@ -26,7 +28,8 @@
         "string_view": "c",
         "span": "c",
         "cstdarg": "c",
-        "ostream": "c"
+        "ostream": "c",
+        "sstream": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc",
     "C_Cpp.errorSquiggles": "enabled"

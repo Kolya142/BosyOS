@@ -1,0 +1,19 @@
+include "/kernel.ux";
+
+U32 OSStart {
+    U32 str = "Simple BOSC REPL!\n";
+    esi str;
+    StrLen;
+    edi eax;
+    Print;
+}
+
+U0 Clear {
+    U8 c = 0x80;
+    esi &c;
+    edi 1;
+    Print;
+}
+
+Uf OSStart;
+OSStart;

@@ -1,7 +1,0 @@
-clear
-
-echo Welcome to BosyOS v0.1.1!
-echo -------------------------
-echo Type 'help' to list available commands
-# this is shell written in shell script
-th /tmp/doc

@@ -6,8 +6,8 @@
 #define PAGE_RW       0x2
 #define PAGE_USER     0x4
 
-#define PAGE_DIR_ADDR  0x00D00000
-#define PAGE_TBL_ADDR  0x00F00000
+#define PAGE_DIR_ADDR  0x0700000
+#define PAGE_TBL_ADDR  0x0D00000
 
 #define Pages  ((volatile uint32_t*)PAGE_DIR_ADDR)
 #define PageT  ((volatile uint32_t*)PAGE_TBL_ADDR)

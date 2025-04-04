@@ -39,9 +39,9 @@ make_drive:
 	cp /tmp/bosyos.drive grub/iso/drive
 
 QEMU=qemu-system-i386
-QEMU_DRIVE=-hda grub/bosyos.iso
+QEMU_DRIVE=-hda grub/bosyos.iso -drive file=drive,format=raw,if=ide,index=1
 QEMU_MOUSE=
-QEMU_MEM=-m 64M
+QEMU_MEM=-m 512M
 QEMU_SER=-serial stdio
 QEMU_NET=-device rtl8139,netdev=net0 -netdev user,id=net0
 QEMU_DEBUG=-D ~/bosyos.qemu.log -d int,cpu_reset --no-reboot --no-shutdown
@@ -54,6 +54,7 @@ QEMU_GDB=-s -S
 QEMU_OUT=
 
 run:
+	truncate -s 2M drive
 	@echo -e "\n\n\n\n\n\n\n\n\n\n\n\n"
 	@if [ "$(MODE)" = "min" ]; then \
 		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT); \
@@ -73,8 +74,8 @@ progc: prog compile
 progrun: progc run
 kernelc: kernel compile
 kernelrun: kernel compile run
-load: img
-	sudo bash load.sh
+load:
+	sudo $(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT) -drive file=/dev/sdb,format=raw,if=ide
 shell:
 	make prog
 	cd userdir && bin/init.elf

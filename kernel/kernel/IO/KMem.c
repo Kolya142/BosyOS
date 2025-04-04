@@ -40,12 +40,13 @@ Ptr HeapAlloc(U32 size) {
             }
             curr->free = False;
             HeapUsed += size;
+            // PrintF("Allocated %p bytes at %p\n", size, curr->ptr);
             return curr->ptr;
         }
         curr = curr->next;
     }
     KDogWatchLog("Failed to malloc some memory", False);
-    SerialPrintF("Tried to alloc %p bytes", size);
+    SerialPrintF("Tried to alloc %p bytes\n", size);
     return NULL;
 }
 

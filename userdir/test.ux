@@ -1,10 +1,7 @@
 U0 Test {
-    U32 count = 4;
-    while count; {
-        esi "Test\n";
-        edi 5;
-        Print;
-        count count - 1;
-    }
+    U16 c = 45493;
+    esi &c;
+    edi 2;
+    Print;
 }
 Test;

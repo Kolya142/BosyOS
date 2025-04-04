@@ -1,4 +1,5 @@
 #include <lib/strings/String.h>
+#include <kernel/KPanic.h>
 #include <drivers/disk/ide.h>
 #include <lib/IO/TTY.h>
 #include <fs/iso9660.h>
@@ -9,10 +10,10 @@ static U8 dir[2048];
 
 U0 ISO9660Init() {
     U8 iso[2048];
-    ATARead(0, iso, 16 * 4, 4);
+    if (!ATARead(0, iso, 16 * 4, 4)) {KPanic("Failed to load ISO9660\n", False);}
     root_dir_lba = *(U32*)(iso + 156 + 2);
     root_dir_size = *(U32*)(iso + 156 + 10);
-    ATARead(0, dir, root_dir_lba * 4, 4);
+    if (!ATARead(0, dir, root_dir_lba * 4, 4)) {KPanic("Failed to load ISO9660\n", False);}
 }
 ISO9660DirEntry *ISO9660Get(String name) {
     U32 s = StrLen(name);

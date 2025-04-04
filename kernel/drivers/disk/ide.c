@@ -4,7 +4,16 @@
 #include <lib/time/Time.h>
 #include <lib/IO/TTY.h>
 
-U0 ATARead(Bool slave, Ptr buf, U32 start, U8 count) {
+static Bool is_first_atapi;
+static Bool is_second_atapi;
+
+Bool ATARead(Bool slave, Ptr buf, U32 start, U8 count) {
+    if (!slave && is_first_atapi) {
+        return ATAPIRead(False, buf, start / 4);
+    }
+    if (slave && is_second_atapi) {
+        return ATAPIRead(True, buf, start / 4);
+    }
     POut(0x01F6, (slave ? 0xF0 : 0xE0) | ((start >> 24) & 15));
     POut(0x01F2, count);
     POut(0x01F3, start & 0xff);
@@ -13,20 +22,24 @@ U0 ATARead(Bool slave, Ptr buf, U32 start, U8 count) {
     POut(0x01F7, 0x20);
 
     Sleep(1);
-    while (PIn(0x01F7) & 0x80);    // Wait BUSY
+    U32 timeout = 1000000;
+    while (PIn(0x01F7) & 0x80 && --timeout);    // Wait BUSY
+    if (!timeout) {
+        return False;
+    }
 
     if (PIn(0x01F7) & 1) {
         PrintF("Try access LBA %x\n", start);
-        KPanic("ATA ERROR: Disk Busy wait failed", True);
+        return False;
     }
 
     U8 *buf8 = buf;
 
     for (U8 sec = 0; sec < count; ++sec) {
-        U32 timeout = 1000000;
+        timeout = 1000000;
         while (!(PIn(0x1F7) & 0x08)) {
-            if (PIn(0x1F7) & 1) { KPanic("ATA ERROR: BSY Failed!", True); }
-            if (PIn(0x1F7) & 0x80) { if (!--timeout) { KPanic("ATA ERROR: BSY stuck!", True); } }
+            if (PIn(0x1F7) & 1) { return False; }
+            if (!--timeout) { return False; }
         }
 
         for (U32 i = 0; i < 256; i++) {
@@ -35,8 +48,16 @@ U0 ATARead(Bool slave, Ptr buf, U32 start, U8 count) {
             buf8[sec * 512 + (i * 2) + 1] = (word >> 8) & 0xff;
         }
     }
+
+    return True;
 }
-U0 ATAWrite(Bool slave, Ptr buf, U32 start, U8 count) {
+Bool ATAWrite(Bool slave, Ptr buf, U32 start, U8 count) {
+    if (!slave && is_first_atapi) {
+        return False;
+    }
+    if (slave && is_second_atapi) {
+        return False;
+    }
     POut(0x01F6, (slave ? 0xF0 : 0xE0) | ((start >> 24) & 15));
     POut(0x01F2, count);
     POut(0x01F3, start & 0xFF);
@@ -44,17 +65,25 @@ U0 ATAWrite(Bool slave, Ptr buf, U32 start, U8 count) {
     POut(0x01F5, (start >> 16) & 0xFF);
     
     Sleep(1);
-    while (PIn(0x01F7) & 0x80);    // Wait BUSY
+    U32 timeout = 1000000;
+    while (PIn(0x01F7) & 0x80 && --timeout);    // Wait BUSY
+    if (!timeout) {
+        return False;
+    }
 
     POut(0x01F7, 0x30);
 
     if (PIn(0x01F7) & 1) {
         PrintF("Try access LBA %x\n", start);
-        KPanic("ATA ERROR: Disk Busy wait failed", True);
+        return False;
     }
     U8 *buf8 = buf;
     for (U8 sec = 0; sec < count; ++sec) {
-        while (!(PIn(0x01F7) & 0x08)); // Wait DRQ
+        timeout = 1000000;
+        while (!(PIn(0x01F7) & 0x08) && --timeout);    // Wait DRQ
+        if (!timeout) {
+            return False;
+        }
         for (U32 i = 0; i < 256; ++i) {
             if (buf) {
                 U16 word = buf8[sec * 512 + (i * 2)] | (buf8[sec * 512 + (i * 2) + 1] << 8);
@@ -69,18 +98,49 @@ U0 ATAWrite(Bool slave, Ptr buf, U32 start, U8 count) {
     while (PIn(0x01F7) & 0x80);    // Wait BUSY
     POut(0x01F7, 0xE7);
     while (PIn(0x01F7) & 0x80);    // Wait BUSY
-}
 
-static U0 IDEDriverHandler(U32 id, U32 *value) {
-    IDEAsk *ask = (IDEAsk*)(value);
-    if (id == 0) {
-        ATARead(0, ask->buf, ask->start, ask->end);
-    }
-    else if (id == 1) {
-        ATAWrite(0, ask->buf, ask->start, ask->end);
-    }
+    return True;
 }
 
 U0 IDEInit() {
-    DriverReg(0x6aa73a10, 0xa8b55cb4, IDEDriverHandler, "ide");
+    U16 identify[256];
+
+    POut(0x01F6, 0xA0);
+    POut(0x80, 0); // Wait
+    POut(0x01F7, 0xEC);
+    POut(0x80, 0); // Wait
+
+    while ((PIn(0x1F7) & 0x80));
+
+    for (int i = 0; i < 256; ++i) {
+        identify[i] = PIn16(0x1F0);
+    }
+
+    if (identify[0] & 0x8000) {
+        is_first_atapi = True;
+        SerialPrintF("first disk is cdrom\n");
+    }
+    else {
+        SerialPrintF("first disk is drive\n");
+    }
+
+
+    POut(0x01F6, 0xB0);
+    POut(0x80, 0); // Wait
+    POut(0x01F7, 0xEC);
+    POut(0x80, 0); // Wait
+
+    while ((PIn(0x1F7) & 0x80));
+
+    for (int i = 0; i < 256; ++i) {
+        identify[i] = PIn16(0x1F0);
+    }
+
+    if (identify[0] & 0x8000) {
+        is_second_atapi = True;
+        SerialPrintF("second disk is cdrom\n");
+    }
+    else {
+        SerialPrintF("second disk is drive\n");
+    }
 }

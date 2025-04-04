@@ -76,6 +76,8 @@ U0 loop();
 U0 KernelMain(struct MultiBoot *mbi) {
     mb = mbi;
 
+    U32 mem = 0;
+
     {
         Ptr ptr = (Ptr)((U32)mb)+8;
         for (;;) {
@@ -120,7 +122,7 @@ U0 KernelMain(struct MultiBoot *mbi) {
     TTYNew(TTYRenderG, ptyg3);
     TTYNew(TTYRenderG, ptyg4);
     TTYCurrent = 4;
-    SerialPrintF("%p", VVRM);
+    SerialPrintF("%p\n", VVRM);
     // TTYSwitch(TTYC_VGA);
 
     VgaInit();
@@ -134,6 +136,7 @@ U0 KernelMain(struct MultiBoot *mbi) {
     IDTInit();
     PICMap();
     RTCUpdate();
+    IDEInit();
     U32 t = SystemTime.second;
     while (SystemTime.second == t) {
         RTCUpdate();
@@ -149,14 +152,9 @@ U0 KernelMain(struct MultiBoot *mbi) {
 
     SerialInit();
     KDogWatchLog("Initialized \x9Bserial\x9C", False);
+
     CompilerInit();
     KDogWatchLog("Initialized \"compiler\"", False);
-
-    // U16 mem = MemorySize();
-    // PrintF("$!EDetected Memory size $!C- $!B0x%2xKB$!F\n\n", mem);
-    // if (mem < 94000) {
-    //     KDogWatchLog("$!CWarning: Memory size < $!B94MB$!F", False);
-    // }
     VgaBlinkingSet(False);
     VgaCursorDisable();
     VgaCursorEnable();
@@ -192,7 +190,6 @@ U0 KernelMain(struct MultiBoot *mbi) {
     BeepInit();
     KDogWatchLog("Initialized \x9Bpc speaker\x9C", False);
     #endif
-    IDEInit();
     KDogWatchLog("Initialized \x9Bide disk\x9C", False);
     VDriversReg();
     KDogWatchLog("Initialized \x9Bvdrivers\x9C", False);
@@ -221,6 +218,7 @@ U0 KernelMain(struct MultiBoot *mbi) {
 
     // EIFInit();
     // KDogWatchLog("Initialized \"eifs\"", False);
+
     // DATInit();
     // KDogWatchLog("Initialized \"dat\"", False);
     // BOTFSInit();
@@ -317,6 +315,7 @@ U0 mainloop() {
     // MFree(buf);
 
     Char inp[512] = {0};
+    U32 inpi = 0;
 
     PrintF("$!A\\$ $!F");
 
@@ -347,12 +346,36 @@ U0 mainloop() {
         PrintF("$*1%s %d:%d:%d.%d %d:%d %s %p    $*0", day_names[(days + 2) % 7], SystemTime.hour, SystemTime.minute, SystemTime.second, PITTime % 1000, (PITTime / 1000) / 60, (PITTime / 1000) % 60, keynames[KBState.Key] ? keynames[KBState.Key] : (Char[]) {KBState.Key, 0}, HeapUsed);
         ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = max(80, c);
         TTYFlush(TTYCurrent);
+        // Byte sr = 0;
+        // if (sr = SerialRead()) {
+        //     inp[++inpi] = sr;
+        //     if (sr == '\n') {
+        //         inpi = 0;
+        //     }
+        // }
 
         if (TTYRead(TTYCurrent, 0, inp, 512)) {
-            if (!StrCmp(inp, "RepairDisk")) {
+            if (!StrCmp(inp, "ClearDisk1")) {
+                for (U32 i = 0;;++i) {
+                    PrintF("Writing block %p\n", i);
+                    ATAWrite(False, NULL, 0, 1);
+                }
+            }
+            else if (!StrCmp(inp, "ClearDisk2")) {
                 for (U32 i = 0;;++i) {
                     PrintF("Writing block %p\n", i);
                     ATAWrite(True, NULL, 0, 1);
+                }
+            }
+            else if (!StrCmp(inp, "Clone")) {
+                U8 buf[512];
+                for (U32 i = 0;;++i) {
+                    PrintF("Reading block %p\n", i);
+                    if (!ATARead(False, buf, i, 1)) {
+                        break;
+                    }
+                    PrintF("Writing block %p\n", i);
+                    ATAWrite(True, buf, i, 1);
                 }
             }
             else {

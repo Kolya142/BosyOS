@@ -1,12 +1,13 @@
-U32 Print {
+U32 Print(U32 str) {
+    StrLen(str,);
+    edx eax;
     eax 4;
-    ecx esi;
-    edx edi;
+    ecx str;
     ebx 1;
     INT 128;
 }
 
-U32 Read {
+U32 Read() {
     eax 3;
     ecx esi;
     edx edi;
@@ -14,12 +15,12 @@ U32 Read {
     INT 128;
 }
 
-U32 StrLen {
+U32 StrLen(U32 str) {
     eax 0;
-    U32 str = esi;
-    while *str {
+    U32 ptr = str;
+    while *ptr {
         eax eax + 1;
-        str str + 1;
+        ptr ptr + 1;
     }
 }
-Uf StrLen;
+Uf Print;

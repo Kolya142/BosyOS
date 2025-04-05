@@ -1,4 +1,4 @@
-U0 Test {
+U0 Test() {
     U16 c = 45493;
     esi &c;
     edi 2;

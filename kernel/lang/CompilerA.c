@@ -161,7 +161,11 @@ List Compiler(String code, List parvars) {
     U32 s = 0;
     U32 sym = 0;
     U32 enter = 0;
-    SerialPrintF("$!BCompiling at %p %p %p...$!F\n%s\n", eip, CompilerOutput->arr, code, code);
+    SerialPrintF("$!BCompiling at %p %p %p...$!F\n", eip, CompilerOutput->arr, code, code);
+    SerialPrintF("Variables %p:\n", parvars.count);
+    for (U32 i = 0; i < parvars.count; ++i) {
+        SerialPrintF("Variable %s with rel %p with size %pBits\n", ((CompilerVariable*)parvars.arr)[i].name, ((CompilerVariable*)parvars.arr)[i].rel, ((CompilerVariable*)parvars.arr)[i].type);
+    }
     NEXTTOK
     CompilerFunction *cfunc;
     CompilerEmit(0x50 + ASM_REG_EBP);
@@ -222,7 +226,7 @@ List Compiler(String code, List parvars) {
                 CompilerVariable var;
                 MemSet(var.name, 0, 32);
                 StrCpy(var.name, name);
-                var.rel = parvars.count ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
+                var.rel = parvars.count && ((I32)((CompilerVariable*)parvars.arr)[parvars.count - 1].rel > 0) ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
                 PrintF("Let %s; [EBP - %x]\n", name, var.rel);
                 var.type = ctype;
                 ListAppend(&parvars, &var);
@@ -235,6 +239,36 @@ List Compiler(String code, List parvars) {
                 CompilerFunction func;
                 MemSet(func.name, 0, 32);
                 StrCpy(func.name, name);
+                if (StrCmp(tok.str, "(")) {
+                    PrintF("Excepted \"(\", but got \"%s\"\n", tok.str);
+                    return (List) {
+                        .count = 0
+                    };
+                }
+                NEXTTOK
+                I32 rel = -8;
+                for (;;) {
+                    if (!StrCmp(tok.str, ")")) {
+                        NEXTTOK
+                        break;
+                    }
+                    if (!(ctype = TypeFromName(tok.str))) {
+                        PrintF("Invalid argument type \"%s\"\n", tok.str);
+                        return (List) {
+                            .count = 0
+                        };
+                    }
+                    NEXTTOK
+                    CompilerVariable var;
+                    MemSet(var.name, 0, 32);
+                    StrCpy(var.name, tok.str);
+                    var.type = ctype;
+                    var.rel = rel;
+                    ListAppend(&parvars, &var);
+                    PrintF("argument %s\n", var.name);
+                    NEXTTOK
+                    rel -= 4;
+                }
                 func.code = Compiler(code - StrLen(tok.str), parvars);
                 PrintF("$!dFunction \"%s\"$!F\n", name);
                 ListAppend(&CompilerFunctions, &func);
@@ -361,8 +395,35 @@ List Compiler(String code, List parvars) {
             ASMInstMovReg2Disp32(ASM_REG_EDX, ASM_REG_EBX, 0, 1);               // MOV [EDX], EBX
         }
         else if (cfunc = get_func(tok.str)) {
+            U32 shift = 0;
+            NEXTTOK
+            if (!StrCmp(tok.str, "(")) {
+                for (;;) {
+                    U32 len = CompilerExpr(code, &parvars);
+                    code += len;
+                    sym += len;
+
+                    SerialPrintF("Eated %d bytes\n", len);
+
+                    CompilerEmit(0x50 + ASM_REG_EBX);
+                    shift += 4;
+
+                    NEXTTOK
+                    if (!StrCmp(tok.str, ")")) {
+                        NEXTTOK
+                        break;
+                    }
+                }
+            }
+            else {
+                sym -= a;
+                code -= a;
+            }
             ASMInstMovIMM2Reg32(ASM_REG_EDX, (U32)cfunc->code.arr);
             ASMInstCallReg32(ASM_REG_EDX);
+            if (shift) {
+                ASMInstAddIMM2Reg32(ASM_REG_ESP, shift);
+            }
         }
         else {
             SerialPrintF("Invalid OpCode \"%s\"\n", tok.str);
@@ -382,11 +443,11 @@ List Compiler(String code, List parvars) {
     CompilerEmit(0xC3);
     PrintF("\n");
     SerialPrintF("Patching ESP\n");
-    U32 *esp_patchv = (CompilerOutput->arr + 5);
+    U32 *esp_patchv = (my_output.arr + 5);
     if (*esp_patchv != 0xBEEF55AA) {
         SerialPrintF("ERROR: ESP PATCH INVALID %p\n", *esp_patchv);
     }
-    PrintF("Compilation for %p bytes\n", CompilerOutput->count);
+    PrintF("Compilation for %p bytes\n", my_output.count);
     *esp_patchv = (parvars.count ? (4 - (((CompilerVariable*)parvars.arr)[parvars.count - 1].rel % 4)) + 4 : 4);
     CompilerOutput = prev_output;
     return my_output;

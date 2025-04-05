@@ -4,11 +4,13 @@ ifeq ($(shell uname),Darwin)
   SYSTEM=macos
 endif
 
-.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun iso
+.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun iso watchcat
 kernel:
 	cd kernel && python3 build.py
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
+watchcat:
+	while inotifywait -e modify -r kernel/ -r userdir/; do make kernel_super_real_fast && make compile && aplay non-kernel\ files/beep.wav; done
 _kernel_super_real_fast:
 	cd kernel && python3 build.py --fast
 	cp kernel/kernel.b kernel.bin
@@ -74,8 +76,9 @@ progc: prog compile
 progrun: progc run
 kernelc: kernel compile
 kernelrun: kernel compile run
-load:
-	sudo $(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT) -drive file=/dev/sdb,format=raw,if=ide
+load: allr
+	echo -e "Write \"Clone\" command"
+	sudo $(QEMU) $(QEMU_ADD) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT) -hda grub/bosyos.iso -drive file=/dev/sda,format=raw,if=ide,index=1
 shell:
 	make prog
 	cd userdir && bin/init.elf

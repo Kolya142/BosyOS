@@ -12,7 +12,7 @@ U32 CompilerExpr(String code, List *vars) {
     Bool cont = True;
     CompilerVariable *var;
     for (;a && cont;) {
-        PrintF("Tok %s\n", tok.str);
+        SerialPrintF("Tok %s\n", tok.str);
         switch (s) {
             case 0: {
                 U8 reg = RegFromName(tok.str);
@@ -36,12 +36,9 @@ U32 CompilerExpr(String code, List *vars) {
                             ASMInstAddIMM2Reg32(ASM_REG_EBX, -(I32)var->rel);
                         }
                     }
-                    else if (!StrCmp(tok.str, "*")) { // FIXME
+                    else if (!StrCmp(tok.str, "*")) {
                         NEXTTOK
                         CompilerVariable *cvar = CompilerFindVar(vars, tok.str);
-                        // MOV EBX, [EBP - rel] -- Get Pointer
-                        // MOV BL,  [EBX + 0]   -- Get Value
-                        // Why is doen't work?
                         ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_EBP, -(I32)cvar->rel, 4);
                         ASMInstMovDisp2Reg32(ASM_REG_EBX, ASM_REG_EDX, 0, 1);
                     }

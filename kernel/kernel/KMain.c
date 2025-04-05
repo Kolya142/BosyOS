@@ -290,6 +290,62 @@ static U0 CompilerExtern() {
     }
 }
 
+U0 shell(String inp) {
+    if (!StrCmp(inp, "ClearDisk1")) {
+        for (U32 i = 0;;++i) {
+            PrintF("Writing block %p\n", i);
+            ATAWrite(False, NULL, 0, 1);
+        }
+    }
+    else if (!StrCmp(inp, "ClearDisk2")) {
+        for (U32 i = 0;;++i) {
+            PrintF("Writing block %p\n", i);
+            ATAWrite(True, NULL, 0, 1);
+        }
+    }
+    else if (!StrCmp(inp, "Clone")) {
+        U32 root_dir_lba;
+        U32 root_dir_size;
+        U8 dir[2048];
+        U8 iso[2048];
+        U8 *buf = MAlloc(1024*1024);
+        ATARead(0, iso, 16 * 4, 4);
+        root_dir_lba = *(U32*)(iso + 156 + 2);
+        root_dir_size = *(U32*)(iso + 156 + 10);
+        ATARead(0, dir, root_dir_lba * 4, 4);
+
+        ATAWrite(1, iso, 16 * 4, 4);
+        ATAWrite(1, dir, root_dir_lba * 4, 4);
+
+
+        for (U32 off = 0; off < 2048;) {
+            ISO9660DirEntry *entry = (ISO9660DirEntry*)&dir[off];
+            if (!entry->length) {
+                break;
+            }
+            PrintF("Cloning File: %s\n", entry->name);
+            ATARead(0, buf, entry->extent_lba_le * 4, entry->data_length_le * 4);
+            ATAWrite(1, buf, entry->extent_lba_le * 4, entry->data_length_le * 4);
+            off += entry->length;
+        }
+        MFree(buf);
+    }
+    else {
+        List vars = ListInit(sizeof(CompilerVariable));
+        List compiled = Compiler(inp, vars);
+        ListDestroy(&vars);
+        if (compiled.count) {
+            U32(*entry)() = compiled.arr;
+            PrintF("Compiled\n");
+            PrintF("\nRunning\n");
+            U32 res = entry();
+            PrintF("Result: %p\n", res);
+            ListDestroy(&compiled);
+        }
+        PrintF("$!A\\$ $!F");
+    }
+}
+
 U0 mainloop() {
     TTYSwitch(0);
     // Win win = WinMake(320 - 6 * 8 - 5, 5, 6 * 8, 6, "clock", WIN_UNMOVEBLE);
@@ -320,6 +376,20 @@ U0 mainloop() {
     PrintF("$!A\\$ $!F");
 
     for (;;) {
+        if (SerialBufState() & 1) {
+            if (SerialRead() == '!') {
+                while (inpi < 511) {
+                    U8 c = SerialRead();
+                    PrintF("%c", c);
+                    if (c == '\r' || c == '\n') break;
+                    inp[inpi++] = c;
+                }
+                inp[inpi] = 0;
+                shell(inp);
+                inpi = 0;
+                MemSet(inp, 0, 512);
+            }
+        }
         String keynames[256] = {
             "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BACKSPACE", "TAB", "ENTER", "VT", "FF", "ENTER", "SO", "SI", "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US", [0x7F] = "DELETE",
         };
@@ -355,43 +425,7 @@ U0 mainloop() {
         // }
 
         if (TTYRead(TTYCurrent, 0, inp, 512)) {
-            if (!StrCmp(inp, "ClearDisk1")) {
-                for (U32 i = 0;;++i) {
-                    PrintF("Writing block %p\n", i);
-                    ATAWrite(False, NULL, 0, 1);
-                }
-            }
-            else if (!StrCmp(inp, "ClearDisk2")) {
-                for (U32 i = 0;;++i) {
-                    PrintF("Writing block %p\n", i);
-                    ATAWrite(True, NULL, 0, 1);
-                }
-            }
-            else if (!StrCmp(inp, "Clone")) {
-                U8 buf[512];
-                for (U32 i = 0;;++i) {
-                    PrintF("Reading block %p\n", i);
-                    if (!ATARead(False, buf, i, 1)) {
-                        break;
-                    }
-                    PrintF("Writing block %p\n", i);
-                    ATAWrite(True, buf, i, 1);
-                }
-            }
-            else {
-                List vars = ListInit(sizeof(CompilerVariable));
-                List compiled = Compiler(inp, vars);
-                ListDestroy(&vars);
-                if (compiled.count) {
-                    U32(*entry)() = compiled.arr;
-                    PrintF("Compiled\n");
-                    PrintF("\nRunning\n");
-                    U32 res = entry();
-                    PrintF("Result: %p\n", res);
-                    ListDestroy(&compiled);
-                }
-                PrintF("$!A\\$ $!F");
-            }
+            shell(inp);
             MemSet(inp, 0, 512);
         }
         Sleep(10);

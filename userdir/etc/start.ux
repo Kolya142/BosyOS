@@ -1,20 +1,6 @@
-include "/kernel.ux";
-
-U32 OSStart() {
-    U32 str = "Simple BOSC REPL!\n";
-    StrLen(str,);
-    edx eax;
-    ecx str;
-    eax 4;
-    ebx 1;
-    INT 128;
+include "kernel.ux";
+U0 Main() {
+    U32 str = "Hello, world!\n";
+    Print(str,);
 }
-
-U0 Clear() {
-    U8 c = 0x80;
-    esi &c;
-    edi 1;
-    Print;
-}
-Uf OSStart;
-OSStart;
+Main;

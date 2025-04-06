@@ -1,3 +1,12 @@
+U32 StrLen(U32 str) {
+    eax 0;
+    U32 ptr = str;
+    while *ptr; {
+        eax eax + 1;
+        ptr ptr + 1;
+    }
+}
+
 U32 Print(U32 str) {
     StrLen(str,);
     edx eax;
@@ -6,21 +15,3 @@ U32 Print(U32 str) {
     ebx 1;
     INT 128;
 }
-
-U32 Read() {
-    eax 3;
-    ecx esi;
-    edx edi;
-    ebx 0;
-    INT 128;
-}
-
-U32 StrLen(U32 str) {
-    eax 0;
-    U32 ptr = str;
-    while *ptr {
-        eax eax + 1;
-        ptr ptr + 1;
-    }
-}
-Uf Print;

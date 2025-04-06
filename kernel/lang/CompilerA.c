@@ -174,7 +174,7 @@ List Compiler(String code, List parvars) {
     CompilerEmit(0xEC);
     CompilerEmit(0xAA);CompilerEmit(0x55);CompilerEmit(0xEF);CompilerEmit(0xBE);
     for (;a;) {
-        SerialPrintF("$!ATok \"%s\" %d; EIP (%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count);
+        SerialPrintF("$!ATok \"%s\" %d; EIP (%p) enter(%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count, enter);
         // NEXTTOK
         // continue;
         CompilerVariable *cvar = CompilerFindVar(&parvars, tok.str);
@@ -236,6 +236,7 @@ List Compiler(String code, List parvars) {
                 ASMInstMovReg2Disp32(ASM_REG_EBP, ASM_REG_EBX, -((I32)var.rel), ctype / 8);
             }
             else {
+                SerialPrintF("$!dStart Function \"%s\"$!F\n", name);
                 CompilerFunction func;
                 MemSet(func.name, 0, 32);
                 StrCpy(func.name, name);
@@ -247,6 +248,7 @@ List Compiler(String code, List parvars) {
                 }
                 NEXTTOK
                 I32 rel = -8;
+                List vars = ListInit(sizeof(CompilerVariable));
                 for (;;) {
                     if (!StrCmp(tok.str, ")")) {
                         NEXTTOK
@@ -264,13 +266,14 @@ List Compiler(String code, List parvars) {
                     StrCpy(var.name, tok.str);
                     var.type = ctype;
                     var.rel = rel;
-                    ListAppend(&parvars, &var);
-                    PrintF("argument %s\n", var.name);
+                    ListAppend(&vars, &var);
+                    SerialPrintF("argument %s\n", var.name);
                     NEXTTOK
                     rel -= 4;
                 }
-                func.code = Compiler(code - StrLen(tok.str), parvars);
-                PrintF("$!dFunction \"%s\"$!F\n", name);
+                func.code = Compiler(code - StrLen(tok.str), vars);
+                ListDestroy(&vars);
+                SerialPrintF("$!dFunction \"%s\"$!F\n", name);
                 ListAppend(&CompilerFunctions, &func);
                 U32 enter1 = 0;
                 do {
@@ -328,7 +331,7 @@ List Compiler(String code, List parvars) {
             a = CompilerExpr(code, &parvars);
             sym += a;
             code += a;
-            PrintF("while %d\n", a);
+            SerialPrintF("while %d\n", a);
             List block = Compiler(code, parvars);
             block.arr += 9;
             block.count -= 9+4;
@@ -340,8 +343,11 @@ List Compiler(String code, List parvars) {
                 CompilerEmit(((U8*)block.arr)[i]);
             }
 
+            NEXTTOK
+
             U32 enter1 = 0;
             do {
+                SerialPrintF("Skipping %s\n", tok.str);
                 if (!StrCmp(tok.str, "{")) {
                     ++enter1;
                 }
@@ -412,6 +418,9 @@ List Compiler(String code, List parvars) {
                     if (!StrCmp(tok.str, ")")) {
                         NEXTTOK
                         break;
+                    }
+                    if (!a) {
+                        PrintF("Forgotten ')'\n");
                     }
                 }
             }

@@ -27,3 +27,5 @@ useful resources: https://github.com/Kolya142/BosyOS/wiki/Useful-Resources
 [Ascii+](ascii+.txt)
 # Thirdparty
 [Vga](vga.md)
+
+![](non-kernel%20files/demo.gif)

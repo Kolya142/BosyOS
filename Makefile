@@ -9,8 +9,19 @@ kernel:
 	cd kernel && python3 build.py
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
+record:
+	QEMU_ADD='-nographic -monitor unix:/tmp/qemu-monitor-sock,server,nowait' MODE=min make run &
+	for i in $$(seq 0 90); do \
+		echo "screendump /tmp/frame$$i.ppm" | socat - UNIX-CONNECT:/tmp/qemu-monitor-sock; \
+		sleep 0.1; \
+	done
+	echo "screendump /tmp/dump.ppm" | socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
+	for i in $$(seq 0 90); do \
+		convert /tmp/frame$$i.ppm /tmp/frame$$i.png; \
+	done
+	convert -delay 10 -loop 0 /tmp/frame*.png non-kernel\ files/demo.gif
 watchcat:
-	while inotifywait -e modify -r kernel/ -r userdir/; do make kernel_super_real_fast && make compile && aplay non-kernel\ files/beep.wav; done
+	while inotifywait -e modify -r kernel/ -r userdir/; do make kernel_super_real_fast && make compile && aplay non-kernel\ files/beep.wav -f dat; done
 _kernel_super_real_fast:
 	cd kernel && python3 build.py --fast
 	cp kernel/kernel.b kernel.bin
@@ -79,6 +90,8 @@ kernelrun: kernel compile run
 load: allr
 	echo -e "Write \"Clone\" command"
 	sudo $(QEMU) $(QEMU_ADD) $(QEMU_USB) $(QEMU_MEM) $(QEMU_SER) $(QEMU_OUT) -hda grub/bosyos.iso -drive file=/dev/sda,format=raw,if=ide,index=1
+test:
+	{sleep 7 ; echo '\!eax 6'} | make run
 shell:
 	make prog
 	cd userdir && bin/init.elf

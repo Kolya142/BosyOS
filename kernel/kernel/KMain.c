@@ -136,7 +136,7 @@ U0 KernelMain(struct MultiBoot *mbi) {
     IDTInit();
     PICMap();
     RTCUpdate();
-    IDEInit();
+    // IDEInit();
     U32 t = SystemTime.second;
     while (SystemTime.second == t) {
         RTCUpdate();
@@ -293,14 +293,18 @@ static U0 CompilerExtern() {
 U0 shell(String inp) {
     if (!StrCmp(inp, "ClearDisk1")) {
         for (U32 i = 0;;++i) {
-            PrintF("Writing block %p\n", i);
-            ATAWrite(False, NULL, 0, 1);
+            PrintF("Writing block %d\n", i);
+            if (!ATAWrite(False, NULL, 0, 1)) {
+                break;
+            }
         }
     }
     else if (!StrCmp(inp, "ClearDisk2")) {
         for (U32 i = 0;;++i) {
-            PrintF("Writing block %p\n", i);
-            ATAWrite(True, NULL, 0, 1);
+            PrintF("Writing block %d\n", i);
+            if (!ATAWrite(True, NULL, 0, 1)) {
+                break;
+            }
         }
     }
     else if (!StrCmp(inp, "Clone")) {

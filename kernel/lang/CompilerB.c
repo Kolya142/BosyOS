@@ -54,7 +54,7 @@ U32 CompilerExpr(String code, List *vars) {
                 else {
                     ASMInstMovReg2Reg32(ASM_REG_EBX, reg);
                 }
-                PrintF("s = 1 %s\n", tok.str);
+                PrintF("s0 %s\n", tok.str);
                 s = 1;
             } break;
             case 1: {

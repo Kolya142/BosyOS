@@ -1,5 +1,14 @@
 U0 Test() {
-    U16 c = 45493;
+    U32 c = 45493;
     Print(&c,);
+
+    Compiler("Print(\"JIT Magic\",);",);
+
+    Print("O0o\n",);
+    if 1; {
+        if 1; {
+            Print("1 && 1\n",);
+        }
+    }
 }
 Test;

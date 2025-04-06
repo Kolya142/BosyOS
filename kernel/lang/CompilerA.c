@@ -431,8 +431,9 @@ List Compiler(String code, List parvars) {
                         NEXTTOK
                         break;
                     }
-                    if (!a) {
+                    if (!len) {
                         PrintF("Forgotten ')'\n");
+                        break;
                     }
                 }
             }

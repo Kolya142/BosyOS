@@ -10,7 +10,7 @@ kernel:
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
 record:
-	QEMU_ADD='-nographic -monitor unix:/tmp/qemu-monitor-sock,server,nowait' MODE=min make run &
+	QEMU_ADD='-nographic -monitor unix:/tmp/qemu-monitor-sock,server,nowait' make run &
 	for i in $$(seq 0 99); do \
 		echo "screendump /tmp/frame$$i.ppm" | socat - UNIX-CONNECT:/tmp/qemu-monitor-sock; \
 		sleep 0.1; \

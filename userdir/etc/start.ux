@@ -16,5 +16,6 @@ U0 Main() {
         }
     }
 }
+include "test.ux";
 Uf Main;
 Main;

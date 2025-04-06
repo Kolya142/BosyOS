@@ -4,24 +4,35 @@ ifeq ($(shell uname),Darwin)
   SYSTEM=macos
 endif
 
-.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun iso watchcat
+.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun iso watchcat mrproper
 kernel:
 	cd kernel && python3 build.py
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
 record:
 	QEMU_ADD='-nographic -monitor unix:/tmp/qemu-monitor-sock,server,nowait' MODE=min make run &
-	for i in $$(seq 0 90); do \
+	for i in $$(seq 0 99); do \
 		echo "screendump /tmp/frame$$i.ppm" | socat - UNIX-CONNECT:/tmp/qemu-monitor-sock; \
 		sleep 0.1; \
 	done
 	echo "screendump /tmp/dump.ppm" | socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
-	for i in $$(seq 0 90); do \
+	for i in $$(seq 0 99); do \
 		convert /tmp/frame$$i.ppm /tmp/frame$$i.png; \
 	done
 	convert -delay 10 -loop 0 /tmp/frame*.png non-kernel\ files/demo.gif
+mrproper:
+	rm -rf kernel/build initrom kernel.bin kernel/kernel.b kernel/kernel.elf release/*
+releases:
+	mkdir -p release
+	mkdir -p release/night
+	mkdir -p release/stable
+	mkdir -p release/test
+	mkdir -p release/user-friendly
+	mkdir -p release/tar
+	cp grub/bosyos.iso release/tar/bosyos.iso
+	echo "cd tar && tar -czvf ../bosyos.tar.gz . && cd .." > release/tar_make.sh
 watchcat:
-	while inotifywait -e modify -r kernel/ -r userdir/; do make kernel_super_real_fast && make compile && aplay non-kernel\ files/beep.wav -f dat; done
+	while inotifywait -e modify -r kernel/ -r userdir/; do bash watchcat_onupd.sh; done
 _kernel_super_real_fast:
 	cd kernel && python3 build.py --fast
 	cp kernel/kernel.b kernel.bin
@@ -78,7 +89,7 @@ run:
 	elif [ "$(SYSTEM)" = "macos" ]; then \
 		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_AUDIO_MAC) $(QEMU_MOUSE) $(QEMU_OUT); \
 	else \
-		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-reboot --no-shutdown;\
+		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-shutdown;\
 	fi
 
 all: kernel compile run

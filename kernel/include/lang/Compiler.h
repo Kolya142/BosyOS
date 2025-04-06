@@ -77,7 +77,7 @@ typedef struct CompilerFunction {
 
 typedef struct CompilerVariable {
     Char name[32];
-    U8 type;
+    U32 type;
     U32 rel;
 } CompilerVariable;
 

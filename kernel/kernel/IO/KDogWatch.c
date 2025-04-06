@@ -22,6 +22,7 @@ volatile KDogWatchProfile Profiles[255] = {0};
 
 #define ERR(name, text) INT_DEF(name) { \
     KDogWatchLog(text, False); \
+    PrintF("EIP: %p; ESP: %p; EAX: %p; EBX: %p\nECX: %p; EDX: %p; ESI: %p; EDI: %p\nEBP: %p\n", regs->eip, regs->useresp, regs->eax, regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi, regs->ebp); \
     KPanic("x86 exception", False); \
 }
 ERR(DWErr00, "#DIVIDE BY 0");

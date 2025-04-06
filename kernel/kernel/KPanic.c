@@ -14,8 +14,7 @@ struct stackframe {
     U32 eip;
 };
 
-U0 KPanic(const String msg, Bool reboot)
-{ // FIXME
+U0 KPanic(const String msg, Bool reboot) {
     for (U8 i = 0; i < 255; ++i) {
         KDogWatchPEnd(i);
     }
@@ -24,8 +23,8 @@ U0 KPanic(const String msg, Bool reboot)
     static U8 tind = 0;
     U32 ecode = *(U32*)msg;
     {
-        for (U32 i = 0; i < 64000; ++i) {
-            VVRM[i] ^= 15;
+        for (U32 i = 0; i < 640*480; ++i) {
+            VRM[i] ^= 15;
         }
     }
     {

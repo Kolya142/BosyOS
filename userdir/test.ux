@@ -1,7 +1,5 @@
 U0 Test() {
     U16 c = 45493;
-    esi &c;
-    edi 2;
-    Print;
+    Print(&c,);
 }
 Test;

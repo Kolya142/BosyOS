@@ -235,6 +235,18 @@ List Compiler(String code, List parvars) {
                 code += a;
                 ASMInstMovReg2Disp32(ASM_REG_EBP, ASM_REG_EBX, -((I32)var.rel), ctype / 8);
             }
+            else if (!StrCmp(tok.str, "<")) {
+                NEXTTOK
+                ctype *= Atoi(tok.str);
+                CompilerVariable var;
+                MemSet(var.name, 0, 32);
+                StrCpy(var.name, name);
+                var.rel = parvars.count && ((I32)((CompilerVariable*)parvars.arr)[parvars.count - 1].rel > 0) ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
+                PrintF("Let %s; [EBP - %x]\n", name, var.rel);
+                var.type = ctype;
+                ListAppend(&parvars, &var);
+                NEXTTOK
+            }
             else {
                 SerialPrintF("$!dStart Function \"%s\"$!F\n", name);
                 CompilerFunction func;

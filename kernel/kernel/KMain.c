@@ -139,7 +139,7 @@ U0 KernelMain(struct MultiBoot *mbi) {
     IDTInit();
     PICMap();
     RTCUpdate();
-    // IDEInit();
+    IDEInit();
     U32 t = SystemTime.second;
     while (SystemTime.second == t) {
         RTCUpdate();

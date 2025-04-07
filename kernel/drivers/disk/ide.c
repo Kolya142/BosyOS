@@ -103,6 +103,8 @@ Bool ATAWrite(Bool slave, Ptr buf, U32 start, U8 count) {
 }
 
 U0 IDEInit() {
+    U32 timeout;
+
     U16 identify[256];
 
     POut(0x01F6, 0xA0);
@@ -110,18 +112,21 @@ U0 IDEInit() {
     POut(0x01F7, 0xEC);
     POut(0x80, 0); // Wait
 
-    while ((PIn(0x1F7) & 0x80));
+    timeout = 100000;
 
-    for (int i = 0; i < 256; ++i) {
-        identify[i] = PIn16(0x1F0);
-    }
+    while ((PIn(0x1F7) & 0x80) && --timeout);
+    if (timeout) {
+        for (int i = 0; i < 256; ++i) {
+            identify[i] = PIn16(0x1F0);
+        }
 
-    if (identify[0] & 0x8000) {
-        is_first_atapi = True;
-        SerialPrintF("first disk is cdrom\n");
-    }
-    else {
-        SerialPrintF("first disk is drive\n");
+        if (identify[0] & 0x8000) {
+            is_first_atapi = True;
+            PrintF("first disk is $!Acdrom$!F\n");
+        }
+        else {
+            PrintF("first disk is $!Bdrive$!F\n");
+        }
     }
 
 
@@ -130,17 +135,22 @@ U0 IDEInit() {
     POut(0x01F7, 0xEC);
     POut(0x80, 0); // Wait
 
-    while ((PIn(0x1F7) & 0x80));
+    timeout = 100000;
 
-    for (int i = 0; i < 256; ++i) {
-        identify[i] = PIn16(0x1F0);
-    }
+    while ((PIn(0x1F7) & 0x80) && --timeout);
 
-    if (identify[0] & 0x8000) {
-        is_second_atapi = True;
-        SerialPrintF("second disk is cdrom\n");
-    }
-    else {
-        SerialPrintF("second disk is drive\n");
+    if (timeout) {
+
+        for (int i = 0; i < 256; ++i) {
+            identify[i] = PIn16(0x1F0);
+        }
+
+        if (identify[0] & 0x8000) {
+            is_second_atapi = True;
+            PrintF("second disk is $!Acdrom$!F\n");
+        }
+        else {
+            PrintF("second disk is $!Bdrive$!F\n");
+        }
     }
 }

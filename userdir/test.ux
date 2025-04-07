@@ -48,4 +48,5 @@ U0 Beep() {
     INT 128;
 }
 Uf Test;
+Beep;
 Test;

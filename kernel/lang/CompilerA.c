@@ -174,13 +174,15 @@ List Compiler(String code, List parvars) {
     CompilerEmit(0xEC);
     CompilerEmit(0xAA);CompilerEmit(0x55);CompilerEmit(0xEF);CompilerEmit(0xBE);
     for (;a;) {
-        SerialPrintF("$!ATok \"%s\" %d; EIP (%p) enter(%p)$!F\n\n", tok.str, tok.type, eip + CompilerOutput->count, enter);
         // NEXTTOK
         // continue;
         CompilerVariable *cvar = CompilerFindVar(&parvars, tok.str);
         U8 ctype = CompilerTypeFromName(tok.str);
         U8 creg = RegFromName(tok.str);
-        if (!StrCmp(tok.str, "Uf")) {
+        if (tok.type == TOK_STR) {
+            SerialPrintF("Ignoring \"%s\" as a comment\n");
+        }
+        else if (!StrCmp(tok.str, "Uf")) {
             NEXTTOK
             CompilerFunction *func = get_func(tok.str);
             if (func) {
@@ -316,14 +318,13 @@ List Compiler(String code, List parvars) {
             ListDestroy(&block);
         }
         else if (!StrCmp(tok.str, "include")) {
-            SerialPrintF("Importing\n");
             NEXTTOK
             VFSStat stat = {0};
             VFSLStat(tok.str, &stat);
             U8 *buf = MAlloc(stat.size + 1);
             buf[stat.size] = 0;
             VFSRead(tok.str, buf, 0, stat.size);
-            SerialPrintF("Including:\n%s\n", buf);
+            SerialPrintF("[Compiling %s]\n", tok.str);
             List vars = ListInit(sizeof(CompilerVariable));
             List compiled = Compiler(buf, vars);
             ListDestroy(&vars);
@@ -359,7 +360,7 @@ List Compiler(String code, List parvars) {
 
             U32 enter1 = 0;
             do {
-                SerialPrintF("Skipping %s\n", tok.str);
+                // SerialPrintF("Skipping %s\n", tok.str);
                 if (!StrCmp(tok.str, "{")) {
                     ++enter1;
                 }
@@ -420,8 +421,6 @@ List Compiler(String code, List parvars) {
                     U32 len = CompilerExpr(code, &parvars);
                     code += len;
                     sym += len;
-
-                    SerialPrintF("Eated %d bytes\n", len);
 
                     CompilerEmit(0x50 + ASM_REG_EBX);
                     shift += 4;

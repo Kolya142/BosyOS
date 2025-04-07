@@ -30,5 +30,22 @@ U0 Test() {
         Print("15 = 15\n",);
     }
 }
+U0 Beep() {
+    eax 5;
+    ebx "/dev/spc";
+    INT 128
+    U32 fd = eax;
+
+    U32 packet = 268439552;
+    eax 4;
+    ecx &packet;
+    edx 4;
+    ebx fd;
+    INT 128;
+
+    eax 6;
+    ebx fd;
+    INT 128;
+}
 Uf Test;
 Test;

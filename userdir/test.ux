@@ -10,5 +10,25 @@ U0 Test() {
             Print("1 && 1\n",);
         }
     }
+
+    U32 i = 35;
+    while i < 45; {
+        Print(&i,);
+        Print("Loop\n",);
+        i i + 1;
+    }
+    if 15 < 17; {
+        Print("15 < 17\n",);
+    }
+    if 17 > 15; {
+        Print("17 > 15\n",);
+    }
+    if 17 ! 15; {
+        Print("17 ! 15\n",);
+    }
+    if 15 = 15; {
+        Print("15 = 15\n",);
+    }
 }
+Uf Test;
 Test;

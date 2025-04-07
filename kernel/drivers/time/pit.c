@@ -137,11 +137,20 @@ INT_DEF(PITHandler) {
         WindowsUpdate();
         
         if (VRMState) {
-            Ptr vrm = VRM;
-            VRM = VRM1;
-            VRMClear(0xFF);
-            VRMDrawSprite(vec2(MouseX, MouseY), vec2(10, 10), White, Black, GCursor);
-            VRM = vrm;
+            MemSet(VRM1, 0xFF, WIDTH*HEIGHT);
+            for (U32 y = 0; y < 10; ++y) {
+                if (MouseY + y > HEIGHT) {
+                    break;
+                }
+                for (U32 x = 0; x < 10; ++x) {
+                    if (MouseX + x > WIDTH) {
+                        break;
+                    }
+                    if (GCursor[x + y * 10] == 1) {
+                        VRM1[x+MouseX + (y+MouseY) * WIDTH] = VRM[x+MouseX + (y+MouseY) * WIDTH] ^ 0x0F;
+                    }
+                }
+            }
             VRMFlush();
             // VRMClear(Black);
         }

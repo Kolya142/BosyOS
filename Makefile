@@ -4,11 +4,13 @@ ifeq ($(shell uname),Darwin)
   SYSTEM=macos
 endif
 
-.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun iso watchcat mrproper
+.PHONY: kernel compile run all kernelrun loadfromrelease releaseerun userdata_dump prog progc progrun iso watchcat mrproper extern_run
 kernel:
 	cd kernel && python3 build.py
 	cp kernel/kernel.b kernel.bin
 	truncate -s 131072 kernel.bin
+extern_run:
+	QEMU_ADD="-vnc 0.0.0.0:1" MODE=min make run
 record:
 	QEMU_ADD='-nographic -monitor unix:/tmp/qemu-monitor-sock,server,nowait' make run &
 	for i in $$(seq 0 99); do \
@@ -21,7 +23,7 @@ record:
 	done
 	convert -delay 10 -loop 0 /tmp/frame*.png non-kernel\ files/demo.gif
 mrproper:
-	rm -rf kernel/build initrom kernel.bin kernel/kernel.b kernel/kernel.elf release/*
+	rm -rf kernel/build initrom kernel.bin kernel/kernel.b kernel/kernel.elf release/* kernel/func-dump.txt
 releases:
 	mkdir -p release
 	mkdir -p release/night

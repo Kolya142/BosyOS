@@ -1,6 +1,6 @@
 include "kernel.ux";
 U0 Main() {
-    Print("Write something:\n$ ",);
+    Print("REPL:\n$ ",);
     U8 buf<512>;
     while 1; {
         eax 3;

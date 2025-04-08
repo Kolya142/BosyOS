@@ -122,6 +122,7 @@ U0 ASMInstMovDisp2Reg32(U8 dst, U8 src, I32 rel, U8 bytes);
 U0 ASMInstAddReg2Reg32(U8 dst, U8 src);
 U0 ASMInstAddIMM2Reg32(U8 reg, U32 imm);
 U0 ASMInstIMulReg2Reg32(U8 dst, U8 src);
+U0 ASMInstIDivReg32(U8 reg);
 U0 ASMInstJccIMM32(U8 opcode, I32 offset);
 U0 ASMInstJmpIMM32(I32 offset);
 U0 ASMInstSubReg2Reg32(U8 dst, U8 src);

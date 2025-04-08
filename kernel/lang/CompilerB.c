@@ -54,14 +54,15 @@ U32 CompilerExpr(String code, List *vars) {
                 else {
                     ASMInstMovReg2Reg32(ASM_REG_EBX, reg);
                 }
-                PrintF("s0 %s\n", tok.str);
+                SerialPrintF("s0 %s\n", tok.str);
                 s = 1;
             } break;
             case 1: {
                 e = tok.str[0];
-                PrintF("s1 %c\n", e);
+                SerialPrintF("s1 %c\n", e);
                 s = 2;
-                if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*' && e != '<' && e != '>' && e != '!' && e != '=') {
+                if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*' &&
+                    e != '/' && e != '%' && e != '<' && e != '>' && e != '!' && e != '=') {
                     cont = False;
                 }
             } break;
@@ -116,6 +117,20 @@ U32 CompilerExpr(String code, List *vars) {
                     case '*': {
                         ASMInstIMulReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
                     } break;
+                    case '/': {
+                        ASMInstMovReg2Reg32(ASM_REG_EAX, ASM_REG_EBX);
+                        ASMInstMovReg2Reg32(ASM_REG_ECX, ASM_REG_EDX);
+                        ASMInstXorReg2Reg32(ASM_REG_EDX, ASM_REG_EDX);
+                        ASMInstIDivReg32(ASM_REG_ECX);
+                        ASMInstMovReg2Reg32(ASM_REG_EBX, ASM_REG_EAX);
+                    } break;
+                    case '%': {
+                        ASMInstMovReg2Reg32(ASM_REG_EAX, ASM_REG_EBX);
+                        ASMInstMovReg2Reg32(ASM_REG_ECX, ASM_REG_EDX);
+                        ASMInstXorReg2Reg32(ASM_REG_EDX, ASM_REG_EDX);
+                        ASMInstIDivReg32(ASM_REG_ECX);
+                        ASMInstMovReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
+                    } break;
                     case '&': {
                         ASMInstAndReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
                     } break;
@@ -146,6 +161,7 @@ U32 CompilerExpr(String code, List *vars) {
                         CompilerEmit(0x0F);CompilerEmit(0x94);CompilerEmit(0xC3);
                     } break;
                 }
+                SerialPrintF("s2 %s\n", tok.str);
                 s = 1;
             } break;
             default: {

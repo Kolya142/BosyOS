@@ -15,3 +15,18 @@ U32 Print(U32 str) {
     ebx 1;
     INT 128;
 }
+
+U32 Itoa(U32 str U32 num) {
+    U32 d = num;
+    while d; {
+        str str + 1;
+        d d / 10;
+    }
+    str str - 1;
+    *str 0;
+    while num; {
+        *str num % 10 + 0x30;
+        str str - 1;
+        num num / 10;
+    }
+}

@@ -4,7 +4,7 @@
 
 /*
 Bugs:
-String eats semicolon
+...
 */
 
 #define TOK_CHECK(t) {if (!StrCmp(tok.str, t)) {PrintF("Invalid token. Excepted \""t"\" but got \"%s\"");}}
@@ -44,15 +44,6 @@ String RegName(U8 reg) {
         } break;
     }
     return "INV";
-}
-U8 TypeFromName(String name) {
-    if (name[0] == 'U') {
-        return Atoi(&name[1]);
-    }
-    // if (name[0] == 'I') {
-    //     return Atoi(&name[1]) | 0x80;
-    // }
-    return 0xFF;
 }
 U8 RegFromName(String name) {
     if (!StrCmp(name, "eax")) {
@@ -105,20 +96,20 @@ CompilerVariable *CompilerFindVar(List *vars, String name) {
     return NULL;
 }
 U8 CompilerTypeFromName(String name) {
-    if (name[0] == 'U') {
+    if (name[0] == 'U' && name[1] >= '0' && name[1] <= '9') {
         U8 type = Atoi(name + 1);
         if (type != 0 && type != 8 && type != 16 && type != 32) {
             return 0xFF;
         }
         return type;
     }
-    if (name[0] == 'I') {
-        U8 type = Atoi(name + 1);
-        if (type != 0 && type != 8 && type != 16 && type != 32) {
-            return 0xFF;
-        }
-        return type | 0x80;
-    }
+    // if (name[0] == 'I') {
+    //     U8 type = Atoi(name + 1);
+    //     if (type != 0 && type != 8 && type != 16 && type != 32) {
+    //         return 0xFF;
+    //     }
+    //     return type | 0x80;
+    // }
     return 0xFF;
 }
 
@@ -160,6 +151,7 @@ List Compiler(String code, List parvars) {
     U32 a = 0;
     U32 s = 0;
     U32 sym = 0;
+    U32 ctype = 0;
     U32 enter = 0;
     SerialPrintF("$!BCompiling at %p %p %p...$!F\n", eip, CompilerOutput->arr, code, code);
     SerialPrintF("Variables %p:\n", parvars.count);
@@ -177,7 +169,8 @@ List Compiler(String code, List parvars) {
         // NEXTTOK
         // continue;
         CompilerVariable *cvar = CompilerFindVar(&parvars, tok.str);
-        U8 ctype = CompilerTypeFromName(tok.str);
+        ctype = CompilerTypeFromName(tok.str);
+        SerialPrintF("Tok: %s\n", tok.str);
         U8 creg = RegFromName(tok.str);
         if (tok.type == TOK_STR) {
             SerialPrintF("Ignoring \"%s\" as a comment\n");
@@ -228,8 +221,8 @@ List Compiler(String code, List parvars) {
                 CompilerVariable var;
                 MemSet(var.name, 0, 32);
                 StrCpy(var.name, name);
-                var.rel = parvars.count && ((I32)((CompilerVariable*)parvars.arr)[parvars.count - 1].rel > 0) ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
-                PrintF("Let %s; [EBP - %x]\n", name, var.rel);
+                var.rel = parvars.count && ((I32)((CompilerVariable*)parvars.arr)[parvars.count - 1].rel > 0) ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (((CompilerVariable*)parvars.arr)[parvars.count - 1].type / 8) : 4;
+                SerialPrintF("Let %s; [EBP - %x]\n", name, var.rel);
                 var.type = ctype;
                 ListAppend(&parvars, &var);
                 a = CompilerExpr(code, &parvars);
@@ -239,12 +232,13 @@ List Compiler(String code, List parvars) {
             }
             else if (!StrCmp(tok.str, "<")) {
                 NEXTTOK
+                // SerialPrintF("Array %p %d\n", ctype, Atoi(tok.str));
                 ctype *= Atoi(tok.str);
                 CompilerVariable var;
                 MemSet(var.name, 0, 32);
                 StrCpy(var.name, name);
-                var.rel = parvars.count && ((I32)((CompilerVariable*)parvars.arr)[parvars.count - 1].rel > 0) ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (ctype / 8) : (ctype / 8);
-                PrintF("Let %s; [EBP - %x]\n", name, var.rel);
+                var.rel = parvars.count && ((I32)((CompilerVariable*)parvars.arr)[parvars.count - 1].rel > 0) ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + (((CompilerVariable*)parvars.arr)[parvars.count - 1].type / 8) : 4;
+                SerialPrintF("Array %s; [EBP - %p] %p\n", name, var.rel, ctype);
                 var.type = ctype;
                 ListAppend(&parvars, &var);
                 NEXTTOK
@@ -268,7 +262,7 @@ List Compiler(String code, List parvars) {
                         NEXTTOK
                         break;
                     }
-                    if (!(ctype = TypeFromName(tok.str))) {
+                    if (!(ctype = CompilerTypeFromName(tok.str))) {
                         PrintF("Invalid argument type \"%s\"\n", tok.str);
                         return (List) {
                             .count = 0
@@ -468,8 +462,12 @@ List Compiler(String code, List parvars) {
     if (*esp_patchv != 0xBEEF55AA) {
         SerialPrintF("ERROR: ESP PATCH INVALID %p\n", *esp_patchv);
     }
+    SerialPrintF("Variables %p:\n", parvars.count);
+    for (U32 i = 0; i < parvars.count; ++i) {
+        SerialPrintF("Variable %s with rel %p with size %pBits\n", ((CompilerVariable*)parvars.arr)[i].name, ((CompilerVariable*)parvars.arr)[i].rel, ((CompilerVariable*)parvars.arr)[i].type);
+    }
     PrintF("Compilation for %p bytes\n", my_output.count);
-    *esp_patchv = (parvars.count ? (4 - (((CompilerVariable*)parvars.arr)[parvars.count - 1].rel % 4)) + 4 : 4);
+    *esp_patchv = (parvars.count && ((I32)((CompilerVariable*)parvars.arr)[parvars.count - 1].rel > 0) ? ((CompilerVariable*)parvars.arr)[parvars.count - 1].rel + ((CompilerVariable*)parvars.arr)[parvars.count - 1].type / 8 + 4 : 4);
     CompilerOutput = prev_output;
     return my_output;
 }

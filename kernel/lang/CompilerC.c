@@ -210,6 +210,9 @@ U0 ASMInstIMulReg2Reg32(U8 dst, U8 src) {
     CompilerEmit(0x0F);
     ASMInstMake32(0, 1, ASM_IMUL, 0b11000000 | (dst << 3) | src, 0, 0, 0);
 }
+U0 ASMInstIDivReg32(U8 reg) {
+    ASMInstMake32(0, 1, ASM_IDIV, 0b11111000 | reg, 0, 0, 0);
+}
 U0 ASMInstSubReg2Reg32(U8 dst, U8 src) {
     ASMInstMake32(0, 1, ASM_SUB, 0b11000000 | (src << 3) | dst, 0, 0, 0);
 }

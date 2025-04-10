@@ -1,10 +1,25 @@
-U0 Test {
-    U32 count = 4;
-    while count; {
-        esi "Test\n";
-        edi 5;
-        Print;
-        count count - 1;
-    }
+U0 Test() {
+    U8 buf<12>;
+    Itoa(512, &buf,);
+    Print("Invalid conversion from int to string: ",);
+    Print(&buf,);
 }
-Test;
+U0 Beep() {
+    eax 5;
+    ebx "/dev/spc";
+    INT 128
+    U32 fd = eax;
+
+    U32 packet = 268439552;
+    eax 4;
+    ecx &packet;
+    edx 4;
+    ebx fd;
+    INT 128;
+
+    eax 6;
+    ebx fd;
+    INT 128;
+}
+Uf Test;
+Beep;

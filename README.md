@@ -15,10 +15,17 @@ fedora: `sudo dnf install qemu -y` \
 mac: `brew install qemu` \
 ubuntu: `sudo apt install qemu-system` \
 windows: download https://qemu.weilnetz.de/w64/2025/qemu-w64-setup-20250210.exe
-### Get BosyOS and run
+### Get BosyOS
 download lastest release: https://github.com/Kolya142/BosyOS/releases/latest \
-unzip release \
+unzip release
+### Run
+#### Run with qemu
 run with qemu: `qemu-system-i386 BOSYOS_RELEASE/RELEASE_NAME` **replace BOSYOS_RELASE and RELEASE_NAME with actual release folder and release name**
+#### Run with virtualbox
+1. create new virtual machine
+2. add disk
+3. set 512MB memory
+4. set disk controller type to PIIX4
 ### Read wiki
 wiki: https://github.com/Kolya142/BosyOS/wiki \
 useful resources: https://github.com/Kolya142/BosyOS/wiki/Useful-Resources
@@ -27,3 +34,5 @@ useful resources: https://github.com/Kolya142/BosyOS/wiki/Useful-Resources
 [Ascii+](ascii+.txt)
 # Thirdparty
 [Vga](vga.md)
+
+![](non-kernel%20files/demo.gif)

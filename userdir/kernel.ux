@@ -1,25 +1,32 @@
-U32 Print {
+U32 StrLen(U32 str) {
+    eax 0;
+    U32 ptr = str;
+    while *ptr; {
+        eax eax + 1;
+        ptr ptr + 1;
+    }
+}
+
+U32 Print(U32 str) {
+    StrLen(str,);
+    edx eax;
     eax 4;
-    ecx esi;
-    edx edi;
+    ecx str;
     ebx 1;
     INT 128;
 }
 
-U32 Read {
-    eax 3;
-    ecx esi;
-    edx edi;
-    ebx 0;
-    INT 128;
-}
-
-U32 StrLen {
-    eax 0;
-    U32 str = esi;
-    while *str {
-        eax eax + 1;
+U32 Itoa(U32 str U32 num) {
+    U32 d = num;
+    while d; {
         str str + 1;
+        d d / 10;
+    }
+    str str - 1;
+    *str 0;
+    while num; {
+        *str num % 10 + 0x30;
+        str str - 1;
+        num num / 10;
     }
 }
-Uf StrLen;

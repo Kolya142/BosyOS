@@ -1,14 +1,9 @@
 #pragma once
-#include <lib/Types.h>
+#include <drivers/disk/atapi.h>
 #include <arch/x86/cpu/io.h>
+#include <lib/Types.h>
 
-typedef struct IDEAsk {
-    Ptr buf;
-    U32 start;
-    U8 end;
-} IDEAsk;
-
-U0 ATARead(Bool slave, Ptr buf, U32 start, U8 count);
-U0 ATAWrite(Bool slave, Ptr buf, U32 start, U8 count);
+Bool ATARead(Bool slave, Ptr buf, U32 start, U8 count);
+Bool ATAWrite(Bool slave, Ptr buf, U32 start, U8 count);
 
 U0 IDEInit();

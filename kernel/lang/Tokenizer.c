@@ -13,31 +13,21 @@ U32 TokenNext(String str, Token *tok) {
             }
             else if (*str == '"') {
                 tok->type = TOK_STR;
+                String start = str;
                 ++str;
                 while (*str && pos < sizeof(tok->str) - 1) {
                     if (*str == '"') {
-                        ++pos;
+                        ++str;
                         break;
                     }
                     if (*str == '\\') {
                         ++str;
                         switch (*str) {
-                            case '"':
-                                tok->str[pos++] = '"';
-                                ++str;
-                            break;
-                            case 'n':
-                                tok->str[pos++] = '\n';
-                                ++str;
-                            break;
-                            case 't':
-                                tok->str[pos++] = '\t';
-                                ++str;
-                            break;
-                            case 'r':
-                                tok->str[pos++] = '\r';
-                                ++str;
-                            break;
+                            case '"': tok->str[pos++] = '"'; ++str; break;
+                            case 'n': tok->str[pos++] = '\n'; ++str; break;
+                            case 't': tok->str[pos++] = '\t'; ++str; break;
+                            case 'r': tok->str[pos++] = '\r'; ++str; break;
+                            case '\\': tok->str[pos++] = '\\'; ++str; break;
                         }
                     }
                     else {
@@ -46,8 +36,7 @@ U32 TokenNext(String str, Token *tok) {
                         ++pos;
                     }
                 }
-                ++str;
-                return pos + 2;
+                return str - start;
             }
             else if ((*str >= '!' && *str <= '/') || (*str >= ':' && *str <= '@') || (*str >= '[' && *str <= '`') || (*str >= '{' && *str <= '~')) {
                 tok->type = TOK_SPEC;

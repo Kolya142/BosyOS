@@ -42,4 +42,5 @@ with tarfile.open(tar_name, "w:gz") as tar:
     tar.add("CHANGELOG.mez", arcname="changelog.mez")
     tar.add("non-kernel files/mez", arcname="mez")
 
-os.system(f"gh release create {name} {tar_name} --title \"kernel {name}\" --notes 'Automated build from {branch}'")
+commit = os.popen("git log -1 --pretty=%B").read().strip()
+os.system(f"gh release create {name} {tar_name} --title \"kernel {name}\" --notes 'generated from last commit \"{commit}\"'")

@@ -33,12 +33,12 @@ U0 PS2Write(U8 cmd, U8 byte) {
     POut(0x64, cmd);
     PS2Wait(1);
     POut(0x60, byte);
-    SerialPrintF("PS/2Write: %1X -> %1X", cmd, byte);
+    SerialPrintF("PS/2Write: %1X -> %1X\n", byte , cmd);
 }
 U8 PS2Read() {
     PS2Wait(0);
     U8 byte = PIn(0x60);
-    SerialPrintF("PS/2Read: %1X", byte);
+    SerialPrintF("PS/2Read: %1X\n", byte);
     return byte;
 }
 

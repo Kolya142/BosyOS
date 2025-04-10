@@ -12,7 +12,7 @@ U32 CompilerExpr(String code, List *vars) {
     Bool cont = True;
     CompilerVariable *var;
     for (;a && cont;) {
-        PrintF("Tok %s\n", tok.str);
+        SerialPrintF("Tok %s\n", tok.str);
         switch (s) {
             case 0: {
                 U8 reg = RegFromName(tok.str);
@@ -36,12 +36,9 @@ U32 CompilerExpr(String code, List *vars) {
                             ASMInstAddIMM2Reg32(ASM_REG_EBX, -(I32)var->rel);
                         }
                     }
-                    else if (!StrCmp(tok.str, "*")) { // FIXME
+                    else if (!StrCmp(tok.str, "*")) {
                         NEXTTOK
                         CompilerVariable *cvar = CompilerFindVar(vars, tok.str);
-                        // MOV EBX, [EBP - rel] -- Get Pointer
-                        // MOV BL,  [EBX + 0]   -- Get Value
-                        // Why is doen't work?
                         ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_EBP, -(I32)cvar->rel, 4);
                         ASMInstMovDisp2Reg32(ASM_REG_EBX, ASM_REG_EDX, 0, 1);
                     }
@@ -57,14 +54,15 @@ U32 CompilerExpr(String code, List *vars) {
                 else {
                     ASMInstMovReg2Reg32(ASM_REG_EBX, reg);
                 }
-                PrintF("s = 1 %s\n", tok.str);
+                SerialPrintF("s0 %s\n", tok.str);
                 s = 1;
             } break;
             case 1: {
                 e = tok.str[0];
-                PrintF("s1 %c\n", e);
+                SerialPrintF("s1 %c\n", e);
                 s = 2;
-                if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*') {
+                if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*' &&
+                    e != '/' && e != '%' && e != '<' && e != '>' && e != '!' && e != '=') {
                     cont = False;
                 }
             } break;
@@ -97,7 +95,7 @@ U32 CompilerExpr(String code, List *vars) {
                         }
                     }
                     else if (tok.type == TOK_STR) {
-                        ASMInstMovIMM2Reg32(ASM_REG_EBX, CompilerRoDataAdd(tok.str));
+                        ASMInstMovIMM2Reg32(ASM_REG_EDX, CompilerRoDataAdd(tok.str));
                     }
                     else if (var = CompilerFindVar(vars, tok.str)) {
                         ASMInstMovDisp2Reg32(ASM_REG_EDX, ASM_REG_EBP, -((I32)var->rel), var->type / 8);
@@ -119,6 +117,20 @@ U32 CompilerExpr(String code, List *vars) {
                     case '*': {
                         ASMInstIMulReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
                     } break;
+                    case '/': {
+                        ASMInstMovReg2Reg32(ASM_REG_EAX, ASM_REG_EBX);
+                        ASMInstMovReg2Reg32(ASM_REG_ECX, ASM_REG_EDX);
+                        ASMInstXorReg2Reg32(ASM_REG_EDX, ASM_REG_EDX);
+                        ASMInstIDivReg32(ASM_REG_ECX);
+                        ASMInstMovReg2Reg32(ASM_REG_EBX, ASM_REG_EAX);
+                    } break;
+                    case '%': {
+                        ASMInstMovReg2Reg32(ASM_REG_EAX, ASM_REG_EBX);
+                        ASMInstMovReg2Reg32(ASM_REG_ECX, ASM_REG_EDX);
+                        ASMInstXorReg2Reg32(ASM_REG_EDX, ASM_REG_EDX);
+                        ASMInstIDivReg32(ASM_REG_ECX);
+                        ASMInstMovReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
+                    } break;
                     case '&': {
                         ASMInstAndReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
                     } break;
@@ -128,7 +140,28 @@ U32 CompilerExpr(String code, List *vars) {
                     case '|': {
                         ASMInstOrReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
                     } break;
+                    case '<': {
+                        ASMInstCmpReg2Reg32(ASM_REG_EDX, ASM_REG_EBX);
+                        ASMInstMovIMM2Reg32(ASM_REG_EBX, 0);
+                        CompilerEmit(0x0F);CompilerEmit(0x92);CompilerEmit(0xC3);
+                    } break;
+                    case '>': {
+                        ASMInstCmpReg2Reg32(ASM_REG_EBX, ASM_REG_EDX);
+                        ASMInstMovIMM2Reg32(ASM_REG_EBX, 0);
+                        CompilerEmit(0x0F);CompilerEmit(0x92);CompilerEmit(0xC3);
+                    } break;
+                    case '!': {
+                        ASMInstCmpReg2Reg32(ASM_REG_EDX, ASM_REG_EBX);
+                        ASMInstMovIMM2Reg32(ASM_REG_EBX, 0);
+                        CompilerEmit(0x0F);CompilerEmit(0x95);CompilerEmit(0xC3);
+                    } break;
+                    case '=': {
+                        ASMInstCmpReg2Reg32(ASM_REG_EDX, ASM_REG_EBX);
+                        ASMInstMovIMM2Reg32(ASM_REG_EBX, 0);
+                        CompilerEmit(0x0F);CompilerEmit(0x94);CompilerEmit(0xC3);
+                    } break;
                 }
+                SerialPrintF("s2 %s\n", tok.str);
                 s = 1;
             } break;
             default: {

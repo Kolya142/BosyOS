@@ -2,7 +2,7 @@
 #include <lib/IO/TTY.h>
 
 PCIDevice *PCIDevices;
-extern String PCIClasses[] = {
+String PCIClasses[] = {
     "Unclassified",    // 0
     "Drive",    // 1
     "Network Adapter",    // 2
@@ -61,8 +61,10 @@ U0 PCIDeviceCheck(U8 bus, U8 slot, U8 func, PCIDevice *dev) {
     dev->prog_if = PCIConfigReadWord(bus, slot, func, 10);
 
     PCIBARsGet(bus, slot, func, dev);
-    // PrintF("PCI Device Found: Bus %X, Slot %X, Func %X, Vendor %X, Device ID %X, Class %X, Subclass %X\n",
-    //              bus, slot, func, dev->vendorid, dev->deviceid, dev->classcode, dev->subclass);
+    PrintF("PCI Device Found: Bus %1X, Slot %1X, Device ID %2X, Class %2X, Subclass %2X\n",
+                 bus, slot, dev->deviceid, dev->classcode, dev->subclass);
+    SerialPrintF("PCI Device Found: Bus %1X, Slot %1X, Device ID %2X, Class %2X, Subclass %2X\n",
+                bus, slot, dev->deviceid, dev->classcode, dev->subclass);
 }
 
 U0 PCIDevicesCheck() {

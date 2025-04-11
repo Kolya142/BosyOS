@@ -8,6 +8,7 @@
 #include <arch/x86/cpu/cpu.h>
 #include <arch/x86/sys/sys.h>
 #include <lib/IO/TTY.h>
+#include <drivers/sys/pci.h>
 
 struct stackframe {
     struct stackframe* ebp;
@@ -42,14 +43,32 @@ U0 KPanic(const String msg, Bool reboot) {
         PrintF("<- %p\n", stk->eip);
         stk = stk->ebp;
     }
-    while (PITTime - start < 15000) {
-        {
-            U32 d = (15000 - PITTime - start);
-            ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor -= ((TTY*)TTYs.arr)[TTYCurrent].pty->width;
+    PrintF("Recovery shell\n");
+    Char buf[512];
+    MemSet(buf, 0, 512);
+    PrintF(">>>");
+    for (;;) {
+        if (TTYRead(TTYCurrent, 0, buf, 512)) {
+            PrintF("\"%s\"\n", buf);
+            if (!StrCmp(buf, "reboot")) {
+                PowerReboot();
+            }
+            else if (!StrCmp(buf, "lspci")) {
+                PCIDevicesCheck();
+            }
+            else if (!StrCmp(buf, "off")) {
+                PowerOff();
+            }
+            else if (!StrCmp(buf, "help")) {
+                PrintF(
+                    "reboot off\n"
+                    "lspci help\n"
+                );
+            }
+            PrintF(">>>");
+            MemSet(buf, 0, 512);
         }
-        Beep(tones[tind]);
-        tind = (tind + 1) % (sizeof(tones) / sizeof(U16));
-        VRMFlush();
+	VRMFlush();
     }
     if (reboot) {
         PowerReboot();

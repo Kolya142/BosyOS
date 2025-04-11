@@ -28,7 +28,7 @@ build_dir = project_root / "build"
 build_dir.mkdir(exist_ok=True)
 
 print("Building kernel")
-cc = f"ccache {"gcc" if plat == 1 else "i686-elf-gcc"} \"-I{project_root}/include\" -static -fno-toplevel-reorder -mgeneral-regs-only -ffreestanding -m32 -mhard-float -mfpmath=387 -c {"-w" if fast else ""}" # -Wall -Wextra -c"
+cc = f"ccache {"gcc" if plat == 1 else "i686-elf-gcc"} \"-I{project_root}/include\" -static -fno-toplevel-reorder -fno-stack-protector -fno-pic -fno-pie -no-pie -mgeneral-regs-only -ffreestanding -m32 -mhard-float -mfpmath=387 -c {"-w" if fast else ""}" # -Wall -Wextra -c"
 print(f"Build command: {cc}")
 tasks = []
 for root, _, files in os.walk("."):

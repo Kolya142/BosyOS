@@ -75,6 +75,19 @@ U0 CompilerExtern(String code) {
         ListDestroy(&compiled);
     }
 }
+U0 CompilerStaticExtern(String code) {
+    List vars = ListInit(sizeof(CompilerVariable));
+    List compiled = Compiler(code, vars);
+    ListDestroy(&vars);
+    if (compiled.count) {
+        for (U32 i = 0; i < compiled.count; ++i) {
+            PrintF("%1X ", ((U8*)compiled.arr)[i]);
+        }
+        PrintF("\n");
+        ListDestroy(&compiled);
+    }
+}
+
 
 U0 KernelMain(struct MultiBoot *mbi) {
     mb = mbi;
@@ -150,13 +163,33 @@ U0 KernelMain(struct MultiBoot *mbi) {
     // KDogWatchLog("Switching to 320x200", False);
     // VgaGraphicsSet();
     // VESAInit();
-    ((TTY*)TTYs.arr)[TTYCurrent].pty->cursor = 0;
     KDogWatchLog("System initializing start", False);
+    // Drivers
+    KDogWatchLog("+Drivers section", False);
+    // KDogWatchLog("[INITIALIZING] \"serial\"", False);
+    // SerialInit();
+    // KDogWatchLog("[INITALIZING] \"PCI\"", False);
+    // PCIInit();
+    // PCIDevicesCheck();
+    // KDogWatchLog("[INITIALIZED] \"PCI\"", False);
+    PS2Init();
+    KDogWatchLog("[INITIALIZED] \"ps/2\"", False);
+    #ifndef FASTBOOT
+    MouseInit();
+    KDogWatchLog("[INITIALIZED] \"mouse\"", False);
+    KBInit();
+    KDogWatchLog("[INITIALIZED] keyboard", False);
+    BeepInit();
+    KDogWatchLog("[INITIALIZED] pc speaker", False);
+    #endif
+    KDogWatchLog("[INITIALIZED] ide disk", False);
+    VDriversReg();
+    KDogWatchLog("[INITIALIZED] vdrivers", False);
+    // Drivers end
 
-    KDogWatchLog("[INITIALIZING] \"serial\"", False);
-    SerialInit();
+    // KPanic("Test Panic", False);
 
-    KDogWatchLog("[INITIALIZING] \"Compiler\"", False);
+    KDogWatchLog("[INITIALIZING] Compiler", False);
     CompilerInit();
     // VgaBlinkingSet(False);
     // VgaCursorDisable();
@@ -179,29 +212,6 @@ U0 KernelMain(struct MultiBoot *mbi) {
     // KDogWatchLog("Setuping fpu", False);
     // FPUBox();
     
-    // Drivers
-    KDogWatchLog("Drivers section", False);
-    // PCIInit();
-    // PCIDevicesCheck();
-    // KDogWatchLog("Initialized \"PCI\"", False);
-    // USBInit();
-    // KDogWatchLog("Initialized \"USB\"", False);
-    // // RTL8139Init();
-    // // KDogWatchLog("Initialized \"rtl8139\"", False);
-    PS2Init();
-    KDogWatchLog("[INITIALIZED] \"ps/2\"", False);
-    #ifndef FASTBOOT
-    MouseInit(); // Portal to hell
-    KDogWatchLog("[INITIALIZED] \"mouse\"", False);
-    KBInit();
-    KDogWatchLog("[INITIALIZED] \x9Bkeyboard\x9C", False);
-    BeepInit();
-    KDogWatchLog("[INITIALIZED] \x9Bpc speaker\x9C", False);
-    #endif
-    KDogWatchLog("[INITIALIZED] \x9Bide disk\x9C", False);
-    VDriversReg();
-    KDogWatchLog("[INITIALIZED] \x9Bvdrivers\x9C", False);
-    // Drivers end
     
     // FSs
     KDogWatchLog("FileSystems Section", False);
@@ -239,10 +249,21 @@ U0 KernelMain(struct MultiBoot *mbi) {
     TTYWrite(1, 1, "\x80", 1);
     PrintF("Running init\n");
     {
+        VRMFlush();
         CompilerFunction func;
         MemSet(func.name, 0, 32);
         StrCpy(func.name, "Compiler");
         func.code.arr = CompilerExtern;
+        ListAppend(&CompilerFunctions, &func);
+
+        MemSet(func.name, 0, 32);
+        StrCpy(func.name, "CompilerS");
+        func.code.arr = CompilerStaticExtern;
+        ListAppend(&CompilerFunctions, &func);
+
+        MemSet(func.name, 0, 32);
+        StrCpy(func.name, "Panic");
+        func.code.arr = KPanic;
         ListAppend(&CompilerFunctions, &func);
 
         List vars = ListInit(sizeof(CompilerVariable));

@@ -34,7 +34,7 @@ releases:
 	cp grub/bosyos.iso release/tar/bosyos.iso
 	echo "cd tar && tar -czvf ../bosyos.tar.gz . && cd .." > release/tar_make.sh
 watchcat:
-	while inotifywait -e modify -r kernel/ -r userdir/; do bash watchcat_onupd.sh; done
+	while inotifywait -e modify -r kernel/ -r userdir/; do python3 non-kernel\ files/bel.py watchcat_onupd.bel; done
 _kernel_super_real_fast:
 	cd kernel && python3 build.py --fast
 	cp kernel/kernel.b kernel.bin

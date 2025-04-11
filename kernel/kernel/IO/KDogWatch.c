@@ -32,6 +32,8 @@ ERR(DWErr08, "#DOUBLE FAULT");
 ERR(DWErr0C, "#STACK SEGMENT FAULT");
 INT_DEF(DWErr0E) {
     U32 cr2;
+    POut(0x20, 0x20);
+    POut(0xA0, 0xA0);
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
     SerialPrintF("#Page fault code: %p\n", cr2);
     KDogWatchLog("#Page fault", False);

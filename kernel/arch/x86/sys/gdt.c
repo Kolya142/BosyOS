@@ -29,7 +29,7 @@ U0 GDTInit() {
 
 U0 GDTLoad() {
     asmV(
-        "lgdt (%0)\n"
+        "lgdt %0\n"
         "movw $0x10, %%ax\n"
         "movw %%ax, %%ds\n"
         "movw %%ax, %%es\n"

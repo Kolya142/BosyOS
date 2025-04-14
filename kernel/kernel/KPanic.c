@@ -47,6 +47,8 @@ U0 KPanic(const String msg, Bool reboot) {
     Char buf[512];
     MemSet(buf, 0, 512);
     PrintF(">>>");
+    U32 i = 0;
+    Bool r = 0;
     for (;;) {
         if (TTYRead(TTYCurrent, 0, buf, 512)) {
             PrintF("\"%s\"\n", buf);
@@ -67,8 +69,13 @@ U0 KPanic(const String msg, Bool reboot) {
             }
             PrintF(">>>");
             MemSet(buf, 0, 512);
+            r = True;
         }
-	VRMFlush();
+	    VRMFlush();
+        ++i;
+        if (i >= 1000000 && !r) {
+            PowerReboot();
+        }
     }
     if (reboot) {
         PowerReboot();

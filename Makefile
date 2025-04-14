@@ -93,6 +93,20 @@ run:
 	else \
 		$(QEMU) $(QEMU_ADD) $(QEMU_DRIVE) $(QEMU_USB) $(QEMU_MEM) $(QEMU_NET) $(QEMU_SER) $(QEMU_DISPLAY) $(QEMU_AUDIO_LINUX) $(QEMU_KVM) $(QEMU_MOUSE) $(QEMU_OUT) --no-shutdown;\
 	fi
+	
+d610:
+	qemu-system-i386 \
+		-M pc \
+		-m 512 \
+		-drive format=raw,file=grub/bosyos.iso,if=ide \
+		-vga std \
+		-no-reboot \
+		-rtc base=localtime \
+		-serial stdio \
+		-d int,cpu_reset,guest_errors \
+		-monitor none \
+		-bios /usr/share/qemu/bios-256k.bin
+		-cpu pentium3,+mmx,-sse,-sse2
 
 all: kernel compile run
 allr: kernel compile

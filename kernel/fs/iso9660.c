@@ -10,10 +10,19 @@ static U8 dir[2048];
 
 U0 ISO9660Init() {
     U8 iso[2048];
-    if (!ATARead(0, iso, 16 * 4, 4)) {KPanic("Failed to load ISO9660\n", False);}
-    root_dir_lba = *(U32*)(iso + 156 + 2);
-    root_dir_size = *(U32*)(iso + 156 + 10);
-    if (!ATARead(0, dir, root_dir_lba * 4, 4)) {KPanic("Failed to load ISO9660\n", False);}
+    Bool slave = False;
+    for (U32 i = 0; i < 4; ++i) {
+        PrintF("Try Init ISO9660 0 %d\n", i);
+        if (!ATARead(slave, iso, 16 * 4, 4)) {slave = True; continue;}
+        root_dir_lba = *(U32*)(iso + 156 + 2);
+        root_dir_size = *(U32*)(iso + 156 + 10);
+        PrintF("Try Init ISO9660 1 %d\n", i);
+        if (!ATARead(slave, dir, root_dir_lba * 4, 4)) {if (slave) {KPanic("Failed to load ISO9660\n", False);} else {slave = True;}}
+        else {
+            PrintF("Try Init ISO9660 2 %d\n", i);
+            break;
+        }
+    }
 }
 ISO9660DirEntry *ISO9660Get(String name) {
     U32 s = StrLen(name);

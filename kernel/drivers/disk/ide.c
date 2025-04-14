@@ -9,10 +9,20 @@ static Bool is_second_atapi;
 
 Bool ATARead(Bool slave, Ptr buf, U32 start, U8 count) {
     if (!slave && is_first_atapi) {
-        return ATAPIRead(False, buf, start / 4);
+        Bool res = False;
+        while (res = ATAPIRead(False, buf, start / 4) && count) {
+            start += 4;
+            count -= 4;
+        }
+        return res;
     }
     if (slave && is_second_atapi) {
-        return ATAPIRead(True, buf, start / 4);
+        Bool res = False;
+        while (res = ATAPIRead(True, buf, start / 4) && count) {
+            start += 4;
+            count -= 4;
+        }
+        return res;
     }
     POut(0x01F6, (slave ? 0xF0 : 0xE0) | ((start >> 24) & 15));
     POut(0x01F2, count);

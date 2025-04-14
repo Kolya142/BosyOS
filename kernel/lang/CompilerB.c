@@ -63,6 +63,8 @@ U32 CompilerExpr(String code, List *vars) {
                 s = 2;
                 if (e != '-' && e != '+' && e != '&' && e != '^' && e != '|' && e != '*' &&
                     e != '/' && e != '%' && e != '<' && e != '>' && e != '!' && e != '=') {
+                    sym -= a;
+                    code -= a;
                     cont = False;
                 }
             } break;

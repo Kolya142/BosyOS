@@ -17,6 +17,7 @@
 #include <drivers/misc/random.h>
 #include <drivers/video/vesa.h>
 #include <drivers/video/vga.h>
+#include <drivers/disk/blkdev.h>
 #include <drivers/disk/ide.h>
 #include <drivers/time/pit.h>
 #include <drivers/sys/beep.h>
@@ -127,7 +128,6 @@ U0 KernelMain(struct MultiBoot *mbi) {
     KDogWatchLog("[INITIALIZED] \"VFS\"", False);
 
     TTYInit();
-
     U32 ptys = PTYNew(2048, 1, 1);
     U32 ptyg1 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
     U32 ptyg2 = PTYNew((WIDTH/8)*(HEIGHT/8)*5, WIDTH/8, HEIGHT/8);
@@ -140,6 +140,8 @@ U0 KernelMain(struct MultiBoot *mbi) {
     TTYNew(TTYRenderG, ptyg4);
     TTYCurrent = 4;
     // TTYSwitch(TTYC_VGA);
+    KDogWatchLog("[INITIALIZING] \"serial\"", False);
+    SerialInit();
 
     VgaInit();
     TTYSwitch(3);
@@ -165,25 +167,25 @@ U0 KernelMain(struct MultiBoot *mbi) {
     // VESAInit();
     KDogWatchLog("System initializing start", False);
     // Drivers
-    KDogWatchLog("+Drivers section", False);
-    // KDogWatchLog("[INITIALIZING] \"serial\"", False);
-    // SerialInit();
-    // KDogWatchLog("[INITALIZING] \"PCI\"", False);
-    // PCIInit();
-    // PCIDevicesCheck();
-    // KDogWatchLog("[INITIALIZED] \"PCI\"", False);
+    KDogWatchLog("Drivers section", False);
+    KDogWatchLog("[INITALIZING] \"PCI\"", False);
+    PCIInit();
+    PCIDevicesCheck();
+    KDogWatchLog("[INITIALIZED] \"PCI\"", False);
+    KDogWatchLog("[INITIALIZING] ps/2", False);
+    TTYFlush(TTYCurrent);
     PS2Init();
-    KDogWatchLog("[INITIALIZED] \"ps/2\"", False);
+    KDogWatchLog("[INITIALIZED] ps/2", False);
     #ifndef FASTBOOT
     MouseInit();
-    KDogWatchLog("[INITIALIZED] \"mouse\"", False);
+    KDogWatchLog("[INITIALIZED] mouse", False);
     KBInit();
     KDogWatchLog("[INITIALIZED] keyboard", False);
     BeepInit();
     KDogWatchLog("[INITIALIZED] pc speaker", False);
     #endif
-    KDogWatchLog("[INITIALIZED] ide disk", False);
-    VDriversReg();
+    BlkDevInit();
+    KDogWatchLog("[INITIALIZED] blkdev", False);
     KDogWatchLog("[INITIALIZED] vdrivers", False);
     // Drivers end
 

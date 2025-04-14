@@ -56,9 +56,10 @@ U0 PCIDeviceCheck(U8 bus, U8 slot, U8 func, PCIDevice *dev) {
     }
 
     dev->deviceid = PCIConfigReadWord(bus, slot, func, 2);
-    dev->classcode = PCIConfigReadWord(bus, slot, func, 8);
-    dev->subclass = PCIConfigReadWord(bus, slot, func, 9);
-    dev->prog_if = PCIConfigReadWord(bus, slot, func, 10);
+    U32 class = PCIConfigReadDWord(bus, slot, func, 8);
+    dev->prog_if    = (class >> 8) & 0xFF;
+    dev->subclass   = (class >> 16) & 0xFF;
+    dev->classcode  = (class >> 24) & 0xFF;    
 
     PCIBARsGet(bus, slot, func, dev);
     PrintF("PCI Device Found: Bus %1X, Slot %1X, Device ID %2X, Class %2X, Subclass %2X\n",

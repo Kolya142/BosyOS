@@ -1,6 +1,7 @@
 (let result (system "make kernel_super_real_fast"))
 (if (= result 0) (
     (system "aplay \"non-kernel files/beep.wav\"")
+    (system "notify-send -a \"BosyOS WatchCat\" Builded -u low -t 400")
     (system "make compille")
 ) (
     (system "canberra-gtk-play -i dialog-error")

@@ -10,6 +10,8 @@
 #include <arch/x86/sys/gdt.h>
 #include <lib/time/Time.h>
 #include <arch/x86/sys/paging.h>
+#include <drivers/input/keyboard.h>
+#include <arch/x86/sys/sys.h>
 #include <lib/IO/TTY.h>
 #include <kws/win.h>
 
@@ -123,10 +125,15 @@ INT_DEF(PITHandler) {
     }
     Alarm *a = AlarmGet();
     if (a) {
+        PrintF("Alarm: %p\n", a);
         if (a->time >= PITTime) {
             a->event(a->args);
             AlarmRemove(a);
         }
+    }
+
+    if (KBState.keys[ASCIIPAlt] && KBState.keys['q'] && KBState.keys['r']) {
+        PowerReboot();
     }
 
     if (!(PITTicks % 2)) {
@@ -134,7 +141,7 @@ INT_DEF(PITHandler) {
     }
     
     {
-        WindowsUpdate();
+        // WindowsUpdate();
         
         if (VRMState) {
             MemSet(VRM1, 0xFF, WIDTH*HEIGHT);
@@ -147,7 +154,7 @@ INT_DEF(PITHandler) {
                         break;
                     }
                     if (GCursor[x + y * 10] == 1) {
-                        VRM1[x+MouseX + (y+MouseY) * WIDTH] = VRM[x+MouseX + (y+MouseY) * WIDTH] ^ 0x0F;
+                        VRM1[x+MouseX + (y+MouseY) * WIDTH] = 15 - VRM[x+MouseX + (y+MouseY) * WIDTH];
                     }
                 }
             }
@@ -155,10 +162,10 @@ INT_DEF(PITHandler) {
             // VRMClear(Black);
         }
         if (PITTime % 1000 < 500) {
-            for (U32 i = 0; i < 6; ++i) {
-                for (U32 j = 0; j < 6; ++j) {
-                    U32 x = i + (((TTY*)TTYs.arr)[TTYCurrent].pty->cursor % ((TTY*)TTYs.arr)[TTYCurrent].pty->width)*6;
-                    U32 y = j + (((TTY*)TTYs.arr)[TTYCurrent].pty->cursor / ((TTY*)TTYs.arr)[TTYCurrent].pty->width)*6;
+            for (U32 i = 0; i < 8; ++i) {
+                for (U32 j = 0; j < 8; ++j) {
+                    U32 x = i + (((TTY*)TTYs.arr)[TTYCurrent].pty->cursor % ((TTY*)TTYs.arr)[TTYCurrent].pty->width)*8;
+                    U32 y = j + (((TTY*)TTYs.arr)[TTYCurrent].pty->cursor / ((TTY*)TTYs.arr)[TTYCurrent].pty->width)*8;
                     VVRM[x + y * 320] ^= 15;
                 }
             }
@@ -179,6 +186,8 @@ INT_DEF(PITHandler) {
         days += SystemTime.day - 1;
         BosyTime = (((days * 24 + SystemTime.hour) * 60) + SystemTime.minute) * 60 + SystemTime.second;
         // SerialPrintF("ESP: %p", regs->useresp);
+        // PrintF("PIT END");
+        VRMFlush();
     }
 }
 

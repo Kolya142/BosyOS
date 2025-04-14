@@ -7,7 +7,7 @@ Alarm *AlarmTail = Null;
 U0 AlarmCreate(U32 delay, U0(*event)(Ptr args), Ptr args) {
     if (!event) return;
 
-    Alarm *a = MAlloc(sizeof(Alarm));
+    Alarm *a = MCAlloc(sizeof(Alarm), 1);
     a->args = args;
     a->time = PITTime + delay;
     a->event = event;
@@ -24,7 +24,9 @@ U0 AlarmCreate(U32 delay, U0(*event)(Ptr args), Ptr args) {
 }
 Alarm *AlarmGet() {
     Alarm *a = AlarmTail;
-    AlarmTail = AlarmTail->next;
+    if (a) {
+        AlarmTail = AlarmTail->next;
+    }
     return a;
 }
 U0 AlarmRemove(Alarm *a) {

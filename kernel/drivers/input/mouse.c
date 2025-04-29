@@ -1,0 +1,85 @@
+#include <drivers/controllers/ps2.h>
+#include <drivers/input/keyboard.h>
+
+I32 MouseX = 0, MouseY = 0;
+U8 MouseBtn = 0;
+static volatile U8 MouseCycle = 0;
+static volatile I8 MousePacket[3];
+
+INT_DEF(MouseUpdate) {
+    U32 esp;
+    asmv("mov %%esp, %0" : "=r"(esp));
+    while ((PIn(0x64) & 1)) {
+        if (!(PIn(0x64) & (1 << 5))) {
+            goto end;
+        }
+
+        I8 data = PIn(0x60);
+        
+        switch (MouseCycle) {
+            case 0:
+                if (!(data & 8)) {
+                    MouseCycle = 0;
+                    break;
+                }
+                MousePacket[MouseCycle] = data;
+                ++MouseCycle;
+            break;
+            case 1:
+                MousePacket[MouseCycle] = data;
+                ++MouseCycle;
+            break;
+            case 2:
+                MousePacket[MouseCycle] = data;
+                MouseCycle = 0;
+
+                MouseBtn = MousePacket[0] & 0b111;
+                MouseX += MousePacket[1];
+                MouseY -= MousePacket[2];
+
+                if (MouseX < 0) MouseX = 0;
+                if (MouseY < 0) MouseY = 0;
+
+                if (MouseX > WIDTH - 1) MouseX = WIDTH - 1;
+                if (MouseY > HEIGHT - 1) MouseY = HEIGHT - 1;
+            break;
+        }
+    }
+    end:
+    POut(0x20, 0x20);
+    POut(0xA0, 0x20);
+    asmv("mov %0, %%esp" :: "r"(esp));
+    return;
+}
+
+static U0 MouseEnable() {
+    PS2Clean();
+
+    PS2Wait(1);
+    POut(0x64, 0xA8);
+
+    PS2Wait(1);
+    POut(0x64, 0xE6);
+
+    PS2Wait(1);
+    POut(0x64, 0x20);
+    U8 conf = PS2Read();
+    conf |= 0b10;
+    PS2Write(0x60, conf);
+
+    PS2Write(0xD4, 0xF4);
+    U8 ack = PS2Read();
+
+    PS2Clean();
+}
+
+U0 MouseInit() {
+    PICClearMask(12);
+    
+    MouseEnable();
+
+    MouseX = WIDTH / 2;
+    MouseY = HEIGHT / 2;
+    
+    IDTSet(0x2C, MouseUpdate, 0x08, 0x8E);
+}

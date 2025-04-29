@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "*.bel": "lisp",
+        "keyboard.h": "c",
+        "types.h": "c",
+        "kheap.h": "c",
+        "memlib.h": "c",
+        "window.h": "c",
+        "*.tcc": "c",
+        "interpretter.h": "c",
+        "idt.h": "c",
+        "gdt.h": "c"
+    }
+}

@@ -173,8 +173,11 @@ U0 WindowDraw(Window *win, Gr *gr) {
             ++p;
         }
     }
+    if (win->draw) {
+        win->draw(win);
+    }
 }
-Window WindowInit() {
+Window WindowInit(U0(*draw)(Window *win)) {
     return (Window) {
         .red = False,
         .title = "Term",
@@ -184,7 +187,8 @@ Window WindowInit() {
         .z = 0,
         .width = 30,
         .height = 20,
-        .flags = 1 | 2 | 4
+        .flags = 1 | 2 | 4,
+	.draw = draw
     };
 }
 static Bool lk[256];

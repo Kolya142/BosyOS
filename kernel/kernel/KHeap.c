@@ -27,12 +27,6 @@ Bool KHeapSanityCheck() {
 }
 
 Ptr KMAlloc(U32 count) {
-    if (KHeapSanityCheck()) {
-        for (U32 i = 0; i < WIDTH*HEIGHT; ++i) {
-            fb0.buffer[i] = 0xFF0000;
-        }
-        for (;;);
-    }
     KHeapBlock *curr = start;
     while (curr) {
         if (curr->free) {

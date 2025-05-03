@@ -119,3 +119,8 @@ typedef enum ASCIIP {
     ASCIIPCWhite,
     ASCIIPNextRaw,
 } ASCIIP;
+
+extern U32 snapx, snapy;
+extern Bool snap;
+extern U32 gridx, gridy;
+extern Bool grid;

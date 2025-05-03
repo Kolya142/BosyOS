@@ -14,10 +14,11 @@ typedef struct Window {
     I32 z;
     Bool red;
     U8 flags;
+    U0(*draw)(struct Window *win);
 } Window;
 
 U0 WindowDraw(Window *win, Gr *gr);
-Window WindowInit();
+Window WindowInit(U0(*draw)(Window *win));
 U0 WindowsUpd(Gr *gr, Window **windows, U32 wincounts);
 U0 WindowPrint(Window *win, String text);
 U0 WindowPrintNum(Window *win, U32 num);
